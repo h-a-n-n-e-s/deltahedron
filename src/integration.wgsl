@@ -22,6 +22,12 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
 
   var newBall = a;
 
+  if raySphereIntersection(global, newBall) && global.mouseChanged > 0 {
+    if newBall.color.a == 0 {newBall.color = vec4f(1);}
+    else {newBall.color = vec4f(0);}
+    // newBall.position += global.mouseRay - global.eye;
+  }
+
   var contactCounter = 0u;
 
   newBall.velocity = vec3f(0);

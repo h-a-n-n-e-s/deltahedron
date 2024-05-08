@@ -8,7 +8,7 @@ export const q = 16; // scalar quantities per object in buffer
 
 export class BallPark {
 
-  boxSize = 40;//80;
+  boxSize = 100;
 
   // 1000, 0.4, 1.7
   // 300, 0.5, 2
@@ -159,9 +159,9 @@ export class BallPark {
     // const initKineticEnergy = this.kineticEnergy();
     // let initVerticalAngularMomentum:number;// = this.verticalAngularMomentum();
 
-    const infoDiv = document.createElement('div');
-    infoDiv.id = 'info';
-    document.body.appendChild(infoDiv);
+    // const infoDiv = document.createElement('div');
+    // infoDiv.id = 'info';
+    // document.body.appendChild(infoDiv);
 
     // frames per second counter
     const divFps = document.createElement('div');
@@ -178,6 +178,10 @@ export class BallPark {
 
       if (!this.freeze) {
 
+        const mouseCoords = camera.getMouseCoords();
+        if (mouseCoords.haveChanged)
+          this.compute.setMouseRayAndEye(camera.getMouseRay(), camera.getEye())
+
         /////////////////////////////////////////////////////////////
         const commandEncoder = gpuDevice.createCommandEncoder();
 
@@ -191,6 +195,8 @@ export class BallPark {
         
         if (this.rotate) camera.raiseAzimuth();
 
+        this.compute.makeMouseCoordsOldNews();
+        
       }
 
       // calculate fps every frameIntegration frames

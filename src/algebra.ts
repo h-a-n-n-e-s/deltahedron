@@ -108,6 +108,18 @@ export const mat4 = {
     return o;
   },
 
+  multiplyVector(a:Float32Array, v:Float32Array) {
+    
+    const o = new Float32Array(4);
+
+    o[0] = v[0] * a[0] + v[1] * a[4] + v[2] * a[8]  + v[3] * a[12];
+    o[1] = v[0] * a[1] + v[1] * a[5] + v[2] * a[9]  + v[3] * a[13];
+    o[2] = v[0] * a[2] + v[1] * a[6] + v[2] * a[10] + v[3] * a[14];
+    o[3] = v[0] * a[3] + v[1] * a[7] + v[2] * a[11] + v[3] * a[15];
+
+    return o;
+  },
+
   lookAtAndViewMatrix(eye:Float32Array, target:Float32Array, azimuth:number, l:Float32Array, v:Float32Array) {
 
     const z = vec3.subtract(eye, target);

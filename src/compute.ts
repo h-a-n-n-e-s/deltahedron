@@ -1,6 +1,7 @@
 
 import header from './header.wgsl?raw';
 import boundary from './boundary.wgsl?raw';
+import intersection from './intersection.wgsl?raw';
 import integrationShader from './integration.wgsl?raw';
 import rodsShader from './rods.wgsl?raw';
 
@@ -37,7 +38,7 @@ export class Compute {
     // buffers ////////////////////////////////////////////
 
     this.globalParameterBuffer = this.device.createBuffer({
-      size: 4*8,
+      size: 4*16,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     });
     this.device.queue.writeBuffer(this.globalParameterBuffer, 0, new Float32Array([
@@ -83,7 +84,7 @@ export class Compute {
 
     const pipelineLayout = this.device.createPipelineLayout({bindGroupLayouts: [bindGroupLayout]});
 
-    this.integrationPipeline = this.createCompPipe(pipelineLayout, header+boundary+integrationShader);
+    this.integrationPipeline = this.createCompPipe(pipelineLayout, header+boundary+intersection+integrationShader);
     this.rodsPipeline = this.createCompPipe(pipelineLayout, header+rodsShader);
 
     this.bindGroup = this.device.createBindGroup({
@@ -164,4 +165,13 @@ export class Compute {
 
   setRodsBuffer = (index:number, rod:Float32Array) =>
     this.device.queue.writeBuffer(this.rodsBuffer, index*4, rod);
+
+  setMouseRayAndEye = (ray:Float32Array, eye:Float32Array) => {
+    this.device.queue.writeBuffer(this.globalParameterBuffer, 32, ray);
+    this.device.queue.writeBuffer(this.globalParameterBuffer, 44, new Float32Array([1]));
+    this.device.queue.writeBuffer(this.globalParameterBuffer, 48, eye);
+  }
+
+  makeMouseCoordsOldNews = () =>
+    this.device.queue.writeBuffer(this.globalParameterBuffer, 44, new Float32Array([-1]));
 }

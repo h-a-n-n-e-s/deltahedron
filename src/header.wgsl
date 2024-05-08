@@ -5,7 +5,11 @@ struct GlobalParameter {
   ballDissipation: f32,
   timeStep: f32,
   gravity: f32,
-  cohesion: f32
+  cohesion: f32,
+  mouseRay: vec3f,
+  mouseChanged: f32,
+  eye: vec3f,
+  bernd: f32
 }
 
 struct Object {

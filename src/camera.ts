@@ -1,4 +1,4 @@
-import { mat4 } from "./algebra";
+import { mat4, vec3 } from "./algebra";
 
 const degToRad = Math.PI/180;
 
@@ -24,6 +24,11 @@ export class Camera {
   private eye!:Float32Array;
 
   private projection = new Float32Array(16);
+  private inverseProjection = new Float32Array(16);
+
+  private mouseCoords:{x:number, y:number, haveChanged:boolean} = {x:0, y:0, haveChanged:false};
+
+  private isNew = true;
 
   constructor(para:ArcRotateCameraParameters) {this.para = para;}
 
@@ -35,6 +40,8 @@ export class Camera {
   }
 
   getCameraMatrix() {
+
+    if (!this.isNew) return;
 
     // cartesian coordinates of the camera (from spherical coordinates)
     const t = this.para.inclination * degToRad;
@@ -50,6 +57,9 @@ export class Camera {
     
     mat4.multiply(this.projection, this.viewMatrix, this.viewProjectionMatrix);
 
+    console.log(':)');
+    
+    this.isNew = false;
   }
 
   setPerspective(aspect:number) {
@@ -62,10 +72,19 @@ export class Camera {
     this.projection[10] = this.para.zFar * rangeInv;
     this.projection[11] = -1;
     this.projection[14] = this.para.zNear * this.para.zFar * rangeInv;
+
+    this.inverseProjection[0] = aspect / f;
+    this.inverseProjection[5] = 1 / f;
+    this.inverseProjection[11] = 1 / this.projection[14];
+    this.inverseProjection[14] = -1;
+    this.inverseProjection[15] = this.projection[10] / this.projection[14];
+
+    this.isNew = true;
   }
 
   raiseAzimuth() {
     this.para.azimuth = (this.para.azimuth - 0.1*this.para.angleResolution)%360;
+    this.isNew = true;
   }
 
   keyboardInteraction() {
@@ -82,6 +101,8 @@ export class Camera {
       else if (e.key === 'ArrowUp'  && this.para.inclination < 180) this.para.inclination += this.para.angleResolution;
       else if (e.key === 'f') this.para.radius += 1;
       else if (e.key === 'd' && this.para.radius > 1) this.para.radius -= 1;
+
+      this.isNew = true;
     });
   }
 
@@ -92,11 +113,45 @@ export class Camera {
       if (mouseDown) {
         this.para.azimuth += 0.1 * this.para.angleResolution * e.movementX;
         this.para.inclination -= 0.1 * this.para.angleResolution * e.movementY;
+        this.isNew = true;
       }
     });
 
     canvas.addEventListener('wheel', (e) => {
       this.para.radius += 0.1 * this.para.radiusResolution * Math.sign(e.deltaY);
+      this.isNew = true;
     });
+
+    canvas.addEventListener('click', (e) => {
+      this.mouseCoords.x = - 1 + 2 * e.clientX/canvas.clientWidth;
+      this.mouseCoords.y = 1 - 2 * e.clientY/canvas.clientHeight;
+      this.mouseCoords.haveChanged = true;
+    });
+  }
+
+  getMouseCoords() {
+    return this.mouseCoords;
+  }
+
+  getMouseRay() {
+    this.mouseCoords.haveChanged = false;
+
+    // thanks to https://antongerdelan.net/opengl/raycasting.html
+
+    const cameraCoords = mat4.multiplyVector(this.inverseProjection, new Float32Array([this.mouseCoords.x, this.mouseCoords.y, -1, 0]));
+    
+    cameraCoords[2] = -1;
+    cameraCoords[3] = 0;
+
+    const mouseRay = mat4.multiplyVector(this.lookAtMatrix, cameraCoords);
+
+    mouseRay[3] = 0;
+    vec3.normalize(mouseRay);
+
+    return mouseRay.slice(0,3);
+  }
+
+  getEye() {
+    return this.eye;
   }
 }

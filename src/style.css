@@ -52,6 +52,7 @@ body {
   right:10px;
   width:80px;
   height:22px;
+  user-select: none;
   /* background-color: #077; */
 }
 #info {
@@ -62,6 +63,7 @@ body {
   width:100px;
   height:16px;
   font-size:12px;
+  user-select: none;
   /* background-color: #077; */
 }
 #noteDisplay {
