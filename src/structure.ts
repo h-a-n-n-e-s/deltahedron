@@ -28,12 +28,18 @@ export class Structure {
 
       balls.set(p.slice(3*i,3*i+3), offset); // position
 
-      balls.set([1,0,0, 1], offset+8); // color
-      if (i == count-5) balls.set([0,0,1, 1], offset+8);
-      if (i == count-4) balls.set([0,1,0, 1], offset+8);
-      if (i == count-3) balls.set([1,0,1, 1], offset+8);
-      if (i == count-2) balls.set([1,1,0, 1], offset+8);
-      if (i == count-1) balls.set([0,1,1, 1], offset+8);
+      const c =  this.count(edges, i);
+      // console.log(i, c);
+
+      let color = [.4,.4,.4, 1];
+
+      if (c === 4) color = [0,0,1, 1];
+      else if (c === 5) color = [0,1,1, 1];
+      else if (c === 6) color = [1,1,1, 1];
+      else if (c === 7) color = [1,0,0, 1];
+      else if (c === 8) color = [1,1,0, 1];
+
+      balls.set(color, offset+8);
 
       balls.set([0.1], offset+3); // size
 
@@ -58,12 +64,7 @@ export class Structure {
       this.connection.set([j], this.connection.indexOf(-1, 16*k));
       this.connection.set([k], this.connection.indexOf(-1, 16*j));  
 
-      // const a = p.slice(3*j,3*j+3);
-      // const b = p.slice(3*k,3*k+3);
-      // rods.set(vec3.midpoint(a, b), offset); // position
-      // rods.set(quaternionFromDirection(vec3.subtract(a, b)), offset+12); // orientation
-
-      this.rods.set([1,1,1, 1], offset+8); // color
+      this.rods.set([0.6,0.6,0.6, 1], offset+8); // color
       this.rods.set([0.2], offset+3); // size
     }
     
@@ -82,6 +83,15 @@ export class Structure {
     this.connection.set([k], this.connection.indexOf(-1, 16*j));
     this.assidx++;
     return this.rods.slice((this.assidx-1)*q, (this.assidx-1)*q+16);
+  }
+
+  count = (a:Uint32Array, v:number) => {
+    let count = 0;
+    for(let i=0; i<a.length; ++i){
+        if(a[i] === v)
+        count++;
+    }
+    return count;
   }
 }
 
