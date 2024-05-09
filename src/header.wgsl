@@ -15,8 +15,14 @@ struct GlobalParameter {
 struct Object {
   position: vec3f,
   size: f32,
+  quarternion: vec4f,
+  color: vec4f,
+
   velocity: vec3f,
   mass: f32,
-  color: vec4f,
-  quarternion: vec4f
+
+  shapePara1: f32,
+  shapePara2: f32,
+  shapePara3: f32,
+  shapePara4: f32
 }

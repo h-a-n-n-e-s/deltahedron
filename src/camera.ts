@@ -57,8 +57,6 @@ export class Camera {
     
     mat4.multiply(this.projection, this.viewMatrix, this.viewProjectionMatrix);
 
-    console.log(':)');
-    
     this.isNew = false;
   }
 
@@ -113,6 +111,7 @@ export class Camera {
       if (mouseDown) {
         this.para.azimuth += 0.1 * this.para.angleResolution * e.movementX;
         this.para.inclination -= 0.1 * this.para.angleResolution * e.movementY;
+        this.para.inclination = Math.min( Math.max(this.para.inclination, 0),180)
         this.isNew = true;
       }
     });

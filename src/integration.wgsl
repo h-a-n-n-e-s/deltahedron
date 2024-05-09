@@ -22,9 +22,9 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
 
   var newBall = a;
 
-  if raySphereIntersection(global, newBall) && global.mouseChanged > 0 {
-    if newBall.color.a == 0 {newBall.color = vec4f(1);}
-    else {newBall.color = vec4f(0);}
+  if global.mouseChanged > 0 && raySphereIntersection(global, newBall) > 0{
+    if newBall.color.g == 0 {newBall.color = vec4f(1);}
+    else {newBall.color = vec4f(1,0,1,1);}
     // newBall.position += global.mouseRay - global.eye;
   }
 
@@ -32,13 +32,13 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
 
   newBall.velocity = vec3f(0);
 
-  // 'size' is equivalent to the radius of the ball
+  // shapePara1 is the radius of the ball
 
   for (var j=0u; j<numberOfBalls; j++) {
     if i == j {continue;}
     let b = balls[j];
     let ab = a.position - b.position;
-    let d = a.size + b.size;
+    let d = a.shapePara1 + b.shapePara1;
     let lenab = length(ab);
 
     newBall.velocity += global.gravity * ab / pow(lenab,1);
@@ -47,7 +47,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
     // else {
     //   let nor = normalize(ab);
     //   let dep = d - lenab; // overlap depth
-    //   let r = sqrt(a.size * b.size / (a.size + b.size));
+    //   let r = sqrt(a.shapePara1 * b.shapePara1 / (a.shapePara1 + b.shapePara1));
     //   let vab = a.velocity - b.velocity;
     //   let vNor = dot(vab, nor) * nor;
 
@@ -78,8 +78,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
 
   // wall collisions //////////////////////////////////////
 
-  // var collisionRedirect = cuboidCollisionCheck(newBalls[i].position, global, a.size);
-  var collisionRedirect = cylinderCollisionCheck(newBall.position, global, a.size);
+  // var collisionRedirect = cuboidCollisionCheck(newBalls[i].position, global, a.shapePara1);
+  var collisionRedirect = cylinderCollisionCheck(newBall.position, global, a.shapePara1);
 
   let velocityFactor = - dot(newBall.velocity, collisionRedirect) / dot(collisionRedirect, collisionRedirect);
 

@@ -122,11 +122,12 @@ export const icosahedronLineIndices = new Uint32Array([
 ]);
 
 
-export function icoSphereMesh(refinementLevel:number):Mesh {
+export function icoSphereMesh(radius:number, refinementLevel:number):Mesh {
+  const [norm, ind] = icoSphere(refinementLevel);
 
-  const [vert, ind] = icoSphere(refinementLevel);
+  const vert = norm.map(v => v * radius);
 
-  return {vertices: vert, normals: vert, indices: ind}
+  return {vertices: vert, normals: norm, indices: ind}
 }
 
 // refined icosahedron to approximate a unit sphere

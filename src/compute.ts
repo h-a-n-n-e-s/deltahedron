@@ -85,7 +85,7 @@ export class Compute {
     const pipelineLayout = this.device.createPipelineLayout({bindGroupLayouts: [bindGroupLayout]});
 
     this.integrationPipeline = this.createCompPipe(pipelineLayout, header+boundary+intersection+integrationShader);
-    this.rodsPipeline = this.createCompPipe(pipelineLayout, header+rodsShader);
+    this.rodsPipeline = this.createCompPipe(pipelineLayout, header+intersection+rodsShader);
 
     this.bindGroup = this.device.createBindGroup({
       label: 'integrationBindGroup',

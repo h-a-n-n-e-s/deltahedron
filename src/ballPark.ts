@@ -4,7 +4,7 @@ import { cylinderMesh, icoSphereMesh, icosahedronEdges } from './mesh';
 import { Camera } from './camera';
 import { Structure } from './structure';
 
-export const q = 16; // scalar quantities per object in buffer
+export const q = 20; // scalar quantities per object in buffer
 
 export class BallPark {
 
@@ -102,47 +102,28 @@ export class BallPark {
       fieldOfViewAngle: 27 * Math.PI/180, // (approximately vertical angle of 50 mm full frame)
     });
     
-    const render = new Render;
-
-    // static ball cube
-    // const ballCount = 1000;
-    // const cubeBalls = {
-    //   instanceData: createRandomCube(ballCount, 0.2),
-    //   mesh: icoSphereMesh(4),
-    //   count: ballCount
-    // }
-    // const cylinderCount = 1000;
-    // const cubeCylinders = {
-    //   instanceData: createRandomCube(cylinderCount, 0.1),
-    //   mesh: cylinderMesh(32, 0.2, 2),
-    //   count: cylinderCount,
-    // }
-
-    // const [gpuDevice, objectBuffer] = await
-    //   render.initialize('canvas', camera, [cubeBalls, cubeCylinders]);
-
-    // this.compute.initialize(gpuDevice, [cubeBalls.count, cubeCylinders.count], cubeBalls.instanceData, bound, this.dissipation, this.wallDissipation, this.timeStep, this.subSteps, objectBuffer);
-
-    // deltahedron test
-
     const edges = icosahedronEdges;
-    const count = Math.max(...edges) + 1; // = maxval(edges)+1
+    const count = Math.max(...edges) + 1;
 
+    const ballRadius = 0.1;
+    const cylinderRadius = 0.04;
+    const cylinderLength = 0.8;
 
     const deltahedron = new Structure;
 
-    const [ballData, rodData, connection] = deltahedron.polyhedron(count, edges);
+    const [ballData, rodData, connection] = deltahedron.polyhedron(count, edges, ballRadius, cylinderRadius, cylinderLength);
     const balls = {
       instanceData: ballData,
-      mesh: icoSphereMesh(4),
+      mesh: icoSphereMesh(ballRadius, 4),
       count: count
     }
     const rods = {
       instanceData: rodData,
-      mesh: cylinderMesh(32, 0.2, 2, true),
+      mesh: cylinderMesh(32, cylinderRadius, cylinderLength/2, true),
       count: rodData.length/q,
     }
-    
+
+    const render = new Render;
     const [gpuDevice, objectBuffer] = await render.initialize('canvas', camera, [balls, rods]);
 
     this.compute.initialize(gpuDevice, [balls.count, rods.count], balls.instanceData, bound, this.dissipation, this.wallDissipation, this.timeStep, this.subSteps, objectBuffer);

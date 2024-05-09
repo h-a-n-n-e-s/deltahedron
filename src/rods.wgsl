@@ -1,8 +1,3 @@
-
-const repulsion = 5000.0;
-const dissipation = 10.0;//100.0;
-const cohesion = 20.0;//200.0;
-
 @group(0) @binding(0) var<uniform> global: GlobalParameter;
 @group(0) @binding(2) var<storage, read> edges: array<vec2u>;
 @group(0) @binding(3) var<storage, read_write> balls: array<Object>;
@@ -15,6 +10,11 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   let i = global_id.x;
   let numberOfRods = arrayLength(&rods);
   if i >= numberOfRods {return;}
+
+  if global.mouseChanged > 0 && rayCylinderIntersection(global, rods[i]) > 0 {
+    if rods[i].color.g == 0 {rods[i].color = vec4f(.6,.6,.6,1);}
+    else {rods[i].color = vec4f(1,0,1,1);}
+  }
 
   let e = edges[i];
   

@@ -10,13 +10,12 @@ export class Structure {
 
   rods!: Float32Array;
 
-  polyhedron(count:number, edges:Uint32Array) {
+  polyhedron(count:number, edges:Uint32Array, ballRadius:number, cylinderRadius:number, cylinderLength:number) {
 
     // const s= 0.4;
 
     const p = new Float32Array(3*count);
     for (let i=0; i<p.length; i++) p[i] = 1 * (0.5 - Math.random());
-    // p.set([0,s,0, s,0,s, s,0,-s, -s,0,-s, -s,0,s, 0,-1,0, 0,-1,0]);
     
     this.edge = edges;
 
@@ -27,9 +26,9 @@ export class Structure {
       const offset = i * q;
 
       balls.set(p.slice(3*i,3*i+3), offset); // position
+      balls.set([1], offset+3); // size
 
-      const c =  this.count(edges, i);
-      // console.log(i, c);
+      const c =  this.entryCount(edges, i);
 
       let color = [.4,.4,.4, 1];
 
@@ -41,10 +40,7 @@ export class Structure {
 
       balls.set(color, offset+8);
 
-      balls.set([0.1], offset+3); // size
-
-      const d = [Math.random(), Math.random(), Math.random()];
-      balls.set(quaternionFromDirection(new Float32Array(d)), offset+12);
+      balls.set([ballRadius], offset+16); // shapePara1
     }
 
     const rodCount = this.edge.length/2;
@@ -62,10 +58,14 @@ export class Structure {
       const k = this.edge[2*i+1];
 
       this.connection.set([j], this.connection.indexOf(-1, 16*k));
-      this.connection.set([k], this.connection.indexOf(-1, 16*j));  
+      this.connection.set([k], this.connection.indexOf(-1, 16*j));
 
+      this.rods.set([1], offset+3); // size
       this.rods.set([0.6,0.6,0.6, 1], offset+8); // color
-      this.rods.set([0.2], offset+3); // size
+      
+      this.rods.set([cylinderRadius], offset+16); // shapePara1
+      this.rods.set([cylinderLength], offset+17); // shapePara2
+
     }
     
     return [balls, this.rods, this.connection] as [Float32Array, Float32Array, Int32Array];
@@ -85,7 +85,7 @@ export class Structure {
     return this.rods.slice((this.assidx-1)*q, (this.assidx-1)*q+16);
   }
 
-  count = (a:Uint32Array, v:number) => {
+  entryCount = (a:Uint32Array, v:number) => {
     let count = 0;
     for(let i=0; i<a.length; ++i){
         if(a[i] === v)
