@@ -1,15 +1,15 @@
+const QUANTIZE_FACTOR = 2097152;
+const DEQUANTIZE_FACTOR = 1.0/2097152.0;
 
 struct GlobalParameter {
-  bound: vec3f,
-  wallDissipation: f32,
-  ballDissipation: f32,
+  ballCount: u32,
+  rodCount: u32,
   timeStep: f32,
   gravity: f32,
-  cohesion: f32,
   mouseRay: vec3f,
   mouseChanged: f32,
   eye: vec3f,
-  bernd: f32
+  empty: u32
 }
 
 struct Object {
@@ -25,4 +25,18 @@ struct Object {
   shapePara2: f32,
   shapePara3: f32,
   shapePara4: f32
+}
+
+struct HalfEdge {
+  twin: u32,
+  prev: u32,
+  next: u32,
+  targetVertex: u32
+}
+
+struct Out {
+  selectedEdge: i32,
+  e1: u32,
+  e2: u32,
+  e3: u32
 }

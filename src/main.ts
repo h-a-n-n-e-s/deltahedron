@@ -2,9 +2,6 @@ import './style.css';
 import { BallPark } from "./ballPark";
 import { Button, InfoSlider, SwitchButton } from './button-slider';
 
-let N = 1_000;
-let maxRadius = 0.5;
-
 Button.initialize(10, 10, 10);
 
 const ballPark = new BallPark();
@@ -13,7 +10,7 @@ const gravitySlider = new InfoSlider(0, 1, 0.1, 0.1, 'repulsion: ', 1, '', 200, 
 gravitySlider.onSlide(() => ballPark.setGravity(gravitySlider.value));
 gravitySlider.setId('gravitySlider');
 
-await ballPark.initialize(N, maxRadius);
+await ballPark.initialize();
 ballPark.setGravity(gravitySlider.value);
 
 const holdButton = new SwitchButton('hold', true);

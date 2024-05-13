@@ -26,7 +26,7 @@ export class Camera {
   private projection = new Float32Array(16);
   private inverseProjection = new Float32Array(16);
 
-  private mouseCoords:{x:number, y:number, haveChanged:boolean} = {x:0, y:0, haveChanged:false};
+  mouseCoords:{x:number, y:number, haveChanged:boolean} = {x:0, y:0, haveChanged:false};
 
   private isNew = true;
 
@@ -121,19 +121,18 @@ export class Camera {
       this.isNew = true;
     });
 
-    canvas.addEventListener('click', (e) => {
+    canvas.addEventListener('mousedown', (e) => {
       this.mouseCoords.x = - 1 + 2 * e.clientX/canvas.clientWidth;
       this.mouseCoords.y = 1 - 2 * e.clientY/canvas.clientHeight;
       this.mouseCoords.haveChanged = true;
     });
   }
 
-  getMouseCoords() {
-    return this.mouseCoords;
-  }
+  // getMouseCoords() {
+  //   return this.mouseCoords;
+  // }
 
   getMouseRay() {
-    this.mouseCoords.haveChanged = false;
 
     // thanks to https://antongerdelan.net/opengl/raycasting.html
 

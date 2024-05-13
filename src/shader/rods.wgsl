@@ -1,0 +1,50 @@
+@group(0) @binding(0) var<uniform> global: GlobalParameter;
+@group(0) @binding(1) var<storage, read> edges: array<HalfEdge>;
+@group(0) @binding(2) var<storage, read_write> velocityUpdate: array< atomic<i32> >;
+@group(0) @binding(3) var<storage, read_write> balls: array<Object>;
+@group(0) @binding(4) var<storage, read_write> rods: array<Object>;
+@group(0) @binding(5) var<storage, read_write> out: Out;
+
+@compute @workgroup_size(64)
+
+fn main(@builtin(global_invocation_id) global_id: vec3u) {
+
+  let i = global_id.x;
+  if i >= global.rodCount {return;}
+
+  if global.mouseChanged > 0 && rayCylinderIntersection(global, rods[i]) > 0 {
+    if rods[i].color.g == 0 {rods[i].color = vec4f(.6,.6,.6,1);}
+    else {rods[i].color = vec4f(1,0,1,1);}
+    out.selectedEdge = i32(i);
+  }
+  
+  let j = edges[2 * i].targetVertex;
+  let k = edges[2 * i + 1].targetVertex;
+
+  let a = balls[j];
+  let b = balls[k];
+
+  let ab = a.position - b.position;
+  let d = 0.8;
+  let lenab = length(ab);
+  var nor = vec3f(0);
+  if lenab > 0.0 {nor = normalize(ab);}
+  let velocity = (d - lenab) * nor;
+
+  rods[i].position = (a.position+b.position)/2;
+  rods[i].quarternion = quaternionFromDirection(ab);
+
+  atomicAdd(&velocityUpdate[3 * j    ], i32(velocity.x * QUANTIZE_FACTOR));
+  atomicAdd(&velocityUpdate[3 * j + 1], i32(velocity.y * QUANTIZE_FACTOR));
+  atomicAdd(&velocityUpdate[3 * j + 2], i32(velocity.z * QUANTIZE_FACTOR));
+
+  atomicAdd(&velocityUpdate[3 * k    ], i32(-velocity.x * QUANTIZE_FACTOR));
+  atomicAdd(&velocityUpdate[3 * k + 1], i32(-velocity.y * QUANTIZE_FACTOR));
+  atomicAdd(&velocityUpdate[3 * k + 2], i32(-velocity.z * QUANTIZE_FACTOR));
+}
+
+fn quaternionFromDirection(v:vec3f) -> vec4f {
+  let l = length(v);
+  let f = 1 / sqrt(2 * l * (l + v.y));
+  return vec4f(v.z * f, 0, - v.x * f, (l + v.y) * f);
+}

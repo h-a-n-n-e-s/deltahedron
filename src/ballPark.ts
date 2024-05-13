@@ -1,6 +1,6 @@
 import { Compute } from './compute';
 import { Render } from './render';
-import { cylinderMesh, icoSphereMesh, icosahedronEdges } from './mesh';
+import { cylinderMesh, icoSphereMesh, tetrahedronHalfEdges } from './mesh';
 import { Camera } from './camera';
 import { Structure } from './structure';
 
@@ -10,23 +10,8 @@ export class BallPark {
 
   boxSize = 100;
 
-  // 1000, 0.4, 1.7
-  // 300, 0.5, 2
-  // 100, 0.5, 3
-  // 20, 0.5, 6
-
-  N!:number; // TODO: fix even numbers bug
-  maxRadius!:number;
-
-  minRadius = 0.3;
-
-  audibleCount = 10;
-
   dissipation = 0;
-  wallDissipation = 0.9;
-
-  bigBrotherCount = 0;
-  bigBrotherRadius = 5;
+  wallDissipation = 0;
 
   timeStep = 0.05; // 0.05
   subSteps = 1; // 5
@@ -34,61 +19,12 @@ export class BallPark {
   freeze = false;
   rotate = false;
 
-  balls!: Float32Array;
-  radius!: Float32Array; // separate radius array necessary for sound connection
-
+  static maxEdgeCount = 1000;
+  static maxVertexCount = 1000;
+  
   compute = new Compute();
 
-  async initialize(N:number, maxRadius:number) {
-
-    this.N = N;
-    this.maxRadius = maxRadius;// Math.max(maxRadius, this.bigBrotherRadius);
-
-    this.balls = new Float32Array(q*this.N);
-    const color = new Float32Array(4*this.N);
-    // const colorCopy = new Float32Array(4*this.N);
-    // const excitation = new Float32Array(this.N);
-    this.radius = new Float32Array(this.N);
-    
-    for (let i=0; i<this.N; i++) {
-
-      this.radius[i] = this.minRadius + ( this.maxRadius - this.minRadius) * i/(this.N-1);
-      
-      if (i<this.bigBrotherCount) this.radius[i] = this.bigBrotherRadius; // big brother
-      
-      this.balls[q*i+3] = this.radius[i];
-      this.balls[q*i+7] = 4/3*Math.PI*this.radius[i]**3; // mass
-      this.balls[q*i+12] = this.radius[i]; // scale
-      
-      for (let j=0; j<3; j++) {
-        this.balls[q*i+j] = (- 1 + 2*Math.random())*(this.boxSize/2 - 1.1 * this.radius[i]); // position
-        // balls[q*i+j+4] = - 0.5 + 1.0*Math.random(); // velocity
-
-        color[4*i+j] = Math.random();
-        if (i == 0) color[4*i+j] = 1.5; // first ball white
-
-        this.balls[q*i+8+j] = Math.random();
-
-        // colorCopy[4*i+j] = color[4*i+j];
-
-      }
-      color[4*i+3] = 1; // alpha?
-      // colorCopy[4*i+3] = 1;
-      this.balls[q*i+8+3] = 1;
-
-      // rigid rotation
-      const f = 0.005;
-      const r = Math.sqrt(this.balls[q*i]**2 + this.balls[q*i+2]**2);
-      this.balls[q*i+4] =   f * r * this.balls[q*i+2];
-      this.balls[q*i+6] = - f * r * this.balls[q*i];
-      // / balls[q*i+7]
-
-    }
-
-    // this.cylinderBoundary = new CylinderBoundingBox(2*this.boxSize, this.boxSize, 0);
-    // this.cylinderBoundary.hide();
-
-    const bound = [this.boxSize, this.boxSize/2, 0];
+  async initialize() {
 
     const camera = new Camera({
       angleResolution: 3,
@@ -102,8 +38,9 @@ export class BallPark {
       fieldOfViewAngle: 27 * Math.PI/180, // (approximately vertical angle of 50 mm full frame)
     });
     
-    const edges = icosahedronEdges;
-    const count = Math.max(...edges) + 1;
+    const edges = new Uint32Array(8*BallPark.maxEdgeCount);
+    edges.set(tetrahedronHalfEdges);
+    const vertexCount = 4;// Math.max(...edges) + 1;
 
     const ballRadius = 0.1;
     const cylinderRadius = 0.04;
@@ -111,25 +48,30 @@ export class BallPark {
 
     const deltahedron = new Structure;
 
-    const [ballData, rodData, connection] = deltahedron.polyhedron(count, edges, ballRadius, cylinderRadius, cylinderLength);
+    const [ballData, rodData] = deltahedron.polyhedron(vertexCount, edges, ballRadius, cylinderRadius, cylinderLength);
+
     const balls = {
       instanceData: ballData,
       mesh: icoSphereMesh(ballRadius, 4),
-      count: count
+      count: vertexCount,
+      maxCount: BallPark.maxVertexCount
     }
     const rods = {
       instanceData: rodData,
       mesh: cylinderMesh(32, cylinderRadius, cylinderLength/2, true),
       count: rodData.length/q,
+      maxCount: BallPark.maxEdgeCount
     }
 
     const render = new Render;
+
     const [gpuDevice, objectBuffer] = await render.initialize('canvas', camera, [balls, rods]);
 
-    this.compute.initialize(gpuDevice, [balls.count, rods.count], balls.instanceData, bound, this.dissipation, this.wallDissipation, this.timeStep, this.subSteps, objectBuffer);
+    this.compute.initialize(gpuDevice, balls.instanceData, this.timeStep, this.subSteps, objectBuffer);
 
-    this.compute.setConnectionBuffer(connection);
     this.compute.setEdgeBuffer(edges);
+
+    this.compute.setCount(balls.count, rods.count);
 
     // interaction ////////////////////////////////////////
 
@@ -159,15 +101,16 @@ export class BallPark {
 
       if (!this.freeze) {
 
-        const mouseCoords = camera.getMouseCoords();
-        if (mouseCoords.haveChanged)
+        if (camera.mouseCoords.haveChanged)
           this.compute.setMouseRayAndEye(camera.getMouseRay(), camera.getEye())
 
         /////////////////////////////////////////////////////////////
         const commandEncoder = gpuDevice.createCommandEncoder();
 
-        // if (init)
-        this.compute.pureIntegration(commandEncoder);
+        this.compute.pureIntegration(commandEncoder, balls.count, rods.count);
+
+        if (camera.mouseCoords.haveChanged)
+          this.compute.copyOutBuffer(commandEncoder);
 
         render.render(camera, commandEncoder);
 
@@ -176,7 +119,18 @@ export class BallPark {
         
         if (this.rotate) camera.raiseAzimuth();
 
-        this.compute.makeMouseCoordsOldNews();
+        if (camera.mouseCoords.haveChanged) {
+
+          const out = await this.compute.getOutBuffer();
+          
+          if (out[0] !== -1) { // edge selected
+            console.log(out[0]);
+            // Good Morning! Start here! :)
+          }
+
+          this.compute.makeMouseCoordsOldNews(camera);
+          this.compute.resetOutBuffer();
+        }
         
       }
 
@@ -201,30 +155,6 @@ export class BallPark {
     };
     requestAnimationFrame(loop);
 
-  }
-
-  kineticEnergy = () => {
-    let energy = 0;
-    for (let i=0; i<this.N; i++) {
-      const velocitySquare = this.balls[q*i+4]**2 + this.balls[q*i+5]**2 + this.balls[q*i+6]**2;
-      energy += this.balls[q*i+7] * velocitySquare; // multiplied with mass
-    }
-    return energy;
-  }
-
-  verticalAngularMomentum = () => {
-    let momentum = 0;
-    for (let i=0; i<this.N; i++) {
-      const cross = this.balls[q*i+2]*this.balls[q*i+4] - this.balls[q*i]*this.balls[q*i+6];
-      momentum += this.balls[q*i+7] * cross; // multiplied with mass
-    }
-    return momentum;
-  }
-
-  verticalAngularMomentumShader = () => {
-    let momentum = 0;
-    for (let i=0; i<this.N; i++) momentum += this.balls[q*i+13];
-    return momentum;
   }
 
   setGravity(g:number) {this.compute.setGravity(g);}

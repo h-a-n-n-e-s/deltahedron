@@ -1,12 +1,15 @@
 import { Mesh, MeshBuffers, getMeshBuffers } from './mesh';
-import header from './header.wgsl?raw';
-import shader from './shader.wgsl?raw';
 import { Camera } from './camera';
+import { q } from './ballPark';
+import header from './shader/header.wgsl?raw';
+import shader from './shader/render.wgsl?raw';
+
 
 export type Object = {
   instanceData: Float32Array;
   mesh: Mesh;
   count: number;
+  maxCount: number;
 }
 
 export type ObjectGPUData = {
@@ -156,7 +159,7 @@ export class Render {
 
       const objBuffer = this.device.createBuffer({
         label: 'object',
-        size: obj.instanceData.byteLength,
+        size: obj.maxCount * q * 4,
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
       });
       objectBufferList.push(objBuffer);
