@@ -23,6 +23,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   }
 
   // newBall.velocity = vec3f(0);
+  // newBall.velocity *= 0.6;
 
   let up = vec3i(velocityUpdate[3*i], velocityUpdate[3*i+1], velocityUpdate[3*i+2]);
   newBall.velocity = vec3f(up) * DEQUANTIZE_FACTOR;

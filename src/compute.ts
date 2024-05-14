@@ -22,7 +22,7 @@ export class Compute {
 
   private ballsBuffer!: GPUBuffer;
   private rodsBuffer!: GPUBuffer;
-  private edgeBuffer!: GPUBuffer;
+  private halfEdgeBuffer!: GPUBuffer;
   private velocityUpdateBuffer!: GPUBuffer;
 
   initialize = (device:GPUDevice, balls:Float32Array, timeStep:number, subSteps:number, objectBufferList:Array<GPUBuffer>) => {
@@ -49,7 +49,7 @@ export class Compute {
       size: this.outBuffer.size,
       usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
     });
-    
+
     this.resetOutBuffer();
 
     [this.ballsBuffer, this.rodsBuffer] = objectBufferList;
@@ -60,7 +60,7 @@ export class Compute {
       usage: GPUBufferUsage.STORAGE
     });
     
-    this.edgeBuffer = this.device.createBuffer({
+    this.halfEdgeBuffer = this.device.createBuffer({
       size: this.rodsBuffer.size / q * 8,
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
     });
@@ -72,7 +72,7 @@ export class Compute {
     const bindGroupLayout = this.device.createBindGroupLayout({
       entries: [
         {binding:0, visibility:GPUShaderStage.COMPUTE, buffer:{type:'uniform'}}, // global parameters
-        {binding:1, visibility:GPUShaderStage.COMPUTE, buffer:{type:'read-only-storage'}}, // edges
+        {binding:1, visibility:GPUShaderStage.COMPUTE, buffer:{type:'read-only-storage'}}, // halfEdges
         {binding:2, visibility:GPUShaderStage.COMPUTE, buffer:{type:'storage'}}, // velocityUpdate
         {binding:3, visibility:GPUShaderStage.COMPUTE, buffer:{type:'storage'}}, // balls
         {binding:4, visibility:GPUShaderStage.COMPUTE, buffer:{type:'storage'}}, // rods
@@ -90,7 +90,7 @@ export class Compute {
       layout: bindGroupLayout,
       entries: [
         {binding: 0, resource: {buffer: this.globalParameterBuffer}},
-        {binding: 1, resource: {buffer: this.edgeBuffer}},
+        {binding: 1, resource: {buffer: this.halfEdgeBuffer}},
         {binding: 2, resource: {buffer: this.velocityUpdateBuffer}},
         {binding: 3, resource: {buffer: this.ballsBuffer}},
         {binding: 4, resource: {buffer: this.rodsBuffer}},
@@ -148,11 +148,14 @@ export class Compute {
   setCount = (ballCount:number, rodCount:number) =>
     this.device.queue.writeBuffer(this.globalParameterBuffer, 0, new Uint32Array([ballCount, rodCount]));
 
-  setEdgeBuffer = (edges:Uint32Array) =>
-    this.device.queue.writeBuffer(this.edgeBuffer, 0, edges);
+  setHalfEdgeBuffer = (halfEdges:Uint32Array) =>
+    this.device.queue.writeBuffer(this.halfEdgeBuffer, 0, halfEdges);
 
-  // setRodsBuffer = (index:number, rod:Float32Array) =>
-  //   this.device.queue.writeBuffer(this.rodsBuffer, index*4, rod);
+  setBallsBuffer = (index:number, ball:Float32Array) =>
+    this.device.queue.writeBuffer(this.ballsBuffer, index*q*4, ball);
+
+  setRodsBuffer = (index:number, rod:Float32Array) =>
+    this.device.queue.writeBuffer(this.rodsBuffer, index*q*4, rod);
 
   setMouseRayAndEye = (ray:Float32Array, eye:Float32Array) => {
     this.device.queue.writeBuffer(this.globalParameterBuffer, 16, ray);

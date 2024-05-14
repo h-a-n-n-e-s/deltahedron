@@ -1,5 +1,5 @@
 @group(0) @binding(0) var<uniform> global: GlobalParameter;
-@group(0) @binding(1) var<storage, read> edges: array<HalfEdge>;
+@group(0) @binding(1) var<storage, read> halfEdges: array<HalfEdge>;
 @group(0) @binding(2) var<storage, read_write> velocityUpdate: array< atomic<i32> >;
 @group(0) @binding(3) var<storage, read_write> balls: array<Object>;
 @group(0) @binding(4) var<storage, read_write> rods: array<Object>;
@@ -18,8 +18,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
     out.selectedEdge = i32(i);
   }
   
-  let j = edges[2 * i].targetVertex;
-  let k = edges[2 * i + 1].targetVertex;
+  let j = halfEdges[2 * i].targetVertex;
+  let k = halfEdges[2 * i + 1].targetVertex;
 
   let a = balls[j];
   let b = balls[k];

@@ -6,7 +6,7 @@ import shader from './shader/render.wgsl?raw';
 
 
 export type Object = {
-  instanceData: Float32Array;
+  data: Float32Array;
   mesh: Mesh;
   count: number;
   maxCount: number;
@@ -15,7 +15,7 @@ export type Object = {
 export type ObjectGPUData = {
   meshbuffers: MeshBuffers;
   bindGroup: GPUBindGroup;
-  count: number;
+  object: Object;
 }
 
 export class Render {
@@ -163,7 +163,7 @@ export class Render {
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
       });
       objectBufferList.push(objBuffer);
-      this.device.queue.writeBuffer(objBuffer, 0, obj.instanceData);
+      this.device.queue.writeBuffer(objBuffer, 0, obj.data);
 
       const bindGroup = this.device.createBindGroup({
         layout: this.pipeline.getBindGroupLayout(0),
@@ -176,7 +176,7 @@ export class Render {
       this.objectGPUDataList.push({
         meshbuffers: getMeshBuffers(this.device, obj.mesh),
         bindGroup: bindGroup,
-        count: obj.count
+        object: obj
       });
     }
 
@@ -233,7 +233,8 @@ export class Render {
       pass.setVertexBuffer(1, o.meshbuffers.normalBuffer);
       pass.setIndexBuffer(o.meshbuffers.indexBuffer, 'uint32');
       pass.setBindGroup(0, o.bindGroup);
-      pass.drawIndexed(o.meshbuffers.indexBuffer.size/4, o.count);
+      pass.drawIndexed(o.meshbuffers.indexBuffer.size/4, o.object.count);
+      // console.log(o.object.count);
     }
 
     pass.end();
