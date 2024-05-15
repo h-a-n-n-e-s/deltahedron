@@ -72,8 +72,8 @@ export class BallPark {
     let i = 0
     let time = Date.now();
     const frameIntegration = 60;
-    let slowmo = false;
-    let endSlowmo = false;
+    // let slowmo = false;
+    // let endSlowmo = false;
 
     const loop = async () => {
 
@@ -85,6 +85,7 @@ export class BallPark {
         /////////////////////////////////////////////////////////////
         const commandEncoder = gpuDevice.createCommandEncoder();
 
+        // if (!slowmo)
         this.compute.pureIntegration(commandEncoder, balls.count, rods.count);
 
         if (camera.mouseCoords.haveChanged)
@@ -106,20 +107,20 @@ export class BallPark {
             
             deltahedron.insertVertex(selectedEdgeIndex, this.compute);
             
-            this.compute.setTimeAndSubStep(0.001, 1);
-            slowmo = true;
-            setTimeout(() => {endSlowmo = true;}, 1000);
+            // this.compute.setTimeAndSubStep(0.001, 1);
+            // slowmo = true;
+            // setTimeout(() => {endSlowmo = true;}, 1000);
           }
 
           this.compute.makeMouseCoordsOldNews(camera);
           this.compute.resetOutBuffer();
         }
         
-        if (slowmo && endSlowmo) {
-          this.compute.setTimeAndSubStep(0.05, 1);
-          slowmo = false;
-          endSlowmo = false;
-        }
+        // if (slowmo && endSlowmo) {
+        //   this.compute.setTimeAndSubStep(0.05, 1);
+        //   slowmo = false;
+        //   endSlowmo = false;
+        // }
       }
 
       // calculate fps every frameIntegration frames

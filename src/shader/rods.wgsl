@@ -11,16 +11,6 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
 
   let i = global_id.x;
   if i >= global.rodCount {return;}
-
-  if global.mouseChanged > 0 && rayCylinderIntersection(global, rods[i]) > 0 {
-    // if rods[i].color.g == 0 {rods[i].color = vec4f(.6,.6,.6,1);}
-    // else {rods[i].color = vec4f(1,0,1,1);}
-    out.selectedEdge = i32(i);
-
-    // orientation
-    let o = balls[0].position;
-    out.e1 = i32(100 * dot(balls[1].position-o, cross(balls[2].position-o, balls[3].position-o)));
-  }
   
   let j = halfEdges[2 * i].targetVertex;
   let k = halfEdges[2 * i + 1].targetVertex;
@@ -29,13 +19,27 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   let b = balls[k];
 
   let ab = a.position - b.position;
+  let abMean = (a.position+b.position)/2;
   let d = 0.8;
   let lenab = length(ab);
   var nor = vec3f(0);
   if lenab > 0.0 {nor = normalize(ab);}
   let velocity = (d - lenab) * nor;
 
-  rods[i].position = (a.position+b.position)/2;
+  // mouse pick test
+  if global.mouseChanged > 0 && rayCylinderIntersection(global, rods[i]) > 0 {
+    // if rods[i].color.g == 0 {rods[i].color = vec4f(.6,.6,.6,1);}
+    // else {rods[i].color = vec4f(1,0,1,1);}
+    out.selectedEdge = i32(i);
+
+    balls[global.ballCount].position = abMean; // possible new ball
+
+    // orientation
+    let o = balls[0].position;
+    out.e1 = i32(100 * dot(balls[1].position-o, cross(balls[2].position-o, balls[3].position-o)));
+  }
+
+  rods[i].position = abMean;
   rods[i].quarternion = quaternionFromDirection(ab);
 
   atomicAdd(&velocityUpdate[3 * j    ], i32(velocity.x * QUANTIZE_FACTOR));

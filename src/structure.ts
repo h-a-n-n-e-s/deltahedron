@@ -166,12 +166,8 @@ export class Structure {
     this.halfEdges[iA+3] = this.balls.count;
     this.halfEdges[kA+1] = B;
 
-    const i = this.halfEdges[kA+3];
-    const j = this.halfEdges[kC+3];
-    let p = new Float32Array(3);
     let l;
     for (let o=0; o<3; o++) {
-      p[o] = (this.balls.data[q*i+o]+this.balls.data[q*j+o])/2;
       l = this.rods.count;
       this.createRod(l);
       compute.setRodsBuffer(l, this.rods.data.slice(q*l,q*l+q));
@@ -181,12 +177,13 @@ export class Structure {
     l = this.halfEdges[kB+3];
     this.increaseConnectionCountandUpdateColor(l);
     compute.setBallsBuffer(l, this.balls.data.slice(q*l,q*l+q));
+    
     l = this.halfEdges[kD+3];
     this.increaseConnectionCountandUpdateColor(l);
     compute.setBallsBuffer(l, this.balls.data.slice(q*l,q*l+q));
 
     l = this.balls.count;
-    this.createBall(l, p);
+    this.createBall(l, this.rods.data.slice(rodIndex*q,rodIndex*q+3));
     this.setVertexConnectionCount(l, 4);
     this.setColor(l, this.connectionsToColor(4));
     compute.setBallsBuffer(l, this.balls.data.slice(q*l,q*l+q));
@@ -195,7 +192,7 @@ export class Structure {
     compute.setHalfEdgeBuffer(this.halfEdges);
     compute.setCount(this.balls.count, this.rods.count);
 
-    // console.log(this.halfEdges.slice(8*this.rods.count-24, 8*this.rods.count));
+    console.log(this.halfEdges.slice(0, 8*this.rods.count));
     
   }
 }
