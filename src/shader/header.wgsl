@@ -36,7 +36,7 @@ struct HalfEdge {
 
 struct Out {
   selectedEdge: i32,
-  e1: u32,
-  e2: u32,
-  e3: u32
+  e1: i32,
+  e2: i32,
+  e3: i32
 }

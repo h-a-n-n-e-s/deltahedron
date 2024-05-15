@@ -13,9 +13,13 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   if i >= global.rodCount {return;}
 
   if global.mouseChanged > 0 && rayCylinderIntersection(global, rods[i]) > 0 {
-    if rods[i].color.g == 0 {rods[i].color = vec4f(.6,.6,.6,1);}
-    else {rods[i].color = vec4f(1,0,1,1);}
+    // if rods[i].color.g == 0 {rods[i].color = vec4f(.6,.6,.6,1);}
+    // else {rods[i].color = vec4f(1,0,1,1);}
     out.selectedEdge = i32(i);
+
+    // orientation
+    let o = balls[0].position;
+    out.e1 = i32(100 * dot(balls[1].position-o, cross(balls[2].position-o, balls[3].position-o)));
   }
   
   let j = halfEdges[2 * i].targetVertex;

@@ -6,7 +6,7 @@ Button.initialize(10, 10, 10);
 
 const ballPark = new BallPark();
 
-const gravitySlider = new InfoSlider(0, 1, 0.1, 0.1, 'repulsion: ', 1, '', 200, document.body);
+const gravitySlider = new InfoSlider(0, 10, 1, 1, 'repulsion: ', 0, '', 200, document.body);
 gravitySlider.onSlide(() => ballPark.setGravity(gravitySlider.value));
 gravitySlider.setId('gravitySlider');
 

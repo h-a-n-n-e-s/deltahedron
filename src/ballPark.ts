@@ -14,8 +14,8 @@ export class BallPark {
   freeze = false;
   rotate = false;
 
-  maxEdgeCount = 1000;
-  maxVertexCount = 1000;
+  maxEdgeCount = 100;
+  maxVertexCount = 100;
   
   compute = new Compute();
 
@@ -72,9 +72,9 @@ export class BallPark {
     let i = 0
     let time = Date.now();
     const frameIntegration = 60;
+    let slowmo = false;
+    let endSlowmo = false;
 
-    // let init = true;
-    
     const loop = async () => {
 
       if (!this.freeze) {
@@ -100,29 +100,42 @@ export class BallPark {
         if (camera.mouseCoords.haveChanged) {
 
           const out = await this.compute.getOutBuffer();
-          
-          if (out[0] !== -1) { // edge selected
-            console.log(out[0]);
-            deltahedron.insertVertex(out[0], this.compute);
-            // Good Morning! Start here! :)
+          const selectedEdgeIndex = out[0];
+          if (selectedEdgeIndex !== -1) { // edge selected
+            console.log('e', selectedEdgeIndex, 'o', out[1]);
+            
+            deltahedron.insertVertex(selectedEdgeIndex, this.compute);
+            
+            this.compute.setTimeAndSubStep(0.001, 1);
+            slowmo = true;
+            setTimeout(() => {endSlowmo = true;}, 1000);
           }
 
           this.compute.makeMouseCoordsOldNews(camera);
           this.compute.resetOutBuffer();
         }
         
+        if (slowmo && endSlowmo) {
+          this.compute.setTimeAndSubStep(0.05, 1);
+          slowmo = false;
+          endSlowmo = false;
+        }
       }
 
       // calculate fps every frameIntegration frames
-
       i++;
-
       if ( i == frameIntegration) {
         i = 0;
-
         const fps = frameIntegration * 1e3 / (Date.now() - time);
         time = Date.now();
         divFps.innerHTML = fps.toFixed() + ' fps';
+
+        // const origin = balls.data.slice(0,3);
+        // console.log(vec3.triple(
+        //   vec3.subtract(balls.data.slice(  q,  q+3), origin),
+        //   vec3.subtract(balls.data.slice(2*q,2*q+3), origin),
+        //   vec3.subtract(balls.data.slice(3*q,3*q+3), origin)
+        // ));
       }
 
       requestAnimationFrame(loop);

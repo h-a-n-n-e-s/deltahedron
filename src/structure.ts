@@ -49,6 +49,7 @@ export class Structure {
     for (let i=0; i<ballCount; i++) {
       this.createBall(i, p.slice(3*i,3*i+3));
       const connections = this.vertexEdgeCount(halfEdgesInit, i);
+      this.setVertexConnectionCount(i, connections);
       this.setColor(i, this.connectionsToColor(connections));
     }
 
@@ -80,13 +81,25 @@ export class Structure {
     this.balls.data.set(color, index*q+8);
   }
 
+  setVertexConnectionCount(index:number, connections:number) {
+    this.balls.data.set([connections], index*q+17); // shapePara2 used for connections
+  }
+
   connectionsToColor = (connections:number) => {
-    if (connections === 4) return [0,0,1, 1];
+    if (connections === 3) return [1,0,1, 1]
+    else if (connections === 4) return [0,0,1, 1];
     else if (connections === 5) return [0,1,1, 1];
     else if (connections === 6) return [1,1,1, 1];
     else if (connections === 7) return [1,0,0, 1];
     else if (connections === 8) return [1,1,0, 1];
+    else if (connections === 9) return [0,1,0, 1];
     else return [.5,.5,.5, 1];
+  }
+
+  increaseConnectionCountandUpdateColor = (index:number) => {
+    let prevConnectionCount = this.balls.data[q*index+17];
+    this.setVertexConnectionCount(index, prevConnectionCount+1);
+    this.setColor(index, this.connectionsToColor(prevConnectionCount+1));
   }
 
   vertexCount = (halfEdges:Uint32Array) => {
@@ -110,7 +123,7 @@ export class Structure {
 
   insertVertex(rodIndex:number, compute:Compute) {
     const A = 2*rodIndex;
-    const iA = 2*A;
+    const iA = 4*A;
     const kA = iA+4;
     const B = 2*this.rods.count;
     const iB = 4*B;
@@ -125,11 +138,11 @@ export class Structure {
     this.halfEdges[iB] = B+1;
     this.halfEdges[iB+1] = this.halfEdges[kA+2];
     this.halfEdges[iB+2] = A+1;
-    this.halfEdges[iB+3] = this.balls.count;
+    this.halfEdges[iB+3] = this.balls.count; // new vertex index
     this.halfEdges[kB] = B;
     this.halfEdges[kB+1] = C;
     this.halfEdges[kB+2] = this.halfEdges[kA+1];
-    this.halfEdges[kB+3] = this.halfEdges[this.halfEdges[kA+2]+3];
+    this.halfEdges[kB+3] = this.halfEdges[4*this.halfEdges[kA+2]+3];
     // C
     this.halfEdges[iC] = C+1;
     this.halfEdges[iC+1] = this.halfEdges[kA+1];
@@ -147,7 +160,7 @@ export class Structure {
     this.halfEdges[kD] = D;
     this.halfEdges[kD+1] = A;
     this.halfEdges[kD+2] = this.halfEdges[iA+1];
-    this.halfEdges[kD+3] = this.halfEdges[this.halfEdges[iA+2]+3];
+    this.halfEdges[kD+3] = this.halfEdges[4*this.halfEdges[iA+2]+3];
     // A
     this.halfEdges[iA+2] = D+1;
     this.halfEdges[iA+3] = this.balls.count;
@@ -156,19 +169,34 @@ export class Structure {
     const i = this.halfEdges[kA+3];
     const j = this.halfEdges[kC+3];
     let p = new Float32Array(3);
+    let l;
     for (let o=0; o<3; o++) {
       p[o] = (this.balls.data[q*i+o]+this.balls.data[q*j+o])/2;
-      this.createRod(this.rods.count);
-      compute.setRodsBuffer(this.rods.count, this.rods.data.slice(q*this.rods.count,q*this.rods.count+q));
+      l = this.rods.count;
+      this.createRod(l);
+      compute.setRodsBuffer(l, this.rods.data.slice(q*l,q*l+q));
       this.rods.count++;
     }
-    this.createBall(this.balls.count, p);
-    this.setColor(this.balls.count, this.connectionsToColor(4));
-    compute.setBallsBuffer(this.balls.count, this.balls.data.slice(q*this.balls.count,q*this.rods.count+q));
+    
+    l = this.halfEdges[kB+3];
+    this.increaseConnectionCountandUpdateColor(l);
+    compute.setBallsBuffer(l, this.balls.data.slice(q*l,q*l+q));
+    l = this.halfEdges[kD+3];
+    this.increaseConnectionCountandUpdateColor(l);
+    compute.setBallsBuffer(l, this.balls.data.slice(q*l,q*l+q));
+
+    l = this.balls.count;
+    this.createBall(l, p);
+    this.setVertexConnectionCount(l, 4);
+    this.setColor(l, this.connectionsToColor(4));
+    compute.setBallsBuffer(l, this.balls.data.slice(q*l,q*l+q));
     this.balls.count++;
 
     compute.setHalfEdgeBuffer(this.halfEdges);
     compute.setCount(this.balls.count, this.rods.count);
+
+    // console.log(this.halfEdges.slice(8*this.rods.count-24, 8*this.rods.count));
+    
   }
 }
 

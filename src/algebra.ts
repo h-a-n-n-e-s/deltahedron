@@ -34,12 +34,20 @@ export const vec3 = {
       throw new Error('cannot normalize zero vector');
   },
 
+  dot(a:Float32Array, b:Float32Array) {
+    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  },
+
   cross(a:Float32Array, b:Float32Array) {
     return new Float32Array([
       a[1] * b[2] - a[2] * b[1],
       a[2] * b[0] - a[0] * b[2],
       a[0] * b[1] - a[1] * b[0]
     ])
+  },
+
+  triple(a:Float32Array, b:Float32Array, c:Float32Array) {
+    return this.dot(a, this.cross(b, c));
   },
 };
 

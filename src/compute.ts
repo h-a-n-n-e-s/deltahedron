@@ -36,9 +36,7 @@ export class Compute {
       size: 4*12,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC
     });
-    this.device.queue.writeBuffer(this.globalParameterBuffer, 8, new Float32Array([
-      timeStep/subSteps
-    ]));
+    this.setTimeAndSubStep(timeStep, subSteps);
 
     this.outBuffer = this.device.createBuffer({
       size: 16,
@@ -142,6 +140,12 @@ export class Compute {
     passEncoder.end();
   }
 
+  setTimeAndSubStep = (dt:number, sub:number) => {
+    this.device.queue.writeBuffer(this.globalParameterBuffer, 8, new Float32Array([
+      dt/sub
+    ]));
+  };
+  
   setGravity = (g:number) =>
     this.device.queue.writeBuffer(this.globalParameterBuffer, 12, new Float32Array([g]));
 
