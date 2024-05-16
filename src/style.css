@@ -192,15 +192,11 @@ svg > path {
   opacity: 0.5;
 }
 
-#volumeSlider, #gravitySlider, #reverbSlider, #cutoffSlider, #sizeSlider, #gravitySlider {
+#gravitySlider {
   position: absolute;
   top: 10px;
 }
-#gravitySlider {left: 150px;}
-#volumeSlider  {left: 320px;}
-#reverbSlider  {left: 530px;}
-#cutoffSlider  {left: 740px;}
-#sizeSlider    {top: 42px; left: 420px;}
+#gravitySlider {left: 210px;}
 
 #midiInput {
   position:absolute;

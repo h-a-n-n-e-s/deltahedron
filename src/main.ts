@@ -18,3 +18,6 @@ holdButton.onPush(() => ballPark.setHold(holdButton.on));
 
 const rotateButton = new SwitchButton('rotate', true);
 rotateButton.onPush(() => ballPark.setRotation(rotateButton.on));
+
+const flipButton = new SwitchButton('flip', true);
+flipButton.onPush(() => ballPark.flipEdges(flipButton.on));

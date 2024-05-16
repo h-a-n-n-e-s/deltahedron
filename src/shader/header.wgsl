@@ -21,10 +21,10 @@ struct Object {
   velocity: vec3f,
   mass: f32,
 
-  shapePara1: f32,
-  shapePara2: f32,
-  shapePara3: f32,
-  shapePara4: f32
+  prop1: f32,
+  prop2: f32,
+  prop3: i32,
+  prop4: i32
 }
 
 struct HalfEdge {

@@ -14,7 +14,11 @@ export class Structure {
   private cylinderRadius!: number;
   private cylinderLength!: number;
 
-  init(maxVertexCount:number, maxEdgeCount:number, halfEdgesInit:Uint32Array, ballRadius:number, cylinderRadius:number, cylinderLength:number) {
+  private compute!: Compute;
+
+  init(maxVertexCount:number, maxEdgeCount:number, halfEdgesInit:Uint32Array, ballRadius:number, cylinderRadius:number, cylinderLength:number, compute:Compute) {
+
+    this.compute = compute;
 
     this.ballRadius = ballRadius;
     this.cylinderRadius = cylinderRadius;
@@ -48,9 +52,9 @@ export class Structure {
 
     for (let i=0; i<ballCount; i++) {
       this.createBall(i, p.slice(3*i,3*i+3));
-      const connections = this.vertexEdgeCount(halfEdgesInit, i);
-      this.setVertexConnectionCount(i, connections);
-      this.setColor(i, this.connectionsToColor(connections));
+      const coordinationNumber = this.vertexEdgeCount(halfEdgesInit, i);
+      this.setCoordinationNumber(i, coordinationNumber);
+      this.setColor(i, this.connectionsToColor(coordinationNumber));
     }
 
     for (let i=0; i<rodCount; i++) this.createRod(i);
@@ -64,7 +68,7 @@ export class Structure {
 
     this.balls.data.set(position, offset);
     this.balls.data.set([1], offset+3); // size
-    this.balls.data.set([this.ballRadius], offset+16); // shapePara1
+    this.balls.data.set([this.ballRadius], offset+16); // prop1
   }
 
   createRod(index:number) {
@@ -73,33 +77,34 @@ export class Structure {
 
     this.rods.data.set([1], offset+3); // size
     this.rods.data.set([0.7,0.7,0.7, 1], offset+8); // color
-    this.rods.data.set([this.cylinderRadius], offset+16); // shapePara1
-    this.rods.data.set([this.cylinderLength], offset+17); // shapePara2
+    this.rods.data.set([this.cylinderRadius], offset+16); // prop1
+    this.rods.data.set([this.cylinderLength], offset+17); // prop2
   }
 
   setColor(index:number, color:Array<number>) {
     this.balls.data.set(color, index*q+8);
   }
 
-  setVertexConnectionCount(index:number, connections:number) {
-    this.balls.data.set([connections], index*q+17); // shapePara2 used for connections
+  setCoordinationNumber(index:number, coordinationNumber:number) {
+    this.balls.data.set([coordinationNumber], index*q+18); // pro3 used for coordinationNumber
   }
 
-  connectionsToColor = (connections:number) => {
-    if (connections === 3) return [1,0,1, 1]
-    else if (connections === 4) return [0,0,1, 1];
-    else if (connections === 5) return [0,1,1, 1];
-    else if (connections === 6) return [1,1,1, 1];
-    else if (connections === 7) return [1,0,0, 1];
-    else if (connections === 8) return [1,1,0, 1];
-    else if (connections === 9) return [0,1,0, 1];
+  connectionsToColor = (coordinationNumber:number) => {
+    if (coordinationNumber === 3) return [1,0,1, 1]
+    else if (coordinationNumber === 4) return [0,0,1, 1];
+    else if (coordinationNumber === 5) return [0,1,1, 1];
+    else if (coordinationNumber === 6) return [1,1,1, 1];
+    else if (coordinationNumber === 7) return [1,0,0, 1];
+    else if (coordinationNumber === 8) return [1,1,0, 1];
+    else if (coordinationNumber === 9) return [0,1,0, 1];
     else return [.5,.5,.5, 1];
   }
 
-  increaseConnectionCountandUpdateColor = (index:number) => {
-    let prevConnectionCount = this.balls.data[q*index+17];
-    this.setVertexConnectionCount(index, prevConnectionCount+1);
-    this.setColor(index, this.connectionsToColor(prevConnectionCount+1));
+  changeCoordinationNumberAndColor = (index:number, diff:number) => {
+    let prevCoordinationNumber = this.balls.data[q*index+18];
+    this.setCoordinationNumber(index, prevCoordinationNumber+diff);
+    this.setColor(index, this.connectionsToColor(prevCoordinationNumber+diff));
+    this.compute.setBallsBuffer(index, this.balls.data.slice(q*index,q*index+q));
   }
 
   vertexCount = (halfEdges:Uint32Array) => {
@@ -121,7 +126,7 @@ export class Structure {
     return count;
   }
 
-  insertVertex(rodIndex:number, compute:Compute) {
+  insertVertex(rodIndex:number) {
     const A = 2*rodIndex;
     const iA = 4*A;
     const kA = iA+4;
@@ -161,40 +166,82 @@ export class Structure {
     this.halfEdges[kD+1] = A;
     this.halfEdges[kD+2] = this.halfEdges[iA+1];
     this.halfEdges[kD+3] = this.halfEdges[4*this.halfEdges[iA+2]+3];
+    // surrounding edges
+    this.halfEdges[4*this.halfEdges[kA+2]+2] = B;
+    this.halfEdges[4*this.halfEdges[kA+1]+1] = B+1;
+    this.halfEdges[4*this.halfEdges[kA+1]+2] = C;
+    this.halfEdges[4*this.halfEdges[iA+2]+1] = C+1;
+    this.halfEdges[4*this.halfEdges[iA+2]+2] = D;
+    this.halfEdges[4*this.halfEdges[iA+1]+1] = D+1;
     // A
     this.halfEdges[iA+2] = D+1;
     this.halfEdges[iA+3] = this.balls.count;
     this.halfEdges[kA+1] = B;
+    
 
     let l;
     for (let o=0; o<3; o++) {
       l = this.rods.count;
       this.createRod(l);
-      compute.setRodsBuffer(l, this.rods.data.slice(q*l,q*l+q));
+      this.compute.setRodsBuffer(l, this.rods.data.slice(q*l,q*l+q));
       this.rods.count++;
     }
     
     l = this.halfEdges[kB+3];
-    this.increaseConnectionCountandUpdateColor(l);
-    compute.setBallsBuffer(l, this.balls.data.slice(q*l,q*l+q));
+    this.changeCoordinationNumberAndColor(l, 1);
     
     l = this.halfEdges[kD+3];
-    this.increaseConnectionCountandUpdateColor(l);
-    compute.setBallsBuffer(l, this.balls.data.slice(q*l,q*l+q));
+    this.changeCoordinationNumberAndColor(l, 1);
 
     l = this.balls.count;
     this.createBall(l, this.rods.data.slice(rodIndex*q,rodIndex*q+3));
-    this.setVertexConnectionCount(l, 4);
+    this.setCoordinationNumber(l, 4);
     this.setColor(l, this.connectionsToColor(4));
-    compute.setBallsBuffer(l, this.balls.data.slice(q*l,q*l+q));
+    this.compute.setBallsBuffer(l, this.balls.data.slice(q*l,q*l+q));
     this.balls.count++;
 
-    compute.setHalfEdgeBuffer(this.halfEdges);
-    compute.setCount(this.balls.count, this.rods.count);
+    this.compute.setHalfEdgeBuffer(this.halfEdges);
+    this.compute.setCount(this.balls.count, this.rods.count);
 
-    console.log(this.halfEdges.slice(0, 8*this.rods.count));
+    // console.log(this.halfEdges.slice(0, 8*this.rods.count));
     
   }
+
+  flipEdge(rodIndex:number) {
+    const ac = 2*rodIndex;
+    const ca = ac+1;
+    const ab = this.halfEdges[4*ca+2];
+    const bc = this.halfEdges[4*ca+1];
+    const cd = this.halfEdges[4*ac+2];
+    const da = this.halfEdges[4*ac+1];
+
+    this.halfEdges[4*ab+1] = da;
+    this.halfEdges[4*ab+2] = ac;
+    this.halfEdges[4*bc+1] = ca;
+    this.halfEdges[4*bc+2] = cd;
+    this.halfEdges[4*cd+1] = bc;
+    this.halfEdges[4*cd+2] = ca;
+    this.halfEdges[4*da+1] = ac;
+    this.halfEdges[4*da+2] = ab;
+
+    this.halfEdges[4*ac+1] = ab;
+    this.halfEdges[4*ac+2] = da;
+    this.halfEdges[4*ca+1] = cd;
+    this.halfEdges[4*ca+2] = bc;
+
+    // vertex pointer
+    this.halfEdges[4*ac+3] = this.halfEdges[4*cd+3];
+    this.halfEdges[4*ca+3] = this.halfEdges[4*ab+3];
+
+    // color
+    this.changeCoordinationNumberAndColor(this.halfEdges[4*da+3], -1);
+    this.changeCoordinationNumberAndColor(this.halfEdges[4*ab+3],  1);
+    this.changeCoordinationNumberAndColor(this.halfEdges[4*bc+3], -1);
+    this.changeCoordinationNumberAndColor(this.halfEdges[4*cd+3],  1);
+
+    this.compute.setHalfEdgeBuffer(this.halfEdges);
+  }
+
 }
 
 

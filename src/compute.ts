@@ -4,15 +4,18 @@ import header from './shader/header.wgsl?raw';
 import intersection from './shader/intersection.wgsl?raw';
 import ballsShader from './shader/balls.wgsl?raw';
 import rodsShader from './shader/rods.wgsl?raw';
+import selectionDepth from './shader/selectionDepth.wgsl?raw';
 import { Camera } from './camera';
 
 
 export class Compute {
 
   private device!: GPUDevice;
+  private bindGroup!: GPUBindGroup;
+
   private integrationPipeline!: GPUComputePipeline;
   private rodsPipeline!: GPUComputePipeline;
-  private bindGroup!: GPUBindGroup;
+  private selectionDepthPipeline!: GPUComputePipeline;
 
   private subSteps!: number;
 
@@ -82,9 +85,9 @@ export class Compute {
 
     this.integrationPipeline = this.createCompPipe(pipelineLayout, header+intersection+ballsShader);
     this.rodsPipeline = this.createCompPipe(pipelineLayout, header+intersection+rodsShader);
+    this.selectionDepthPipeline = this.createCompPipe(pipelineLayout, header+intersection+selectionDepth);
 
     this.bindGroup = this.device.createBindGroup({
-      label: 'integrationBindGroup',
       layout: bindGroupLayout,
       entries: [
         {binding: 0, resource: {buffer: this.globalParameterBuffer}},
@@ -104,6 +107,12 @@ export class Compute {
     for (let s=0; s<this.subSteps; s++)
       this.computePass(encoder, this.integrationPipeline, this.bindGroup, ballCount);
 
+  }
+
+  depthTest = (rodCount:number) => {
+    const encoder = this.device.createCommandEncoder();
+    this.computePass(encoder, this.selectionDepthPipeline, this.bindGroup, rodCount);
+    this.device.queue.submit([encoder.finish()]);
   }
 
   copyOutBuffer = (encoder:GPUCommandEncoder) =>
@@ -173,5 +182,6 @@ export class Compute {
   makeMouseCoordsOldNews = (camera:Camera) => {
     this.device.queue.writeBuffer(this.globalParameterBuffer, 28, new Float32Array([-1]));
     camera.mouseCoords.haveChanged = false;
-    }
+    this.resetOutBuffer();
+  }
 }

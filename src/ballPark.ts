@@ -14,10 +14,12 @@ export class BallPark {
   freeze = false;
   rotate = false;
 
-  maxEdgeCount = 100;
-  maxVertexCount = 100;
+  maxEdgeCount = 1000;
+  maxVertexCount = 1000;
   
   compute = new Compute();
+
+  flip = false;
 
   async initialize() {
 
@@ -39,7 +41,7 @@ export class BallPark {
 
     const deltahedron = new Structure;
 
-    const [balls, rods, halfEdges] = deltahedron.init(this.maxVertexCount, this.maxEdgeCount, tetrahedronHalfEdges, ballRadius, cylinderRadius, cylinderLength);
+    const [balls, rods, halfEdges] = deltahedron.init(this.maxVertexCount, this.maxEdgeCount, tetrahedronHalfEdges, ballRadius, cylinderRadius, cylinderLength, this.compute);
 
     const render = new Render;
 
@@ -75,12 +77,17 @@ export class BallPark {
     // let slowmo = false;
     // let endSlowmo = false;
 
+    let checkSelection = false;
+
     const loop = async () => {
 
       if (!this.freeze) {
 
-        if (camera.mouseCoords.haveChanged)
+        if (camera.mouseCoords.haveChanged) {
+          checkSelection = true;
           this.compute.setMouseRayAndEye(camera.getMouseRay(), camera.getEye())
+        }
+          
 
         /////////////////////////////////////////////////////////////
         const commandEncoder = gpuDevice.createCommandEncoder();
@@ -88,7 +95,7 @@ export class BallPark {
         // if (!slowmo)
         this.compute.pureIntegration(commandEncoder, balls.count, rods.count);
 
-        if (camera.mouseCoords.haveChanged)
+        if (checkSelection)
           this.compute.copyOutBuffer(commandEncoder);
 
         render.render(camera, commandEncoder);
@@ -98,22 +105,27 @@ export class BallPark {
         
         if (this.rotate) camera.raiseAzimuth();
 
-        if (camera.mouseCoords.haveChanged) {
+        if (checkSelection) {
 
-          const out = await this.compute.getOutBuffer();
+          let out = await this.compute.getOutBuffer(); // get min distance
+          this.compute.depthTest(rods.count);
+          out = await this.compute.getOutBuffer(); // get edge index
           const selectedEdgeIndex = out[0];
+
           if (selectedEdgeIndex !== -1) { // edge selected
-            console.log('e', selectedEdgeIndex, 'o', out[1]);
+            console.log('e', selectedEdgeIndex);
             
-            deltahedron.insertVertex(selectedEdgeIndex, this.compute);
+            if (this.flip)
+              deltahedron.flipEdge(selectedEdgeIndex);
+            else
+              deltahedron.insertVertex(selectedEdgeIndex);
             
             // this.compute.setTimeAndSubStep(0.001, 1);
             // slowmo = true;
             // setTimeout(() => {endSlowmo = true;}, 1000);
           }
-
+          checkSelection = false;
           this.compute.makeMouseCoordsOldNews(camera);
-          this.compute.resetOutBuffer();
         }
         
         // if (slowmo && endSlowmo) {
@@ -150,4 +162,5 @@ export class BallPark {
   setHold(h:boolean) {this.freeze = h;}
   setRotation(r:boolean) {this.rotate = r;}
 
+  flipEdges = (flip:boolean) => this.flip = flip;
 }

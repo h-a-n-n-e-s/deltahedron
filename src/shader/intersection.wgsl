@@ -5,7 +5,7 @@ fn raySphereIntersection(global:GlobalParameter, obj:Object) -> f32{
 
   let m = global.eye - obj.position;
   let b = dot(m, global.mouseRay);
-  let c = dot(m, m) - obj.shapePara1 * obj.shapePara1; // sP1 is radius
+  let c = dot(m, m) - obj.prop1 * obj.prop1; // sP1 is radius
 
   if b > 0 && c > 0 {return -1;}
 
@@ -22,8 +22,8 @@ fn rayCylinderIntersection(global:GlobalParameter, obj:Object) -> f32 {
   let q = obj.quarternion;
   let cylinderAxis = y + 2 * cross(q.xyz, cross(q.xyz, y) + q.w * y);
 
-  let r = obj.shapePara1; // radius
-  let d = cylinderAxis * obj.shapePara2; // sP2 is length
+  let r = obj.prop1; // radius
+  let d = cylinderAxis * obj.prop2; // prop2 is length
   let m = global.eye - obj.position + 0.5 * d;
   let n = global.mouseRay * 1000;
 
