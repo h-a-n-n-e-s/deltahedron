@@ -13,9 +13,9 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   // check if this rod was hit first
   if rods[i].prop3 == out[0] {
 
-    rods[i].color = vec4f(1,0,1,1);
+    // rods[i].color = vec4f(1,0,1,1);
 
-    out[0] = i32(i);
+    out[1] = i32(i);
 
     balls[global.ballCount].position = rods[i].position; // possible new ball
   }

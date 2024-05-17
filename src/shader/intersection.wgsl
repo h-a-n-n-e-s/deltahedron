@@ -5,7 +5,7 @@ fn raySphereIntersection(global:GlobalParameter, obj:Object) -> f32{
 
   let m = global.eye - obj.position;
   let b = dot(m, global.mouseRay);
-  let c = dot(m, m) - obj.prop1 * obj.prop1; // sP1 is radius
+  let c = dot(m, m) - obj.prop1 * obj.prop1; // prop1 is radius
 
   if b > 0 && c > 0 {return -1;}
 

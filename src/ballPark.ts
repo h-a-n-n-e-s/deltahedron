@@ -3,6 +3,7 @@ import { Render } from './render';
 import { tetrahedronHalfEdges } from './mesh';
 import { Camera } from './camera';
 import { Structure } from './structure';
+import { readFile } from './io';
 
 export const q = 20; // scalar quantities per object in buffer
 
@@ -16,7 +17,9 @@ export class BallPark {
 
   maxEdgeCount = 1000;
   maxVertexCount = 1000;
-  
+
+  deltahedron!: Structure;
+
   compute = new Compute();
 
   flip = false;
@@ -39,9 +42,9 @@ export class BallPark {
     const cylinderRadius = 0.04;
     const cylinderLength = 0.8;
 
-    const deltahedron = new Structure;
+    this.deltahedron = new Structure(this.maxVertexCount, this.maxEdgeCount, ballRadius, cylinderRadius, cylinderLength, this.compute );
 
-    const [balls, rods, halfEdges] = deltahedron.init(this.maxVertexCount, this.maxEdgeCount, tetrahedronHalfEdges, ballRadius, cylinderRadius, cylinderLength, this.compute);
+    const [balls, rods, halfEdges] = this.deltahedron.init(tetrahedronHalfEdges);
 
     const render = new Render;
 
@@ -84,19 +87,16 @@ export class BallPark {
       if (!this.freeze) {
 
         if (camera.mouseCoords.haveChanged) {
+          camera.mouseCoords.haveChanged = false;
           checkSelection = true;
           this.compute.setMouseRayAndEye(camera.getMouseRay(), camera.getEye())
         }
-          
-
+        
         /////////////////////////////////////////////////////////////
         const commandEncoder = gpuDevice.createCommandEncoder();
 
         // if (!slowmo)
-        this.compute.pureIntegration(commandEncoder, balls.count, rods.count);
-
-        if (checkSelection)
-          this.compute.copyOutBuffer(commandEncoder);
+        this.compute.integration(commandEncoder, balls.count, rods.count);
 
         render.render(camera, commandEncoder);
 
@@ -107,25 +107,25 @@ export class BallPark {
 
         if (checkSelection) {
 
-          let out = await this.compute.getOutBuffer(); // get min distance
+          await this.compute.workDone(); // wait for min distance
           this.compute.depthTest(rods.count);
-          out = await this.compute.getOutBuffer(); // get edge index
-          const selectedEdgeIndex = out[0];
+          const out = await this.compute.getOutBuffer(); // get edge index
+          const selectedEdgeIndex = out[1];
 
           if (selectedEdgeIndex !== -1) { // edge selected
             console.log('e', selectedEdgeIndex);
             
             if (this.flip)
-              deltahedron.flipEdge(selectedEdgeIndex);
+              this.deltahedron.flipEdge(selectedEdgeIndex);
             else
-              deltahedron.insertVertex(selectedEdgeIndex);
+              this.deltahedron.insertVertex(selectedEdgeIndex);
             
             // this.compute.setTimeAndSubStep(0.001, 1);
             // slowmo = true;
             // setTimeout(() => {endSlowmo = true;}, 1000);
           }
           checkSelection = false;
-          this.compute.makeMouseCoordsOldNews(camera);
+          this.compute.makeMouseCoordsOldNews();
         }
         
         // if (slowmo && endSlowmo) {
@@ -158,9 +158,17 @@ export class BallPark {
   }
 
   setGravity(g:number) {this.compute.setGravity(g);}
-
   setHold(h:boolean) {this.freeze = h;}
   setRotation(r:boolean) {this.rotate = r;}
+  flipEdges(flip:boolean) {this.flip = flip;}
+  saveData() {this.deltahedron.saveData();}
 
-  flipEdges = (flip:boolean) => this.flip = flip;
+  loadData = async() => {
+    await readFile((data:Uint32Array) => {
+      const [balls, rods, halfEdges] = this.deltahedron.init(data);
+      this.compute.setCompleteBallsAndRodsBuffer(balls.data, rods.data);
+      this.compute.setHalfEdgeBuffer(halfEdges);
+      this.compute.setCount(balls.count, rods.count);
+    });
+  }
 }

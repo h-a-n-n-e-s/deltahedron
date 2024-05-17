@@ -27,15 +27,22 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   let velocity = (d - lenab) * nor;
 
   // mouse pick test
-  let distance = rayCylinderIntersection(global, rods[i]);
-  if global.mouseChanged > 0 && distance > 0 {
+  if global.mouseChanged > 0 {
 
-    rods[i].prop3 = i32(distance * QUANTIZE_FACTOR);
-    atomicMin(&out[0], rods[i].prop3);
+    // for factor 1000 see intersection.wgsl l.28 
+    let distance = 1000 * rayCylinderIntersection(global, rods[i]);
+    if distance > 0 {
 
-    // orientation
-    // let o = balls[0].position;
-    // out.e1 = i32(100 * dot(balls[1].position-o, cross(balls[2].position-o, balls[3].position-o)));
+      rods[i].prop3 = i32(distance * QUANTIZE_FACTOR);
+      atomicMin(&out[0], rods[i].prop3);
+
+      // orientation
+      // let o = balls[0].position;
+      // out.e1 = i32(100 * dot(balls[1].position-o, cross(balls[2].position-o, balls[3].position-o)));
+    }
+    else {
+      rods[i].prop3 = -1;
+    }
   }
 
   rods[i].position = abMean;

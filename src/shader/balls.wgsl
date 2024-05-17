@@ -2,6 +2,7 @@
 @group(0) @binding(1) var<storage, read> edges: array<HalfEdge>;
 @group(0) @binding(2) var<storage, read_write> velocityUpdate: array<i32>;
 @group(0) @binding(3) var<storage, read_write> balls: array<Object>;
+@group(0) @binding(5) var<storage, read_write> out: array< atomic<i32>, 4>;
 
 @compute @workgroup_size(64)
 
@@ -16,10 +17,20 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
 
   var newBall = a;
 
-  // if global.mouseChanged > 0 && raySphereIntersection(global, newBall) > 0{
-  //   if newBall.color.g == 0 {newBall.color = vec4f(1);}
-  //   else {newBall.color = vec4f(1,0,1,1);}
-  // }
+  // mouse pick test
+  if global.mouseChanged > 0 {
+
+    let distance = raySphereIntersection(global, newBall);
+
+    if distance > 0 {
+      // newBall.color = vec4f(0,0,0,1);
+      newBall.prop3 = i32(distance * QUANTIZE_FACTOR);
+      atomicMin(&out[0], newBall.prop3);
+    }
+    else {
+      newBall.prop3 = -1;
+    }
+  }
 
   // newBall.velocity = vec3f(0);
   newBall.velocity *= 0.6;

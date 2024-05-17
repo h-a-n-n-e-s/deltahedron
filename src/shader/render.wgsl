@@ -8,7 +8,7 @@ struct Para {
   lightIntensity: f32,
   pointLightPosition: vec3f,
   pointLightIntensity: f32,
-};
+}
 
 struct VertexOutput {
   @builtin(position) clipSpacePosition: vec4f,
@@ -16,7 +16,7 @@ struct VertexOutput {
   @location(1) normal: vec3f,
   @location(2) surfaceToLight: vec3f,
   @location(3) surfaceToEye: vec3f,
-};
+}
 
 @group(0) @binding(0) var<uniform> para: Para;
 @group(0) @binding(1) var<storage, read> object: array<Object>;

@@ -5,7 +5,6 @@ import intersection from './shader/intersection.wgsl?raw';
 import ballsShader from './shader/balls.wgsl?raw';
 import rodsShader from './shader/rods.wgsl?raw';
 import selectionDepth from './shader/selectionDepth.wgsl?raw';
-import { Camera } from './camera';
 
 
 export class Compute {
@@ -13,7 +12,7 @@ export class Compute {
   private device!: GPUDevice;
   private bindGroup!: GPUBindGroup;
 
-  private integrationPipeline!: GPUComputePipeline;
+  private ballsPipeline!: GPUComputePipeline;
   private rodsPipeline!: GPUComputePipeline;
   private selectionDepthPipeline!: GPUComputePipeline;
 
@@ -41,18 +40,6 @@ export class Compute {
     });
     this.setTimeAndSubStep(timeStep, subSteps);
 
-    this.outBuffer = this.device.createBuffer({
-      size: 16,
-      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST
-    });
-
-    this.stagingOutBuffer = this.device.createBuffer({
-      size: this.outBuffer.size,
-      usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
-    });
-
-    this.resetOutBuffer();
-
     [this.ballsBuffer, this.rodsBuffer] = objectBufferList;
     this.device.queue.writeBuffer(this.ballsBuffer, 0, balls);
 
@@ -65,6 +52,18 @@ export class Compute {
       size: this.rodsBuffer.size / q * 8,
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
     });
+
+    this.outBuffer = this.device.createBuffer({
+      size: 16,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST
+    });
+
+    this.stagingOutBuffer = this.device.createBuffer({
+      size: this.outBuffer.size,
+      usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
+    });
+
+    this.resetOutBuffer();
 
     // pipelines //////////////////////////////////////////
 
@@ -83,7 +82,7 @@ export class Compute {
 
     const pipelineLayout = this.device.createPipelineLayout({bindGroupLayouts: [bindGroupLayout]});
 
-    this.integrationPipeline = this.createCompPipe(pipelineLayout, header+intersection+ballsShader);
+    this.ballsPipeline = this.createCompPipe(pipelineLayout, header+intersection+ballsShader);
     this.rodsPipeline = this.createCompPipe(pipelineLayout, header+intersection+rodsShader);
     this.selectionDepthPipeline = this.createCompPipe(pipelineLayout, header+intersection+selectionDepth);
 
@@ -100,23 +99,23 @@ export class Compute {
     });
   }
 
-  pureIntegration = (encoder:GPUCommandEncoder, ballCount:number, rodCount:number) => {
+  integration = (encoder:GPUCommandEncoder, ballCount:number, rodCount:number) => {
 
     this.computePass(encoder, this.rodsPipeline, this.bindGroup, rodCount);
 
     for (let s=0; s<this.subSteps; s++)
-      this.computePass(encoder, this.integrationPipeline, this.bindGroup, ballCount);
+      this.computePass(encoder, this.ballsPipeline, this.bindGroup, ballCount);
 
   }
 
   depthTest = (rodCount:number) => {
     const encoder = this.device.createCommandEncoder();
     this.computePass(encoder, this.selectionDepthPipeline, this.bindGroup, rodCount);
+    encoder.copyBufferToBuffer(this.outBuffer, 0, this.stagingOutBuffer, 0, this.outBuffer.size);
     this.device.queue.submit([encoder.finish()]);
   }
 
-  copyOutBuffer = (encoder:GPUCommandEncoder) =>
-    encoder.copyBufferToBuffer(this.outBuffer, 0, this.stagingOutBuffer, 0, this.outBuffer.size);
+  workDone = async () => await this.device.queue.onSubmittedWorkDone();
 
   getOutBuffer = async () => {
     
@@ -127,7 +126,7 @@ export class Compute {
 
   resetOutBuffer = () => {
     this.stagingOutBuffer.unmap();
-    this.device.queue.writeBuffer(this.outBuffer, 0, new Int32Array([-1]));
+    this.device.queue.writeBuffer(this.outBuffer, 0, new Int32Array([2147483647, -1]));
   }
 
   createCompPipe = (layout:GPUPipelineLayout, code:string, constants={}, entry='main') => {
@@ -173,15 +172,19 @@ export class Compute {
   setRodsBuffer = (index:number, rod:Float32Array) =>
     this.device.queue.writeBuffer(this.rodsBuffer, index*q*4, rod);
 
+  setCompleteBallsAndRodsBuffer = (balls:Float32Array, rods:Float32Array) => {
+    this.device.queue.writeBuffer(this.ballsBuffer, 0, balls);
+    this.device.queue.writeBuffer(this.rodsBuffer, 0, rods);
+  }
+
   setMouseRayAndEye = (ray:Float32Array, eye:Float32Array) => {
     this.device.queue.writeBuffer(this.globalParameterBuffer, 16, ray);
     this.device.queue.writeBuffer(this.globalParameterBuffer, 28, new Float32Array([1]));
     this.device.queue.writeBuffer(this.globalParameterBuffer, 32, eye);
   }
 
-  makeMouseCoordsOldNews = (camera:Camera) => {
+  makeMouseCoordsOldNews = () => {
     this.device.queue.writeBuffer(this.globalParameterBuffer, 28, new Float32Array([-1]));
-    camera.mouseCoords.haveChanged = false;
     this.resetOutBuffer();
   }
 }

@@ -1,22 +1,23 @@
 import { quaternionFromDirection } from "./algebra";
 import { q } from "./ballPark";
 import { Compute } from "./compute";
+import { saveBinary } from "./io";
 import { cylinderMesh, icoSphereMesh } from "./mesh";
 import { Object } from "./render";
 
 export class Structure {
 
-  private balls!: Object;
-  private rods!: Object;
-  private halfEdges!: Uint32Array;
+  private balls: Object;
+  private rods: Object;
+  private halfEdges: Uint32Array;
 
-  private ballRadius!: number;
-  private cylinderRadius!: number;
-  private cylinderLength!: number;
+  private ballRadius: number;
+  private cylinderRadius: number;
+  private cylinderLength: number;
 
-  private compute!: Compute;
+  private compute: Compute;
 
-  init(maxVertexCount:number, maxEdgeCount:number, halfEdgesInit:Uint32Array, ballRadius:number, cylinderRadius:number, cylinderLength:number, compute:Compute) {
+  constructor(maxVertexCount:number, maxEdgeCount:number, ballRadius:number, cylinderRadius:number, cylinderLength:number, compute:Compute) {
 
     this.compute = compute;
 
@@ -25,39 +26,43 @@ export class Structure {
     this.cylinderLength = cylinderLength;
 
     this.halfEdges = new Uint32Array(8*maxEdgeCount);
-    this.halfEdges.set(halfEdgesInit);
-    
-    const ballCount = this.vertexCount(halfEdgesInit);
-    const rodCount = halfEdgesInit.length/8;
 
     const ballData = new Float32Array(maxVertexCount * q);
     const rodData = new Float32Array(maxEdgeCount * q);
 
-    const p = new Float32Array(3*ballCount);
-    for (let i=0; i<p.length; i++) p[i] = 1 * (0.5 - Math.random());
-
     this.balls = {
       data: ballData,
-      mesh: icoSphereMesh(ballRadius, 4),
-      count: ballCount,
+      mesh: icoSphereMesh(this.ballRadius, 4),
+      count: 0,
       maxCount: maxVertexCount
     }
 
     this.rods = {
       data: rodData,
-      mesh: cylinderMesh(32, cylinderRadius, cylinderLength/2, true),
-      count: rodCount,
+      mesh: cylinderMesh(32, this.cylinderRadius, this.cylinderLength/2, true),
+      count: 0,
       maxCount: maxEdgeCount
     }
+  }
 
-    for (let i=0; i<ballCount; i++) {
+  init(halfEdgesInit:Uint32Array) {
+
+    this.halfEdges.set(halfEdgesInit);
+    
+    this.balls.count = this.vertexCount(halfEdgesInit);
+    this.rods.count = halfEdgesInit.length/8;
+
+    const p = new Float32Array(3*this.balls.count);
+    for (let i=0; i<p.length; i++) p[i] = 1 * (0.5 - Math.random());
+
+    for (let i=0; i<this.balls.count; i++) {
       this.createBall(i, p.slice(3*i,3*i+3));
       const coordinationNumber = this.vertexEdgeCount(halfEdgesInit, i);
       this.setCoordinationNumber(i, coordinationNumber);
       this.setColor(i, this.connectionsToColor(coordinationNumber));
     }
 
-    for (let i=0; i<rodCount; i++) this.createRod(i);
+    for (let i=0; i<this.rods.count; i++) this.createRod(i);
 
     return [this.balls, this.rods, this.halfEdges] as [Object, Object, Uint32Array];
   }
@@ -86,7 +91,7 @@ export class Structure {
   }
 
   setCoordinationNumber(index:number, coordinationNumber:number) {
-    this.balls.data.set([coordinationNumber], index*q+18); // pro3 used for coordinationNumber
+    this.balls.data.set([coordinationNumber], index*q+19); // pro4 used for coordinationNumber
   }
 
   connectionsToColor = (coordinationNumber:number) => {
@@ -101,7 +106,7 @@ export class Structure {
   }
 
   changeCoordinationNumberAndColor = (index:number, diff:number) => {
-    let prevCoordinationNumber = this.balls.data[q*index+18];
+    let prevCoordinationNumber = this.balls.data[q*index+19];
     this.setCoordinationNumber(index, prevCoordinationNumber+diff);
     this.setColor(index, this.connectionsToColor(prevCoordinationNumber+diff));
     this.compute.setBallsBuffer(index, this.balls.data.slice(q*index,q*index+q));
@@ -242,6 +247,10 @@ export class Structure {
     this.compute.setHalfEdgeBuffer(this.halfEdges);
   }
 
+  saveData() {
+    saveBinary(this.halfEdges.slice(0,this.rods.count*8), 'data');
+    console.log(this.rods.count+' edges saved to file.');
+  }
 }
 
 

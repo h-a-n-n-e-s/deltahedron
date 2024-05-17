@@ -33,10 +33,3 @@ struct HalfEdge {
   next: u32,
   targetVertex: u32
 }
-
-struct Out {
-  selectedEdge: i32,
-  e1: i32,
-  e2: i32,
-  e3: i32
-}

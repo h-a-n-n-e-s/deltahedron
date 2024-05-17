@@ -1,14 +1,14 @@
 
-io
-depth selector
-
 merge vertices
 subdivide faces
 remove edges
 
-environment lighting
-
 newton
 
 undo
+
+stl out
+
+environment lighting
+triangles
 show only edges connecting vertices with coordination number n
