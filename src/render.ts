@@ -1,21 +1,13 @@
-import { Mesh, MeshBuffers, getMeshBuffers } from './mesh';
+import { MeshBuffers, getMeshBuffers } from './mesh';
 import { Camera } from './camera';
-import { q } from './ballPark';
 import header from './shader/header.wgsl?raw';
 import shader from './shader/render.wgsl?raw';
+import { Object } from './structure';
 
-
-export type Object = {
-  data: Float32Array;
-  mesh: Mesh;
-  count: number;
-  maxCount: number;
-}
-
-export type ObjectGPUData = {
-  meshbuffers: MeshBuffers;
-  bindGroup: GPUBindGroup;
-  object: Object;
+export interface ObjectGPUData {
+  meshbuffers: MeshBuffers,
+  bindGroup: GPUBindGroup,
+  object: Object
 }
 
 export class Render {
@@ -37,17 +29,9 @@ export class Render {
   
   private objectGPUDataList: Array<ObjectGPUData> = [];
 
-  async initialize(canvasId:string, camera:Camera, objects:Array<Object>) {
+  constructor(device:GPUDevice, canvasId:string, camera:Camera, objects:Array<Object>,) {
 
-    if (navigator.gpu === undefined) alert('WebGPU is not supported');
-
-    const adapter = await navigator.gpu!.requestAdapter();
-    // ({powerPreference: 'high-performance'});
-    // console.log(adapter!.limits);
-
-    this.device = await adapter!.requestDevice({
-      // requiredFeatures: ["timestamp-query"]
-    });
+    this.device = device;
 
     this.canvas = document.createElement('canvas');
     this.canvas.id = canvasId;
@@ -129,9 +113,7 @@ export class Render {
       },
     };
 
-    // buffers //////////////////////////////////////////////
-
-    // parameters
+    // parameter buffer /////////////////////////
 
     this.parameters = new Float32Array(60);
     
@@ -151,25 +133,15 @@ export class Render {
     // map camera position and relevant matrices to parameter array
     camera.shaderParameterMapping(this.parameters);
 
-    // object
-
-    const objectBufferList = [];
+    // objects
 
     for (const obj of objects) {
-
-      const objBuffer = this.device.createBuffer({
-        label: 'object',
-        size: obj.maxCount * q * 4,
-        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-      });
-      objectBufferList.push(objBuffer);
-      this.device.queue.writeBuffer(objBuffer, 0, obj.data);
 
       const bindGroup = this.device.createBindGroup({
         layout: this.pipeline.getBindGroupLayout(0),
         entries: [
           { binding: 0, resource: { buffer: this.parameterBuffer }},
-          { binding: 1, resource: { buffer: objBuffer }},
+          { binding: 1, resource: { buffer: obj.buffer as GPUBuffer }},
         ],
       });
       
@@ -180,13 +152,8 @@ export class Render {
       });
     }
 
-    /////////////////////////////////////////////////////////
-
     this.resize(camera);
-
-    return [this.device, objectBufferList] as [GPUDevice, Array<GPUBuffer>];
   }
-
 
   render(camera:Camera, commandEncoder?:GPUCommandEncoder) {
 
@@ -224,7 +191,6 @@ export class Render {
 
     const encoder = commandEncoder!==undefined ? commandEncoder : this.device.createCommandEncoder();
 
-    
     const pass = encoder.beginRenderPass(this.renderPassDescriptor);
     pass.setPipeline(this.pipeline);
 
@@ -234,7 +200,6 @@ export class Render {
       pass.setIndexBuffer(o.meshbuffers.indexBuffer, 'uint32');
       pass.setBindGroup(0, o.bindGroup);
       pass.drawIndexed(o.meshbuffers.indexBuffer.size/4, o.object.count);
-      // console.log(o.object.count);
     }
 
     pass.end();

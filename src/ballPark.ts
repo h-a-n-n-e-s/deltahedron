@@ -46,30 +46,19 @@ export class BallPark {
 
     const [balls, rods, halfEdges] = this.deltahedron.init(tetrahedronHalfEdges);
 
-    const render = new Render;
-
-    const [gpuDevice, objectBuffer] = await render.initialize('canvas', camera, [balls, rods]);
-
-    this.compute.initialize(gpuDevice, balls.data, this.timeStep, this.subSteps, objectBuffer);
+    const gpuDevice = await this.compute.initialize([balls, rods], this.timeStep, this.subSteps);
 
     this.compute.setHalfEdgeBuffer(halfEdges);
-
     this.compute.setCount(balls.count, rods.count);
 
-    // interaction ////////////////////////////////////////
+    const render = new Render(gpuDevice, 'canvas', camera, [balls, rods]);
+
+    // interaction
 
     camera.mouseInteraction(render.getCanvas());
-    
-    // info output
-
-    // const initKineticEnergy = this.kineticEnergy();
-    // let initVerticalAngularMomentum:number;// = this.verticalAngularMomentum();
-
-    // const infoDiv = document.createElement('div');
-    // infoDiv.id = 'info';
-    // document.body.appendChild(infoDiv);
 
     // frames per second counter
+
     const divFps = document.createElement('div');
     divFps.id = 'fps';
     document.body.appendChild(divFps);

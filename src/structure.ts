@@ -2,8 +2,15 @@ import { quaternionFromDirection } from "./algebra";
 import { q } from "./ballPark";
 import { Compute } from "./compute";
 import { saveBinary } from "./io";
-import { cylinderMesh, icoSphereMesh } from "./mesh";
-import { Object } from "./render";
+import { Mesh, cylinderMesh, icoSphereMesh } from "./mesh";
+
+export interface Object {
+  data: Float32Array,
+  buffer?: GPUBuffer,
+  mesh: Mesh,
+  count: number,
+  maxCount: number
+}
 
 export class Structure {
 

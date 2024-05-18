@@ -4,6 +4,8 @@ subdivide faces
 remove edges
 
 newton
+neighbor repulsion only
+centroid
 
 undo
 

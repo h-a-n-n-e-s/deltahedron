@@ -5,7 +5,7 @@ import intersection from './shader/intersection.wgsl?raw';
 import ballsShader from './shader/balls.wgsl?raw';
 import rodsShader from './shader/rods.wgsl?raw';
 import selectionDepth from './shader/selectionDepth.wgsl?raw';
-
+import { Object } from './structure';
 
 export class Compute {
 
@@ -27,9 +27,18 @@ export class Compute {
   private halfEdgeBuffer!: GPUBuffer;
   private velocityUpdateBuffer!: GPUBuffer;
 
-  initialize = (device:GPUDevice, balls:Float32Array, timeStep:number, subSteps:number, objectBufferList:Array<GPUBuffer>) => {
+  initialize = async (objects:Array<Object>, timeStep:number, subSteps:number) => {
 
-    this.device = device;
+    if (navigator.gpu === undefined) alert('WebGPU is not supported');
+
+    const adapter = await navigator.gpu!.requestAdapter();
+    // ({powerPreference: 'high-performance'});
+    // console.log(adapter!.limits);
+
+    this.device = await adapter!.requestDevice({
+      // requiredFeatures: ["timestamp-query"]
+    });
+
     this.subSteps = subSteps;
 
     // buffers ////////////////////////////////////////////
@@ -40,8 +49,21 @@ export class Compute {
     });
     this.setTimeAndSubStep(timeStep, subSteps);
 
-    [this.ballsBuffer, this.rodsBuffer] = objectBufferList;
-    this.device.queue.writeBuffer(this.ballsBuffer, 0, balls);
+    const [balls, rods] = objects;
+
+    this.ballsBuffer = this.device.createBuffer({
+      size: balls.maxCount * q * 4,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+    });
+    this.device.queue.writeBuffer(this.ballsBuffer, 0, balls.data);
+    balls.buffer = this.ballsBuffer;
+
+    this.rodsBuffer = this.device.createBuffer({
+      size: rods.maxCount * q * 4,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+    });
+    this.device.queue.writeBuffer(this.rodsBuffer, 0, rods.data);
+    rods.buffer = this.rodsBuffer;
 
     this.velocityUpdateBuffer = this.device.createBuffer({
       size: this.ballsBuffer.size / q * 3, // padding unnecessary
@@ -97,6 +119,8 @@ export class Compute {
         {binding: 5, resource: {buffer: this.outBuffer}},
       ]
     });
+
+    return this.device;
   }
 
   integration = (encoder:GPUCommandEncoder, ballCount:number, rodCount:number) => {
