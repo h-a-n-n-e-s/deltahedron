@@ -138,7 +138,7 @@ export class Structure {
     return count;
   }
 
-  insertVertex(rodIndex:number) {
+  addVertex(rodIndex:number) {
     const A = 2*rodIndex;
     const iA = 4*A;
     const kA = iA+4;
@@ -252,6 +252,35 @@ export class Structure {
     this.changeCoordinationNumberAndColor(this.halfEdges[4*cd+3],  1);
 
     this.compute.setHalfEdgeBuffer(this.halfEdges);
+  }
+
+  removeEdge(rodIndex:number) {
+    const ac = 2*rodIndex;
+    const ca = ac+1;
+    const ab = this.halfEdges[4*ca+2];
+    const bc = this.halfEdges[4*ca+1];
+    const cd = this.halfEdges[4*ac+2];
+    const da = this.halfEdges[4*ac+1];
+
+    this.halfEdges[4*da+2] = ab;
+    this.halfEdges[4*ab+1] = da;
+    this.halfEdges[4*bc+2] = cd;
+    this.halfEdges[4*cd+1] = bc;
+
+    // deactivate edge
+    this.halfEdges[4*ac+1] = 0;
+    this.halfEdges[4*ac+2] = 0;
+
+    // color
+    this.changeCoordinationNumberAndColor(this.halfEdges[4*ac+3], -1);
+    this.changeCoordinationNumberAndColor(this.halfEdges[4*ca+3], -1);
+
+    this.compute.setHalfEdgeBuffer(this.halfEdges);
+
+    // make edge invisible
+    const l = rodIndex;
+    this.rods.data.set([0], l*q+3); // size
+    this.compute.setRodsBuffer(l, this.rods.data.slice(q*l,q*l+q));
   }
 
   saveData() {

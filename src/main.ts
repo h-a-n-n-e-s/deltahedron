@@ -1,6 +1,6 @@
 import './style.css';
 import { BallPark } from "./ballPark";
-import { Button, InfoSlider, PushButton, SwitchButton } from './button-slider';
+import { Button, InfoSlider, PushButton, RadioButton, SwitchButton } from './button-slider';
 
 Button.initialize(10, 10, 10);
 
@@ -12,8 +12,11 @@ holdButton.onPush(() => ballPark.setHold(holdButton.on));
 const rotateButton = new SwitchButton('rotate', true);
 rotateButton.onPush(() => ballPark.setRotation(rotateButton.on));
 
-const flipButton = new SwitchButton('flip', true);
-flipButton.onPush(() => ballPark.flipEdges(flipButton.on));
+new RadioButton([
+  {name:'add', func:(on) => ballPark.addVertex(on)},
+  {name:'flip', func:(on) => ballPark.flipEdges(on)},
+  {name:'remove', func:(on) => ballPark.removeEdges(on)},
+]);
 
 const saveButton = new PushButton('save', true);
 saveButton.onPush(() => ballPark.saveData());

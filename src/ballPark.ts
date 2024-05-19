@@ -22,7 +22,9 @@ export class BallPark {
 
   compute = new Compute();
 
+  add = false;
   flip = false;
+  remove = false;
 
   async initialize() {
 
@@ -104,11 +106,13 @@ export class BallPark {
           if (selectedEdgeIndex !== -1) { // edge selected
             console.log('e', selectedEdgeIndex);
             
-            if (this.flip)
+            if (this.add)
+              this.deltahedron.addVertex(selectedEdgeIndex);
+            else if (this.flip)
               this.deltahedron.flipEdge(selectedEdgeIndex);
-            else
-              this.deltahedron.insertVertex(selectedEdgeIndex);
-            
+            else if (this.remove)
+              this.deltahedron.removeEdge(selectedEdgeIndex);
+           
             // this.compute.setTimeAndSubStep(0.001, 1);
             // slowmo = true;
             // setTimeout(() => {endSlowmo = true;}, 1000);
@@ -149,7 +153,9 @@ export class BallPark {
   setGravity(g:number) {this.compute.setGravity(g);}
   setHold(h:boolean) {this.freeze = h;}
   setRotation(r:boolean) {this.rotate = r;}
+  addVertex(add:boolean) {this.add = add;}
   flipEdges(flip:boolean) {this.flip = flip;}
+  removeEdges(remove:boolean) {this.remove = remove;}
   saveData() {this.deltahedron.saveData();}
 
   loadData = async() => {

@@ -1,11 +1,11 @@
 
 merge vertices
 subdivide faces
-remove edges
 
 newton
 neighbor repulsion only
 centroid
+from face description to half edge
 
 undo
 

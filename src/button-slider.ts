@@ -82,34 +82,30 @@ export class SwitchButton extends Button {
   on = false; // button state
 
   private func = () => {}; // optional function
-  // private active = true;
 
   constructor(name:string, isOnTop=false) {
 
     super(name, isOnTop);
 
     this.button.addEventListener('click', () => {
-
-      // if (this.active) {
-
-        // invert colors
-        if (!this.on) this.button.classList.replace('switchButtonOff', 'switchButtonOn');
-        else this.button.classList.replace('switchButtonOn', 'switchButtonOff');
-
-        // switch 'on' state
-        this.on = !this.on;
-
-        // optional callback function
-        this.func();
-      // }
-
+      this.switch();
     }, false);
+  }
+
+  switch = () => {
+    // invert colors
+    if (!this.on) this.button.classList.replace('switchButtonOff', 'switchButtonOn');
+    else this.button.classList.replace('switchButtonOn', 'switchButtonOff');
+
+    // switch 'on' state
+    this.on = !this.on;
+
+    // optional callback function
+    this.func();
   }
 
   onPush = (func:()=>void) => this.func = func;
   
-  // activate = () => this.active = true;
-  // deactivate = () => this.active = false;
 }
 
 
@@ -125,6 +121,26 @@ export class PushButton extends Button {
   onPush = (func:()=>void) => this.button.addEventListener('click', () => {func()}, false);
 }
 
+export class RadioButton {
+
+  private activeButton: SwitchButton | undefined;
+
+  constructor(buttonList:Array<{name:string, func:(on:boolean)=>void}>) {
+
+    for(const entry of buttonList) {
+      const butt = new SwitchButton(entry.name, true);
+      butt.onPush(() => {
+        if (butt.on === true) {
+          if (this.activeButton !== undefined) this.activeButton.switch();
+          this.activeButton = butt;
+        }
+        else // butt was active before
+          this.activeButton = undefined;
+        entry.func(butt.on);
+      });
+    }
+  }
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 

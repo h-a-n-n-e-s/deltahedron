@@ -12,6 +12,9 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   let i = global_id.x;
   if i >= global.rodCount {return;}
   
+  // inactive edge
+  if halfEdges[2 * i].prev == halfEdges[2 * i].next {return;}
+
   let j = halfEdges[2 * i].targetVertex;
   let k = halfEdges[2 * i + 1].targetVertex;
 
