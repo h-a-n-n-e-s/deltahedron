@@ -19,13 +19,15 @@ export class Compute {
   private subSteps!: number;
 
   private globalParameterBuffer!: GPUBuffer;
-  private outBuffer!: GPUBuffer;
-  private stagingOutBuffer!: GPUBuffer;
-
   private ballsBuffer!: GPUBuffer;
   private rodsBuffer!: GPUBuffer;
   private halfEdgeBuffer!: GPUBuffer;
   private velocityUpdateBuffer!: GPUBuffer;
+  private outBuffer!: GPUBuffer;
+  private triangleVertexBuffer!: GPUBuffer;
+  private triangleNormalBuffer!: GPUBuffer;
+  private stagingOutBuffer!: GPUBuffer;
+  private stagingBallsBuffer!: GPUBuffer;
 
   initialize = async (objects:Array<Object>, timeStep:number, subSteps:number) => {
 
@@ -49,11 +51,11 @@ export class Compute {
     });
     this.setTimeAndSubStep(timeStep, subSteps);
 
-    const [balls, rods] = objects;
+    const [balls, rods, triangles] = objects;
 
     this.ballsBuffer = this.device.createBuffer({
       size: balls.maxCount * q * 4,
-      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
     });
     this.device.queue.writeBuffer(this.ballsBuffer, 0, balls.data);
     balls.buffer = this.ballsBuffer;
@@ -85,11 +87,39 @@ export class Compute {
       usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
     });
 
+    this.stagingBallsBuffer = this.device.createBuffer({
+      size: this.ballsBuffer.size,
+      usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
+    });
+
     this.resetOutBuffer();
 
-    // pipelines //////////////////////////////////////////
+    // triangle buffers
 
-    // integration
+    triangles.buffer = this.device.createBuffer({
+      size: q * 4,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+    });
+    this.device.queue.writeBuffer(triangles.buffer, 0, triangles.data);
+
+    this.triangleVertexBuffer = this.device.createBuffer({
+      size: triangles.maxCount*6 * 4,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX
+    });
+    this.triangleNormalBuffer = this.device.createBuffer({
+      size: triangles.maxCount*6 * 4,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX
+    });
+    const triangleIndices = new Uint32Array(triangles.maxCount*6);
+    for (let i=0; i<triangleIndices.length; i++) triangleIndices[i] = i;
+    const triangleIndexBuffer = this.device.createBuffer({
+      size: triangles.maxCount*6 * 4,
+      usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.INDEX
+    });
+    this.device.queue.writeBuffer(triangleIndexBuffer, 0, triangleIndices);
+    triangles.meshBuffers = {vertexBuffer:this.triangleVertexBuffer, normalBuffer:this.triangleNormalBuffer, indexBuffer:triangleIndexBuffer};
+
+    // bindgroups and pipelines
 
     const bindGroupLayout = this.device.createBindGroupLayout({
       entries: [
@@ -99,6 +129,8 @@ export class Compute {
         {binding:3, visibility:GPUShaderStage.COMPUTE, buffer:{type:'storage'}}, // balls
         {binding:4, visibility:GPUShaderStage.COMPUTE, buffer:{type:'storage'}}, // rods
         {binding:5, visibility:GPUShaderStage.COMPUTE, buffer:{type:'storage'}}, // out
+        {binding:6, visibility:GPUShaderStage.COMPUTE, buffer:{type:'storage'}}, // triangleVertex
+        {binding:7, visibility:GPUShaderStage.COMPUTE, buffer:{type:'storage'}}, // triangleNormal
       ]
     });
 
@@ -117,6 +149,8 @@ export class Compute {
         {binding: 3, resource: {buffer: this.ballsBuffer}},
         {binding: 4, resource: {buffer: this.rodsBuffer}},
         {binding: 5, resource: {buffer: this.outBuffer}},
+        {binding: 6, resource: {buffer: this.triangleVertexBuffer}},
+        {binding: 7, resource: {buffer: this.triangleNormalBuffer}},
       ]
     });
 
@@ -151,6 +185,18 @@ export class Compute {
   resetOutBuffer = () => {
     this.stagingOutBuffer.unmap();
     this.device.queue.writeBuffer(this.outBuffer, 0, new Int32Array([2147483647, -1]));
+  }
+
+  getBallsBuffer = async () => {
+    this.stagingBallsBuffer.unmap();
+
+    const encoder = this.device.createCommandEncoder();
+    encoder.copyBufferToBuffer(this.ballsBuffer, 0, this.stagingBallsBuffer, 0, this.ballsBuffer.size);
+    this.device.queue.submit([encoder.finish()]);
+
+    await this.stagingBallsBuffer.mapAsync(GPUMapMode.READ);
+    
+    return new Float32Array(this.stagingBallsBuffer.getMappedRange());  
   }
 
   createCompPipe = (layout:GPUPipelineLayout, code:string, constants={}, entry='main') => {

@@ -23,7 +23,7 @@ struct VertexOutput {
 
 @vertex
 fn vs(
-  @location(0) vertexPosition: vec4f, // vertex buffer
+  @location(0) vertexPosition: vec3f, // vertex buffer
   @location(1) normal: vec3f, // normal buffer
   @builtin(instance_index) instanceIndex: u32 // index buffer
 ) -> VertexOutput {
@@ -31,7 +31,7 @@ fn vs(
   var vsOut: VertexOutput;
   let obj = object[instanceIndex];
 
-  var scaledPosition = obj.size * vertexPosition.xyz;
+  var scaledPosition = obj.size * vertexPosition;
 
   let rotatedPosition = rotateByQuarternion(scaledPosition, obj.quarternion);
 

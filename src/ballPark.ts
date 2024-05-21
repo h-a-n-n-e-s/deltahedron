@@ -1,6 +1,6 @@
 import { Compute } from './compute';
 import { Render } from './render';
-import { tetrahedronHalfEdges } from './mesh';
+import { torusHalfEdges, torusVertexPositions } from './mesh';
 import { Camera } from './camera';
 import { Structure } from './structure';
 import { readFile } from './io';
@@ -46,14 +46,14 @@ export class BallPark {
 
     this.deltahedron = new Structure(this.maxVertexCount, this.maxEdgeCount, ballRadius, cylinderRadius, cylinderLength, this.compute );
 
-    const [balls, rods, halfEdges] = this.deltahedron.init(tetrahedronHalfEdges);
+    const [balls, rods, triangles, halfEdges] = this.deltahedron.init(torusHalfEdges(), torusVertexPositions);
 
-    const gpuDevice = await this.compute.initialize([balls, rods], this.timeStep, this.subSteps);
+    const gpuDevice = await this.compute.initialize([balls, rods, triangles], this.timeStep, this.subSteps);
 
     this.compute.setHalfEdgeBuffer(halfEdges);
     this.compute.setCount(balls.count, rods.count);
 
-    const render = new Render(gpuDevice, 'canvas', camera, [balls, rods]);
+    const render = new Render(gpuDevice, 'canvas', camera, [balls, rods, triangles]);
 
     // interaction
 
@@ -104,7 +104,7 @@ export class BallPark {
           const selectedEdgeIndex = out[1];
 
           if (selectedEdgeIndex !== -1) { // edge selected
-            console.log('e', selectedEdgeIndex);
+            // console.log('e', selectedEdgeIndex);
             
             if (this.add)
               this.deltahedron.addVertex(selectedEdgeIndex);
@@ -156,11 +156,11 @@ export class BallPark {
   addVertex(add:boolean) {this.add = add;}
   flipEdges(flip:boolean) {this.flip = flip;}
   removeEdges(remove:boolean) {this.remove = remove;}
-  saveData() {this.deltahedron.saveData();}
+  async saveData() {await this.deltahedron.saveData();}
 
   loadData = async() => {
     await readFile((data:Uint32Array) => {
-      const [balls, rods, halfEdges] = this.deltahedron.init(data);
+      const [balls, rods, _triangles, halfEdges] = this.deltahedron.init(data);
       this.compute.setCompleteBallsAndRodsBuffer(balls.data, rods.data);
       this.compute.setHalfEdgeBuffer(halfEdges);
       this.compute.setCount(balls.count, rods.count);

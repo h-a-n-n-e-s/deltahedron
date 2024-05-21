@@ -2,12 +2,13 @@ import { quaternionFromDirection } from "./algebra";
 import { q } from "./ballPark";
 import { Compute } from "./compute";
 import { saveBinary } from "./io";
-import { Mesh, cylinderMesh, icoSphereMesh } from "./mesh";
+import { Mesh, MeshBuffers, cylinderMesh, icoSphereMesh } from "./mesh";
 
 export interface Object {
   data: Float32Array,
   buffer?: GPUBuffer,
-  mesh: Mesh,
+  mesh?: Mesh,
+  meshBuffers?: MeshBuffers, // optional for individual triangles
   count: number,
   maxCount: number
 }
@@ -16,6 +17,7 @@ export class Structure {
 
   private balls: Object;
   private rods: Object;
+  private triangles: Object;
   private halfEdges: Uint32Array;
 
   private ballRadius: number;
@@ -34,25 +36,28 @@ export class Structure {
 
     this.halfEdges = new Uint32Array(8*maxEdgeCount);
 
-    const ballData = new Float32Array(maxVertexCount * q);
-    const rodData = new Float32Array(maxEdgeCount * q);
-
     this.balls = {
-      data: ballData,
+      data: new Float32Array(maxVertexCount * q),
       mesh: icoSphereMesh(this.ballRadius, 4),
       count: 0,
       maxCount: maxVertexCount
     }
 
     this.rods = {
-      data: rodData,
+      data: new Float32Array(maxEdgeCount * q),
       mesh: cylinderMesh(32, this.cylinderRadius, this.cylinderLength/2, true),
       count: 0,
       maxCount: maxEdgeCount
     }
+
+    this.triangles = {
+      data: new Float32Array(q),
+      count: 1,
+      maxCount: 1000
+    }
   }
 
-  init(halfEdgesInit:Uint32Array) {
+  init(halfEdgesInit:Uint32Array, vertexPositions?:Float32Array) {
 
     this.halfEdges.set(halfEdgesInit);
     
@@ -60,7 +65,10 @@ export class Structure {
     this.rods.count = halfEdgesInit.length/8;
 
     const p = new Float32Array(3*this.balls.count);
-    for (let i=0; i<p.length; i++) p[i] = 1 * (0.5 - Math.random());
+    if (vertexPositions === undefined)
+      for (let i=0; i<p.length; i++) p[i] = 5 * (0.5 - Math.random());
+    else
+      p.set(vertexPositions);
 
     for (let i=0; i<this.balls.count; i++) {
       this.createBall(i, p.slice(3*i,3*i+3));
@@ -71,7 +79,10 @@ export class Structure {
 
     for (let i=0; i<this.rods.count; i++) this.createRod(i);
 
-    return [this.balls, this.rods, this.halfEdges] as [Object, Object, Uint32Array];
+    this.triangles.data.set([1], 3); // size
+    this.triangles.data.set([0.3, 0.2, 0.2, 1], 8); // color
+
+    return [this.balls, this.rods, this.triangles, this.halfEdges] as [Object, Object, Object, Uint32Array];
   }
 
   createBall(index:number, position:Float32Array) {
@@ -139,56 +150,52 @@ export class Structure {
   }
 
   addVertex(rodIndex:number) {
-    const A = 2*rodIndex;
-    const iA = 4*A;
-    const kA = iA+4;
-    const B = 2*this.rods.count;
-    const iB = 4*B;
-    const kB = iB+4;
-    const C = 2*this.rods.count+2;
-    const iC = 4*C;
-    const kC = iC+4;
-    const D = 2*this.rods.count+4;
-    const iD = 4*D;
-    const kD = iD+4;
+    const ac = 2*rodIndex;
+    const bn = 2*this.rods.count;
+    const cn = 2*this.rods.count+2;
+    const dn = 2*this.rods.count+4;
+    const ca = ac+1;
+    const nb = bn+1;
+    const nc = cn+1;
+    const nd = dn+1;
     // B
-    this.halfEdges[iB] = B+1;
-    this.halfEdges[iB+1] = this.halfEdges[kA+2];
-    this.halfEdges[iB+2] = A+1;
-    this.halfEdges[iB+3] = this.balls.count; // new vertex index
-    this.halfEdges[kB] = B;
-    this.halfEdges[kB+1] = C;
-    this.halfEdges[kB+2] = this.halfEdges[kA+1];
-    this.halfEdges[kB+3] = this.halfEdges[4*this.halfEdges[kA+2]+3];
+    this.halfEdges[4*bn] = nb;
+    this.halfEdges[4*bn+1] = this.halfEdges[4*ca+2];
+    this.halfEdges[4*bn+2] = ca;
+    this.halfEdges[4*bn+3] = this.balls.count; // new vertex index
+    this.halfEdges[4*nb] = bn;
+    this.halfEdges[4*nb+1] = cn;
+    this.halfEdges[4*nb+2] = this.halfEdges[4*ca+1];
+    this.halfEdges[4*nb+3] = this.halfEdges[4*this.halfEdges[4*ca+2]+3];
     // C
-    this.halfEdges[iC] = C+1;
-    this.halfEdges[iC+1] = this.halfEdges[kA+1];
-    this.halfEdges[iC+2] = B+1;
-    this.halfEdges[iC+3] = this.balls.count;
-    this.halfEdges[kC] = C;
-    this.halfEdges[kC+1] = D;
-    this.halfEdges[kC+2] = this.halfEdges[iA+2];
-    this.halfEdges[kC+3] = this.halfEdges[iA+3];
+    this.halfEdges[4*cn] = nc;
+    this.halfEdges[4*cn+1] = this.halfEdges[4*ca+1];
+    this.halfEdges[4*cn+2] = nb;
+    this.halfEdges[4*cn+3] = this.balls.count;
+    this.halfEdges[4*nc] = cn;
+    this.halfEdges[4*nc+1] = dn;
+    this.halfEdges[4*nc+2] = this.halfEdges[4*ac+2];
+    this.halfEdges[4*nc+3] = this.halfEdges[4*ac+3];
     // D
-    this.halfEdges[iD] = D+1;
-    this.halfEdges[iD+1] = this.halfEdges[iA+2];
-    this.halfEdges[iD+2] = C+1;
-    this.halfEdges[iD+3] = this.balls.count;
-    this.halfEdges[kD] = D;
-    this.halfEdges[kD+1] = A;
-    this.halfEdges[kD+2] = this.halfEdges[iA+1];
-    this.halfEdges[kD+3] = this.halfEdges[4*this.halfEdges[iA+2]+3];
+    this.halfEdges[4*dn] = nd;
+    this.halfEdges[4*dn+1] = this.halfEdges[4*ac+2];
+    this.halfEdges[4*dn+2] = nc;
+    this.halfEdges[4*dn+3] = this.balls.count;
+    this.halfEdges[4*nd] = dn;
+    this.halfEdges[4*nd+1] = ac;
+    this.halfEdges[4*nd+2] = this.halfEdges[4*ac+1];
+    this.halfEdges[4*nd+3] = this.halfEdges[4*this.halfEdges[4*ac+2]+3];
     // surrounding edges
-    this.halfEdges[4*this.halfEdges[kA+2]+2] = B;
-    this.halfEdges[4*this.halfEdges[kA+1]+1] = B+1;
-    this.halfEdges[4*this.halfEdges[kA+1]+2] = C;
-    this.halfEdges[4*this.halfEdges[iA+2]+1] = C+1;
-    this.halfEdges[4*this.halfEdges[iA+2]+2] = D;
-    this.halfEdges[4*this.halfEdges[iA+1]+1] = D+1;
+    this.halfEdges[4*this.halfEdges[4*ca+2]+2] = bn;
+    this.halfEdges[4*this.halfEdges[4*ca+1]+1] = nb;
+    this.halfEdges[4*this.halfEdges[4*ca+1]+2] = cn;
+    this.halfEdges[4*this.halfEdges[4*ac+2]+1] = nc;
+    this.halfEdges[4*this.halfEdges[4*ac+2]+2] = dn;
+    this.halfEdges[4*this.halfEdges[4*ac+1]+1] = nd;
     // A
-    this.halfEdges[iA+2] = D+1;
-    this.halfEdges[iA+3] = this.balls.count;
-    this.halfEdges[kA+1] = B;
+    this.halfEdges[4*ac+2] = nd;
+    this.halfEdges[4*ac+3] = this.balls.count;
+    this.halfEdges[4*ca+1] = bn;
     
 
     let l;
@@ -199,10 +206,10 @@ export class Structure {
       this.rods.count++;
     }
     
-    l = this.halfEdges[kB+3];
+    l = this.halfEdges[4*nb+3];
     this.changeCoordinationNumberAndColor(l, 1);
     
-    l = this.halfEdges[kD+3];
+    l = this.halfEdges[4*nd+3];
     this.changeCoordinationNumberAndColor(l, 1);
 
     l = this.balls.count;
@@ -283,9 +290,15 @@ export class Structure {
     this.compute.setRodsBuffer(l, this.rods.data.slice(q*l,q*l+q));
   }
 
-  saveData() {
+  async saveData() {
     saveBinary(this.halfEdges.slice(0,this.rods.count*8), 'data');
     console.log(this.rods.count+' edges saved to file.');
+
+    // put out vertex positions
+    // const b = await this.compute.getBallsBuffer();
+    // for (let i=0; i<this.balls.count; i++)
+    //   console.log(b[q*i], b[q*i+1], b[q*i+2]);
+     
   }
 }
 

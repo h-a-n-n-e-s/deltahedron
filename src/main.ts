@@ -19,7 +19,7 @@ new RadioButton([
 ]);
 
 const saveButton = new PushButton('save', true);
-saveButton.onPush(() => ballPark.saveData());
+saveButton.onPush(async () => await ballPark.saveData());
 
 const loadButton = new PushButton('load', true);
 loadButton.onPush( async () => ballPark.loadData()); 

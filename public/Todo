@@ -1,16 +1,15 @@
 
-merge vertices
+triangles
 subdivide faces
-
+merge vertices
 newton
-neighbor repulsion only
 centroid
+undo
+stl out
+environment lighting
+show only edges connecting vertices with coordination number n
 from face description to half edge
 
-undo
 
-stl out
 
-environment lighting
-triangles
-show only edges connecting vertices with coordination number n
+torus: 48v 144e 96f

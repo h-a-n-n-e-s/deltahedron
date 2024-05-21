@@ -1,4 +1,4 @@
-import { MeshBuffers, getMeshBuffers } from './mesh';
+import { Mesh, MeshBuffers, getMeshBuffers } from './mesh';
 import { Camera } from './camera';
 import header from './shader/header.wgsl?raw';
 import shader from './shader/render.wgsl?raw';
@@ -145,8 +145,16 @@ export class Render {
         ],
       });
       
+      let meshBuff:MeshBuffers;
+      if (obj.mesh !== undefined) // normal object
+        meshBuff = getMeshBuffers(this.device, obj.mesh as Mesh);
+      else if (obj.meshBuffers !== undefined)
+        meshBuff = obj.meshBuffers;
+      else 
+        throw new Error('no mesh buffer');
+        
       this.objectGPUDataList.push({
-        meshbuffers: getMeshBuffers(this.device, obj.mesh),
+        meshbuffers: meshBuff!,
         bindGroup: bindGroup,
         object: obj
       });

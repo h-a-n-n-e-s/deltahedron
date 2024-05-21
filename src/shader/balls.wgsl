@@ -51,7 +51,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
     let d = a.prop1 + b.prop1;
     let lenab = length(ab);
 
-    newBall.velocity += repulsionFactor * global.gravity * ab / pow(lenab,1);
+    newBall.velocity += repulsionFactor * global.gravity * ab / pow(lenab,2);
   }
 
   newBall.position += newBall.velocity * dt;
