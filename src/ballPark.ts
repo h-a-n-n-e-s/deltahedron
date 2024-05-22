@@ -1,6 +1,6 @@
 import { Compute } from './compute';
 import { Render } from './render';
-import { torusHalfEdges, torusVertexPositions } from './mesh';
+import { tetrahedronHalfEdges, torusHalfEdges, torusVertexPositions } from './mesh';
 import { Camera } from './camera';
 import { Structure } from './structure';
 import { readFile } from './io';
@@ -47,6 +47,7 @@ export class BallPark {
     this.deltahedron = new Structure(this.maxVertexCount, this.maxEdgeCount, ballRadius, cylinderRadius, cylinderLength, this.compute );
 
     const [balls, rods, triangles, halfEdges] = this.deltahedron.init(torusHalfEdges(), torusVertexPositions);
+    // this.deltahedron.init(tetrahedronHalfEdges);
 
     const gpuDevice = await this.compute.initialize([balls, rods, triangles], this.timeStep, this.subSteps);
 

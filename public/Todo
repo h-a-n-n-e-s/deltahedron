@@ -1,7 +1,8 @@
 
-triangles
+remove triangles when removing edges 
 subdivide faces
 merge vertices
+smoothing algo
 newton
 centroid
 undo

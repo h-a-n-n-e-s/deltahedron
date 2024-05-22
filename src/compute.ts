@@ -103,17 +103,18 @@ export class Compute {
     this.device.queue.writeBuffer(triangles.buffer, 0, triangles.data);
 
     this.triangleVertexBuffer = this.device.createBuffer({
-      size: triangles.maxCount*6 * 4,
+      size: triangles.maxCount*8 * 4,
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX
     });
     this.triangleNormalBuffer = this.device.createBuffer({
-      size: triangles.maxCount*6 * 4,
+      size: triangles.maxCount*8 * 4,
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX
     });
     const triangleIndices = new Uint32Array(triangles.maxCount*6);
     for (let i=0; i<triangleIndices.length; i++) triangleIndices[i] = i;
+    // for (let i=0; i<12; i++) triangleIndices[i] = i;
     const triangleIndexBuffer = this.device.createBuffer({
-      size: triangles.maxCount*6 * 4,
+      size: triangles.maxCount*8 * 4,
       usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.INDEX
     });
     this.device.queue.writeBuffer(triangleIndexBuffer, 0, triangleIndices);

@@ -66,7 +66,7 @@ export class Structure {
 
     const p = new Float32Array(3*this.balls.count);
     if (vertexPositions === undefined)
-      for (let i=0; i<p.length; i++) p[i] = 5 * (0.5 - Math.random());
+      for (let i=0; i<p.length; i++) p[i] = 20 * (0.5 - Math.random());
     else
       p.set(vertexPositions);
 
@@ -80,7 +80,7 @@ export class Structure {
     for (let i=0; i<this.rods.count; i++) this.createRod(i);
 
     this.triangles.data.set([1], 3); // size
-    this.triangles.data.set([0.3, 0.2, 0.2, 1], 8); // color
+    this.triangles.data.set([.8, .7, .5, 1], 8); // color
 
     return [this.balls, this.rods, this.triangles, this.halfEdges] as [Object, Object, Object, Uint32Array];
   }

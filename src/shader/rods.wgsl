@@ -4,6 +4,8 @@
 @group(0) @binding(3) var<storage, read_write> balls: array<Object>;
 @group(0) @binding(4) var<storage, read_write> rods: array<Object>;
 @group(0) @binding(5) var<storage, read_write> out: array< atomic<i32>, 4>;
+@group(0) @binding(6) var<storage, read_write> triVert: array<f32>;
+@group(0) @binding(7) var<storage, read_write> triNorm: array<f32>;
 
 @compute @workgroup_size(64)
 
@@ -17,9 +19,13 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
 
   let j = halfEdges[2 * i].targetVertex;
   let k = halfEdges[2 * i + 1].targetVertex;
+  let l = halfEdges[halfEdges[2 * i].next].targetVertex;
+  let m = halfEdges[halfEdges[2 * i + 1].next].targetVertex;
 
   let a = balls[j];
   let b = balls[k];
+  let e = balls[l];
+  let f = balls[m];
 
   let ab = a.position - b.position;
   let abMean = (a.position+b.position)/2;
@@ -58,6 +64,52 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   atomicAdd(&velocityUpdate[3 * k    ], i32(-velocity.x * QUANTIZE_FACTOR));
   atomicAdd(&velocityUpdate[3 * k + 1], i32(-velocity.y * QUANTIZE_FACTOR));
   atomicAdd(&velocityUpdate[3 * k + 2], i32(-velocity.z * QUANTIZE_FACTOR));
+
+  // triangles
+
+  var p = (a.position+b.position+e.position)/3;
+  triVert[18 * i    ] = a.position.x;
+  triVert[18 * i + 1] = a.position.y;
+  triVert[18 * i + 2] = a.position.z;
+  triVert[18 * i + 3] = b.position.x;
+  triVert[18 * i + 4] = b.position.y;
+  triVert[18 * i + 5] = b.position.z;
+  triVert[18 * i + 6] = p.x;
+  triVert[18 * i + 7] = p.y;
+  triVert[18 * i + 8] = p.z;
+
+  var norm = normalize(cross(a.position - p, b.position - p));
+  triNorm[18 * i    ] = norm.x;
+  triNorm[18 * i + 1] = norm.y;
+  triNorm[18 * i + 2] = norm.z;
+  triNorm[18 * i + 3] = norm.x;
+  triNorm[18 * i + 4] = norm.y;
+  triNorm[18 * i + 5] = norm.z;
+  triNorm[18 * i + 6] = norm.x;
+  triNorm[18 * i + 7] = norm.y;
+  triNorm[18 * i + 8] = norm.z;
+
+  p = (a.position+b.position+f.position)/3;
+  triVert[18 * i + 9] = b.position.x;
+  triVert[18 * i +10] = b.position.y;
+  triVert[18 * i +11] = b.position.z;
+  triVert[18 * i +12] = a.position.x;
+  triVert[18 * i +13] = a.position.y;
+  triVert[18 * i +14] = a.position.z;
+  triVert[18 * i +15] = p.x;
+  triVert[18 * i +16] = p.y;
+  triVert[18 * i +17] = p.z;
+
+  norm = normalize(cross(b.position - p, a.position - p));
+  triNorm[18 * i + 9] = norm.x;
+  triNorm[18 * i +10] = norm.y;
+  triNorm[18 * i +11] = norm.z;
+  triNorm[18 * i +12] = norm.x;
+  triNorm[18 * i +13] = norm.y;
+  triNorm[18 * i +14] = norm.z;
+  triNorm[18 * i +15] = norm.x;
+  triNorm[18 * i +16] = norm.y;
+  triNorm[18 * i +17] = norm.z;
 }
 
 fn quaternionFromDirection(v:vec3f) -> vec4f {
