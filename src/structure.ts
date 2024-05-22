@@ -1,4 +1,3 @@
-import { quaternionFromDirection } from "./algebra";
 import { q } from "./ballPark";
 import { Compute } from "./compute";
 import { saveBinary } from "./io";
@@ -9,6 +8,7 @@ export interface Object {
   buffer?: GPUBuffer,
   mesh?: Mesh,
   meshBuffers?: MeshBuffers, // optional for individual triangles
+  visible: boolean,
   count: number,
   maxCount: number
 }
@@ -39,6 +39,7 @@ export class Structure {
     this.balls = {
       data: new Float32Array(maxVertexCount * q),
       mesh: icoSphereMesh(this.ballRadius, 4),
+      visible: true,
       count: 0,
       maxCount: maxVertexCount
     }
@@ -46,12 +47,14 @@ export class Structure {
     this.rods = {
       data: new Float32Array(maxEdgeCount * q),
       mesh: cylinderMesh(32, this.cylinderRadius, this.cylinderLength/2, true),
+      visible: true,
       count: 0,
       maxCount: maxEdgeCount
     }
 
     this.triangles = {
       data: new Float32Array(q),
+      visible: true,
       count: 1,
       maxCount: 1000
     }
@@ -61,12 +64,14 @@ export class Structure {
 
     this.halfEdges.set(halfEdgesInit);
     
+    this.balls.data = new Float32Array(this.balls.maxCount * q);
+
     this.balls.count = this.vertexCount(halfEdgesInit);
     this.rods.count = halfEdgesInit.length/8;
 
     const p = new Float32Array(3*this.balls.count);
     if (vertexPositions === undefined)
-      for (let i=0; i<p.length; i++) p[i] = 20 * (0.5 - Math.random());
+      for (let i=0; i<p.length; i++) p[i] = 2 * (0.5 - Math.random());
     else
       p.set(vertexPositions);
 
@@ -291,44 +296,32 @@ export class Structure {
   }
 
   async saveData() {
-    saveBinary(this.halfEdges.slice(0,this.rods.count*8), 'data');
-    console.log(this.rods.count+' edges saved to file.');
+    const intCount = this.rods.count*8;
+    const floatCount = this.balls.count*3;
 
-    // put out vertex positions
-    // const b = await this.compute.getBallsBuffer();
-    // for (let i=0; i<this.balls.count; i++)
-    //   console.log(b[q*i], b[q*i+1], b[q*i+2]);
-     
+    // vertex positions
+    const b = await this.compute.getBallsBuffer();
+    const p = new Float32Array(floatCount);
+    for (let i=0; i<this.balls.count; i++)
+      p.set(b.slice(q*i,q*i+3),3*i);
+
+    const buffy = new Uint32Array(1+intCount+floatCount);
+    const floatView = new Float32Array(buffy.buffer);
+
+    buffy.set([intCount]);
+    buffy.set(this.halfEdges.slice(0,intCount), 1);
+    floatView.set(p, 1+intCount);
+
+    saveBinary(buffy, 'deltahedron_data');
+
+    console.log(this.rods.count+' edges and '+this.balls.count+' vertices saved to file.');
   }
-}
 
+  hideFaces = (areHidden:boolean) =>
+    this.triangles.visible = !areHidden;
 
-
-export function createRandomCube(objectCount:number, size:number) {
-    
-  const object = new Float32Array(objectCount * q);
-
-  for (let i=0; i<objectCount; i++) {
-
-    const offset = i * q;
-    
-    const p = 5;
-
-    const x = p*(Math.random()-0.5);
-    const y = p*(Math.random()-0.5);
-    const z = p*(Math.random()-0.5);
-
-    object.set([x, y, z], offset); // position
-
-    object.set([1], offset+7); // mass
-
-    object.set([Math.random(), Math.random(), Math.random(), 1], offset+8); // color
-
-    const s = size * Math.random();
-    object.set([s], offset+3); // size
-
-    const d = [Math.random(), Math.random(), Math.random()];
-    object.set(quaternionFromDirection(new Float32Array(d)), offset+12);
+  hideBallsAndRods = (areHidden:boolean) => {
+    this.balls.visible = !areHidden;
+    this.rods.visible = !areHidden;
   }
-  return object;
 }

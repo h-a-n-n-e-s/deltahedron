@@ -1,4 +1,4 @@
-export function saveBinary(data:Uint32Array, filename:string) {
+export function saveBinary(data:ArrayBuffer, filename:string) {
   let blob = new Blob([data], {type: 'octet/stream'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -20,11 +20,11 @@ export const openFile = async () => {
   });
 };
 
-export const readFile = async (call:(data:Uint32Array)=>void) => {
+export const readFile = async (call:(data:ArrayBuffer)=>void) => {
   const file = await openFile() as File;
   const reader = new FileReader();
   reader.onload = evt => {
-    const data = new Uint32Array(evt.target?.result as ArrayBuffer);
+    const data = evt.target?.result as ArrayBuffer;
     call(data);
   }
   reader.readAsArrayBuffer(file);

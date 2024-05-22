@@ -124,11 +124,17 @@ export class PushButton extends Button {
 export class RadioButton {
 
   private activeButton: SwitchButton | undefined;
+  private buttons: Array<SwitchButton> = [];
 
-  constructor(buttonList:Array<{name:string, func:(on:boolean)=>void}>) {
+  constructor(buttonList:Array<{name:string, func:(on:boolean)=>void}>, isOnTop=true) {
 
     for(const entry of buttonList) {
-      const butt = new SwitchButton(entry.name, true);
+      const butt = new SwitchButton(entry.name, isOnTop);
+      if (!isOnTop) {
+        butt.button.id = entry.name+'RadioBut';
+        document.body.appendChild(butt.button);
+      }
+      
       butt.onPush(() => {
         if (butt.on === true) {
           if (this.activeButton !== undefined) this.activeButton.switch();
@@ -138,8 +144,12 @@ export class RadioButton {
           this.activeButton = undefined;
         entry.func(butt.on);
       });
+
+      this.buttons.push(butt);
     }
   }
+
+  click = (index:number) => this.buttons[index].click();
 }
 
 ///////////////////////////////////////////////////////////////////////////////

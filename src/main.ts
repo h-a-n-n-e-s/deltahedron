@@ -6,25 +6,38 @@ Button.initialize(10, 10, 10);
 
 const ballPark = new BallPark();
 
-const holdButton = new SwitchButton('hold', true);
-holdButton.onPush(() => ballPark.setHold(holdButton.on));
+// const holdButton = new SwitchButton('hold', true);
+// holdButton.onPush(() => ballPark.setHold(holdButton.on));
 
-const rotateButton = new SwitchButton('rotate', true);
-rotateButton.onPush(() => ballPark.setRotation(rotateButton.on));
-
-new RadioButton([
-  {name:'add', func:(on) => ballPark.addVertex(on)},
-  {name:'flip', func:(on) => ballPark.flipEdges(on)},
-  {name:'remove', func:(on) => ballPark.removeEdges(on)},
-]);
+const loadButton = new PushButton('load', true);
+loadButton.onPush( async () => ballPark.loadData());
 
 const saveButton = new PushButton('save', true);
 saveButton.onPush(async () => await ballPark.saveData());
 
-const loadButton = new PushButton('load', true);
-loadButton.onPush( async () => ballPark.loadData()); 
+const rotateButton = new SwitchButton('rotate', true);
+rotateButton.onPush(() => ballPark.setRotation(rotateButton.on));
 
-const gravitySlider = new InfoSlider(0, 10, 1, 1, 'repulsion: ', 0, '', 200, document.body);
+const hideFacesButton = new SwitchButton('hide faces', true);
+hideFacesButton.onPush(() => ballPark.hideFaces(hideFacesButton.on));
+
+const hideScaffoldButton = new SwitchButton('hide scaffold', true);
+hideScaffoldButton.onPush(() => ballPark.hideBallsAndRods(hideScaffoldButton.on));
+
+const erasseAllButton = new PushButton('erase all', true);
+erasseAllButton.onPush(() => {
+  if(confirm('Are you sure you want to erase this structure? If not you should save it first.'))
+    ballPark.loadTetrahedron();
+});
+
+const operationButtons = new RadioButton([
+  {name:'add', func:(on) => ballPark.addVertex(on)},
+  {name:'flip', func:(on) => ballPark.flipEdges(on)},
+  {name:'remove', func:(on) => ballPark.removeEdges(on)},
+], false);
+operationButtons.click(0); // activate 'add' button
+
+const gravitySlider = new InfoSlider(0, 10, 1, 1, 'inflation: ', 0, '', 200, document.body);
 gravitySlider.onSlide(() => ballPark.setGravity(gravitySlider.value));
 gravitySlider.setId('gravitySlider');
 

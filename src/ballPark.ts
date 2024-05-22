@@ -1,6 +1,6 @@
 import { Compute } from './compute';
 import { Render } from './render';
-import { tetrahedronHalfEdges, torusHalfEdges, torusVertexPositions } from './mesh';
+import { tetrahedronHalfEdges, tetrahedronVertexPositions, torusHalfEdges, torusVertexPositions } from './mesh';
 import { Camera } from './camera';
 import { Structure } from './structure';
 import { readFile } from './io';
@@ -154,17 +154,32 @@ export class BallPark {
   setGravity(g:number) {this.compute.setGravity(g);}
   setHold(h:boolean) {this.freeze = h;}
   setRotation(r:boolean) {this.rotate = r;}
+  hideFaces(h:boolean) {this.deltahedron.hideFaces(h);}
+  hideBallsAndRods(h:boolean) {this.deltahedron.hideBallsAndRods(h);}
+  loadTetrahedron() {this.setData(tetrahedronHalfEdges, tetrahedronVertexPositions);}
+
   addVertex(add:boolean) {this.add = add;}
   flipEdges(flip:boolean) {this.flip = flip;}
   removeEdges(remove:boolean) {this.remove = remove;}
   async saveData() {await this.deltahedron.saveData();}
 
-  loadData = async() => {
-    await readFile((data:Uint32Array) => {
-      const [balls, rods, _triangles, halfEdges] = this.deltahedron.init(data);
-      this.compute.setCompleteBallsAndRodsBuffer(balls.data, rods.data);
-      this.compute.setHalfEdgeBuffer(halfEdges);
-      this.compute.setCount(balls.count, rods.count);
+  setData = (heData:Uint32Array, posData?:Float32Array) => {
+    const [balls, rods, _triangles, halfEdges] = 
+      this.deltahedron.init(heData, posData);
+
+    this.compute.setCompleteBallsAndRodsBuffer(balls.data, rods.data);
+    this.compute.setHalfEdgeBuffer(halfEdges);
+    this.compute.setCount(balls.count, rods.count);
+    this.compute.resetTriangleVertexBuffer();
+  }
+
+  loadData = async () => {
+    await readFile((data:ArrayBuffer) => {
+      const he = new Uint32Array(data);
+      const count = he[0];
+      const pos = new Float32Array(data);
+
+      this.setData(he.slice(1,count+1), pos.slice(count+1));
     });
   }
 }

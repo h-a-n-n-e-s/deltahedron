@@ -76,7 +76,21 @@ export class Render {
       fragment: {
         module,
         entryPoint: 'fs',
-        targets: [{ format: presentationFormat }]
+        targets: [{
+          format: presentationFormat,
+          // blend: {
+          //   color: {
+          //     operation: 'add',
+          //     srcFactor: 'one',
+          //     dstFactor: 'one-minus-src-alpha'
+          //   },
+          //   alpha: {
+          //     operation: 'add',
+          //     srcFactor: 'one',
+          //     dstFactor: 'one-minus-src-alpha'
+          //   },
+          // },
+        }]
       },
       primitive: {
         topology: 'triangle-list',
@@ -203,6 +217,9 @@ export class Render {
     pass.setPipeline(this.pipeline);
 
     for (const o of this.objectGPUDataList) {
+      
+      if (!o.object.visible) continue;
+
       pass.setVertexBuffer(0, o.meshbuffers.vertexBuffer);
       pass.setVertexBuffer(1, o.meshbuffers.normalBuffer);
       pass.setIndexBuffer(o.meshbuffers.indexBuffer, 'uint32');

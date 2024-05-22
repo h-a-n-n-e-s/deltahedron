@@ -15,7 +15,10 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   if i >= global.rodCount {return;}
   
   // inactive edge
-  if halfEdges[2 * i].prev == halfEdges[2 * i].next {return;}
+  if halfEdges[2 * i].prev == halfEdges[2 * i].next {
+    setTriangles(i, vec3f(0), vec3f(0), vec3f(0), vec3f(0));
+    return;
+  }
 
   let j = halfEdges[2 * i].targetVertex;
   let k = halfEdges[2 * i + 1].targetVertex;
@@ -65,20 +68,30 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   atomicAdd(&velocityUpdate[3 * k + 1], i32(-velocity.y * QUANTIZE_FACTOR));
   atomicAdd(&velocityUpdate[3 * k + 2], i32(-velocity.z * QUANTIZE_FACTOR));
 
-  // triangles
+  setTriangles(i, a.position, b.position, e.position, f.position);
 
-  var p = (a.position+b.position+e.position)/3;
-  triVert[18 * i    ] = a.position.x;
-  triVert[18 * i + 1] = a.position.y;
-  triVert[18 * i + 2] = a.position.z;
-  triVert[18 * i + 3] = b.position.x;
-  triVert[18 * i + 4] = b.position.y;
-  triVert[18 * i + 5] = b.position.z;
+}
+
+fn quaternionFromDirection(v:vec3f) -> vec4f {
+  let l = length(v);
+  let f = 1 / sqrt(2 * l * (l + v.y));
+  return vec4f(v.z * f, 0, - v.x * f, (l + v.y) * f);
+}
+
+fn setTriangles(i:u32, a:vec3f, b:vec3f, e:vec3f, f:vec3f) {
+
+  var p = (a+b+e)/3;
+  triVert[18 * i    ] = a.x;
+  triVert[18 * i + 1] = a.y;
+  triVert[18 * i + 2] = a.z;
+  triVert[18 * i + 3] = b.x;
+  triVert[18 * i + 4] = b.y;
+  triVert[18 * i + 5] = b.z;
   triVert[18 * i + 6] = p.x;
   triVert[18 * i + 7] = p.y;
   triVert[18 * i + 8] = p.z;
 
-  var norm = normalize(cross(a.position - p, b.position - p));
+  var norm = normalize(cross(a - p, b - p));
   triNorm[18 * i    ] = norm.x;
   triNorm[18 * i + 1] = norm.y;
   triNorm[18 * i + 2] = norm.z;
@@ -89,18 +102,18 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   triNorm[18 * i + 7] = norm.y;
   triNorm[18 * i + 8] = norm.z;
 
-  p = (a.position+b.position+f.position)/3;
-  triVert[18 * i + 9] = b.position.x;
-  triVert[18 * i +10] = b.position.y;
-  triVert[18 * i +11] = b.position.z;
-  triVert[18 * i +12] = a.position.x;
-  triVert[18 * i +13] = a.position.y;
-  triVert[18 * i +14] = a.position.z;
+  p = (a+b+f)/3;
+  triVert[18 * i + 9] = b.x;
+  triVert[18 * i +10] = b.y;
+  triVert[18 * i +11] = b.z;
+  triVert[18 * i +12] = a.x;
+  triVert[18 * i +13] = a.y;
+  triVert[18 * i +14] = a.z;
   triVert[18 * i +15] = p.x;
   triVert[18 * i +16] = p.y;
   triVert[18 * i +17] = p.z;
 
-  norm = normalize(cross(b.position - p, a.position - p));
+  norm = normalize(cross(b - p, a - p));
   triNorm[18 * i + 9] = norm.x;
   triNorm[18 * i +10] = norm.y;
   triNorm[18 * i +11] = norm.z;
@@ -110,10 +123,4 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   triNorm[18 * i +15] = norm.x;
   triNorm[18 * i +16] = norm.y;
   triNorm[18 * i +17] = norm.z;
-}
-
-fn quaternionFromDirection(v:vec3f) -> vec4f {
-  let l = length(v);
-  let f = 1 / sqrt(2 * l * (l + v.y));
-  return vec4f(v.z * f, 0, - v.x * f, (l + v.y) * f);
 }

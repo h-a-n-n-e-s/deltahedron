@@ -1,7 +1,9 @@
 
+
 remove triangles when removing edges 
 subdivide faces
 merge vertices
+equilibrium acceleration algorithm
 smoothing algo
 newton
 centroid

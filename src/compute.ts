@@ -24,6 +24,7 @@ export class Compute {
   private halfEdgeBuffer!: GPUBuffer;
   private velocityUpdateBuffer!: GPUBuffer;
   private outBuffer!: GPUBuffer;
+  private triangleBuffer!: GPUBuffer;
   private triangleVertexBuffer!: GPUBuffer;
   private triangleNormalBuffer!: GPUBuffer;
   private stagingOutBuffer!: GPUBuffer;
@@ -96,15 +97,16 @@ export class Compute {
 
     // triangle buffers
 
-    triangles.buffer = this.device.createBuffer({
+    this.triangleBuffer = this.device.createBuffer({
       size: q * 4,
-      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
     });
-    this.device.queue.writeBuffer(triangles.buffer, 0, triangles.data);
+    this.device.queue.writeBuffer(this.triangleBuffer, 0, triangles.data);
+    triangles.buffer = this.triangleBuffer;
 
     this.triangleVertexBuffer = this.device.createBuffer({
       size: triangles.maxCount*8 * 4,
-      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
     });
     this.triangleNormalBuffer = this.device.createBuffer({
       size: triangles.maxCount*8 * 4,
@@ -228,6 +230,10 @@ export class Compute {
   setGravity = (g:number) =>
     this.device.queue.writeBuffer(this.globalParameterBuffer, 12, new Float32Array([g]));
 
+  // hideFaces = (areHidden:boolean) => {
+  //   this.device.queue.writeBuffer(this.triangleBuffer, 3*4, new Float32Array([areHidden?0:1]));
+  // }
+
   setCount = (ballCount:number, rodCount:number) =>
     this.device.queue.writeBuffer(this.globalParameterBuffer, 0, new Uint32Array([ballCount, rodCount]));
 
@@ -246,6 +252,11 @@ export class Compute {
   setCompleteBallsAndRodsBuffer = (balls:Float32Array, rods:Float32Array) => {
     this.device.queue.writeBuffer(this.ballsBuffer, 0, balls);
     this.device.queue.writeBuffer(this.rodsBuffer, 0, rods);
+  }
+
+  resetTriangleVertexBuffer = () => {
+    const zero = new Float32Array(this.triangleVertexBuffer.size/4);
+    this.device.queue.writeBuffer(this.triangleVertexBuffer,0,zero)
   }
 
   setMouseRayAndEye = (ray:Float32Array, eye:Float32Array) => {
