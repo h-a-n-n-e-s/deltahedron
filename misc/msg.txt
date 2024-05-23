@@ -1,0 +1,28 @@
+I put the deltahedron design app online!
+https://deltahedron.pages.dev
+
+Please try it out.
+Here a few comments:
+
+You can save and load binary files of your mesh. If you "save", a file called "deltahedron-data" will be downloaded to your Download folder. You can rename it to anything you like. I made a little construction with the file name "ringu1" here:
+https://drive.google.com/file/d/1M7H4YpXjuV1cX-E8TGPwbx1Cuu5h94eg/view?usp=drive_link
+You can start from it or start with the initial torus (or, if you "erase all", with a tetrahedron).
+
+Most buttons are self explanatory. The operator buttons in the second row decide about what is done with an edge if you select it. "Add" (initially active) adds a vertex at the edge and also connects it to the two opposing vertices. "Flip" and "remove" do what they say.
+
+If you use "remove", the mesh is no deltahedron anymore, since not all faces are triangles anymore. Also a remainder of the face is still rendered, this is not perfect yet. We should try not to use "remove" too much for now.
+
+The inflation slider is important. It "inflates" the mesh like a balloon if the value is nonzero (initially it is 1). You can also think about it as pressure from inside. This is useful if you add new vertices and some part of the mesh bends inwards. With a bit of inflation/pressure you can bend it outside.
+The important point is that finally, if you want to see the shape of your true deltahedron, you have to set inflation to zero! Then the mesh shrinks together and slowly all edges approach exactly the same length. Sometimes surprises appear, so please experiment!
+
+The main next steps will be:
+- operation to subdivide all faces, putting a new vertex on all edges.
+- operation to merge vertices.
+- Undo.
+- STL export.
+
+This is a unique new app which allows us to create organic polyhedral shapes through a growth process! Other apps rely on gluing symmetric shapes (like tetrahedra or octahedra) together and can never create this free form mesh. The challenging part is to not make the mesh crouch together, since every change will affect the whole mesh.
+
+I'm looking forward to your creations, please share them!
+
+If you want to get used to the operators, you can "erase all" and start from a tetrahedron. One nice initial challenge is to make an icosahedron only using "add" and "flip". Enjoy! :)
