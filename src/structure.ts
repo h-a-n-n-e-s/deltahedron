@@ -6,7 +6,8 @@ import { Mesh, MeshBuffers, cylinderMesh, icoSphereMesh } from "./mesh";
 export interface Object {
   data: Float32Array,
   buffer?: GPUBuffer,
-  mesh?: Mesh,
+  mesh: Mesh,
+  isInstancedMesh: boolean,
   meshBuffers?: MeshBuffers, // optional for individual triangles
   visible: boolean,
   count: number,
@@ -26,7 +27,7 @@ export class Structure {
 
   private compute: Compute;
 
-  constructor(maxVertexCount:number, maxEdgeCount:number, ballRadius:number, cylinderRadius:number, cylinderLength:number, compute:Compute) {
+  constructor(maxVertexCount:number, maxEdgeCount:number, maxFaceCount:number, ballRadius:number, cylinderRadius:number, cylinderLength:number, compute:Compute) {
 
     this.compute = compute;
 
@@ -39,6 +40,7 @@ export class Structure {
     this.balls = {
       data: new Float32Array(maxVertexCount * q),
       mesh: icoSphereMesh(this.ballRadius, 4),
+      isInstancedMesh: true,
       visible: true,
       count: 0,
       maxCount: maxVertexCount
@@ -47,6 +49,7 @@ export class Structure {
     this.rods = {
       data: new Float32Array(maxEdgeCount * q),
       mesh: cylinderMesh(32, this.cylinderRadius, this.cylinderLength/2, true),
+      isInstancedMesh: true,
       visible: true,
       count: 0,
       maxCount: maxEdgeCount
@@ -54,9 +57,14 @@ export class Structure {
 
     this.triangles = {
       data: new Float32Array(q),
+      mesh: {
+        vertices: new Float32Array(),
+        normals: new Float32Array(),
+        indices: new Uint32Array(3*maxFaceCount)},
+      isInstancedMesh: false,
       visible: true,
       count: 1,
-      maxCount: 1000
+      maxCount: maxFaceCount
     }
   }
 
@@ -83,6 +91,8 @@ export class Structure {
     }
 
     for (let i=0; i<this.rods.count; i++) this.createRod(i);
+
+    this.faceInit();
 
     this.triangles.data.set([1], 3); // size
     this.triangles.data.set([.8, .7, .5, 1], 8); // color
@@ -152,6 +162,29 @@ export class Structure {
       count++;
     }
     return count;
+  }
+
+  faceInit() {
+
+    let f = 0; // face count
+
+    for (let i=0; i<this.halfEdges.length/4; i++) {
+
+      const j = this.halfEdges[4*i+2];
+      const k = this.halfEdges[4*j+2];
+
+      if (i < j && i < k) {
+        this.halfEdges[4*i] = 3*f;
+        this.halfEdges[4*j] = 3*f+1;
+        this.halfEdges[4*k] = 3*f+2;
+
+        this.triangles.mesh.indices[3*f  ] = 3*f;
+        this.triangles.mesh.indices[3*f+1] = 3*f+1;
+        this.triangles.mesh.indices[3*f+2] = 3*f+2;
+
+        f++;
+      }
+    }
   }
 
   addVertex(rodIndex:number) {

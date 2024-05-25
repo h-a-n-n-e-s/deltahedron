@@ -28,8 +28,8 @@ struct Object {
 }
 
 struct HalfEdge {
-  twin: u32,
+  face: u32,
   prev: u32,
   next: u32,
-  targetVertex: u32
+  vertex: u32
 }

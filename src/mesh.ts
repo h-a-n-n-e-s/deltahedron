@@ -324,11 +324,11 @@ export const torusHalfEdges = () => {
     const e = 72 * i;
     
     // twin
-    for (let j=0; j<36; j++) {
-      const o = e+2*j;
-      h[4*o] = o+1;
-      h[4*(o+1)] = o; 
-    }
+    // for (let j=0; j<36; j++) {
+    //   const o = e+2*j;
+    //   h[4*o] = o+1;
+    //   h[4*(o+1)] = o; 
+    // }
 
     const previous = new Int32Array([
       -14, 24,-10, 11, -6, 13, -2, 17,  1, 18,

@@ -13,22 +13,21 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
 
   let i = global_id.x;
   if i >= global.rodCount {return;}
-  
+
+
   // inactive edge
   if halfEdges[2 * i].prev == halfEdges[2 * i].next {
-    setTriangles(i, vec3f(0), vec3f(0), vec3f(0), vec3f(0));
+    setTriangles(halfEdges[2 * i].face, vec3f(0), vec3f(0), vec3f(0));
     return;
   }
 
-  let j = halfEdges[2 * i].targetVertex;
-  let k = halfEdges[2 * i + 1].targetVertex;
-  let l = halfEdges[halfEdges[2 * i].next].targetVertex;
-  let m = halfEdges[halfEdges[2 * i + 1].next].targetVertex;
-
+  let j = halfEdges[2 * i].vertex;
+  let k = halfEdges[halfEdges[2 * i].next].vertex;
+  let l = halfEdges[2 * i + 1].vertex;
+  
   let a = balls[j];
   let b = balls[k];
-  let e = balls[l];
-  let f = balls[m];
+  let c = balls[l];
 
   let ab = a.position - b.position;
   let abMean = (a.position+b.position)/2;
@@ -68,7 +67,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   atomicAdd(&velocityUpdate[3 * k + 1], i32(-velocity.y * QUANTIZE_FACTOR));
   atomicAdd(&velocityUpdate[3 * k + 2], i32(-velocity.z * QUANTIZE_FACTOR));
 
-  setTriangles(i, a.position, b.position, e.position, f.position);
+  setTriangles(halfEdges[2 * i].face, a.position, b.position, c.position);
 
 }
 
@@ -78,49 +77,22 @@ fn quaternionFromDirection(v:vec3f) -> vec4f {
   return vec4f(v.z * f, 0, - v.x * f, (l + v.y) * f);
 }
 
-fn setTriangles(i:u32, a:vec3f, b:vec3f, e:vec3f, f:vec3f) {
+fn setTriangles(f:u32, a:vec3f, b:vec3f, c:vec3f) {
 
-  var p = (a+b+e)/3;
-  triVert[18 * i    ] = a.x;
-  triVert[18 * i + 1] = a.y;
-  triVert[18 * i + 2] = a.z;
-  triVert[18 * i + 3] = b.x;
-  triVert[18 * i + 4] = b.y;
-  triVert[18 * i + 5] = b.z;
-  triVert[18 * i + 6] = p.x;
-  triVert[18 * i + 7] = p.y;
-  triVert[18 * i + 8] = p.z;
+  triVert[3 * f    ] = a.x;
+  triVert[3 * f + 1] = a.y;
+  triVert[3 * f + 2] = a.z;
+  triVert[3 * f + 3] = b.x;
+  triVert[3 * f + 4] = b.y;
+  triVert[3 * f + 5] = b.z;
+  triVert[3 * f + 6] = c.x;
+  triVert[3 * f + 7] = c.y;
+  triVert[3 * f + 8] = c.z;
 
-  var norm = normalize(cross(a - p, b - p));
-  triNorm[18 * i    ] = norm.x;
-  triNorm[18 * i + 1] = norm.y;
-  triNorm[18 * i + 2] = norm.z;
-  triNorm[18 * i + 3] = norm.x;
-  triNorm[18 * i + 4] = norm.y;
-  triNorm[18 * i + 5] = norm.z;
-  triNorm[18 * i + 6] = norm.x;
-  triNorm[18 * i + 7] = norm.y;
-  triNorm[18 * i + 8] = norm.z;
+  var norm = normalize(cross(b - a, c - a));
+  triNorm[3 * f    ] = norm.x;
+  triNorm[3 * f + 1] = norm.y;
+  triNorm[3 * f + 2] = norm.z;
 
-  p = (a+b+f)/3;
-  triVert[18 * i + 9] = b.x;
-  triVert[18 * i +10] = b.y;
-  triVert[18 * i +11] = b.z;
-  triVert[18 * i +12] = a.x;
-  triVert[18 * i +13] = a.y;
-  triVert[18 * i +14] = a.z;
-  triVert[18 * i +15] = p.x;
-  triVert[18 * i +16] = p.y;
-  triVert[18 * i +17] = p.z;
 
-  norm = normalize(cross(b - p, a - p));
-  triNorm[18 * i + 9] = norm.x;
-  triNorm[18 * i +10] = norm.y;
-  triNorm[18 * i +11] = norm.z;
-  triNorm[18 * i +12] = norm.x;
-  triNorm[18 * i +13] = norm.y;
-  triNorm[18 * i +14] = norm.z;
-  triNorm[18 * i +15] = norm.x;
-  triNorm[18 * i +16] = norm.y;
-  triNorm[18 * i +17] = norm.z;
 }

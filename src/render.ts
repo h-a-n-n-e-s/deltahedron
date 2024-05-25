@@ -160,7 +160,7 @@ export class Render {
       });
       
       let meshBuff:MeshBuffers;
-      if (obj.mesh !== undefined) // normal object
+      if (obj.isInstancedMesh) // normal object
         meshBuff = getMeshBuffers(this.device, obj.mesh as Mesh);
       else if (obj.meshBuffers !== undefined)
         meshBuff = obj.meshBuffers;
@@ -224,11 +224,7 @@ export class Render {
       pass.setVertexBuffer(1, o.meshbuffers.normalBuffer);
       pass.setIndexBuffer(o.meshbuffers.indexBuffer, 'uint32');
       pass.setBindGroup(0, o.bindGroup);
-
-      // if (o.object.mesh !== undefined) // normal object
-        pass.drawIndexed(o.meshbuffers.indexBuffer.size/4, o.object.count);
-      // else
-      //   pass.draw(3);
+      pass.drawIndexed(o.meshbuffers.indexBuffer.size/4, o.object.count);
     }
 
     pass.end();

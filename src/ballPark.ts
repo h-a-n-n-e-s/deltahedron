@@ -17,6 +17,7 @@ export class BallPark {
 
   maxEdgeCount = 1000;
   maxVertexCount = 1000;
+  maxFaceCount = 1000;
 
   deltahedron!: Structure;
 
@@ -44,7 +45,7 @@ export class BallPark {
     const cylinderRadius = 0.04;
     const cylinderLength = 0.8;
 
-    this.deltahedron = new Structure(this.maxVertexCount, this.maxEdgeCount, ballRadius, cylinderRadius, cylinderLength, this.compute );
+    this.deltahedron = new Structure(this.maxVertexCount, this.maxEdgeCount, this.maxFaceCount, ballRadius, cylinderRadius, cylinderLength, this.compute );
 
     const [balls, rods, triangles, halfEdges] = this.deltahedron.init(torusHalfEdges(), torusVertexPositions);
     // this.deltahedron.init(tetrahedronHalfEdges);
