@@ -53,7 +53,7 @@ export class BallPark {
     const gpuDevice = await this.compute.initialize([balls, rods, triangles], this.timeStep, this.subSteps);
 
     this.compute.setHalfEdgeBuffer(halfEdges);
-    this.compute.setCount(balls.count, rods.count);
+    this.compute.setCount(balls.count, rods.count, triangles.count);
 
     const render = new Render(gpuDevice, 'canvas', camera, [balls, rods, triangles]);
 
@@ -89,7 +89,7 @@ export class BallPark {
         const commandEncoder = gpuDevice.createCommandEncoder();
 
         // if (!slowmo)
-        this.compute.integration(commandEncoder, balls.count, rods.count);
+        this.compute.integration(commandEncoder, balls.count, rods.count, triangles.count);
 
         render.render(camera, commandEncoder);
 
@@ -165,13 +165,13 @@ export class BallPark {
   async saveData() {await this.deltahedron.saveData();}
 
   setData = (heData:Uint32Array, posData?:Float32Array) => {
-    const [balls, rods, _triangles, halfEdges] = 
+    const [balls, rods, triangles, halfEdges] = 
       this.deltahedron.init(heData, posData);
 
     this.compute.setCompleteBallsAndRodsBuffer(balls.data, rods.data);
+    this.compute.setTriangleIndexBuffer(triangles.mesh.indices);
     this.compute.setHalfEdgeBuffer(halfEdges);
-    this.compute.setCount(balls.count, rods.count);
-    this.compute.resetTriangleVertexBuffer();
+    this.compute.setCount(balls.count, rods.count, triangles.count);
   }
 
   loadData = async () => {

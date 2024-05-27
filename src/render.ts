@@ -224,7 +224,10 @@ export class Render {
       pass.setVertexBuffer(1, o.meshbuffers.normalBuffer);
       pass.setIndexBuffer(o.meshbuffers.indexBuffer, 'uint32');
       pass.setBindGroup(0, o.bindGroup);
-      pass.drawIndexed(o.meshbuffers.indexBuffer.size/4, o.object.count);
+      if (o.object.isInstancedMesh)
+        pass.drawIndexed(o.meshbuffers.indexBuffer.size/4, o.object.count);
+      else
+        pass.drawIndexed(3*o.object.count, 1);
     }
 
     pass.end();

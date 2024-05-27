@@ -4,6 +4,7 @@ import header from './shader/header.wgsl?raw';
 import intersection from './shader/intersection.wgsl?raw';
 import ballsShader from './shader/balls.wgsl?raw';
 import rodsShader from './shader/rods.wgsl?raw';
+import trianglesShader from './shader/triangles.wgsl?raw';
 import selectionDepth from './shader/selectionDepth.wgsl?raw';
 import { Object } from './structure';
 
@@ -14,6 +15,7 @@ export class Compute {
 
   private ballsPipeline!: GPUComputePipeline;
   private rodsPipeline!: GPUComputePipeline;
+  private trianglesPipeline!: GPUComputePipeline;
   private selectionDepthPipeline!: GPUComputePipeline;
 
   private subSteps!: number;
@@ -27,6 +29,7 @@ export class Compute {
   private triangleBuffer!: GPUBuffer;
   private triangleVertexBuffer!: GPUBuffer;
   private triangleNormalBuffer!: GPUBuffer;
+  private triangleIndexBuffer!: GPUBuffer;
   private stagingOutBuffer!: GPUBuffer;
   private stagingBallsBuffer!: GPUBuffer;
 
@@ -114,13 +117,21 @@ export class Compute {
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX
     });
 
-    const triangleIndexBuffer = this.device.createBuffer({
+    this.triangleIndexBuffer = this.device.createBuffer({
+      size: triangles.maxCount*3 * 4,
+      usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.STORAGE
+    });
+    this.device.queue.writeBuffer(this.triangleIndexBuffer, 0, triangles.mesh.indices);
+
+    const indexBuffer = this.device.createBuffer({
       size: triangles.maxCount*3 * 4,
       usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.INDEX
     });
-    this.device.queue.writeBuffer(triangleIndexBuffer, 0, triangles.mesh.indices);
+    const ind = new Uint32Array(triangles.maxCount*3);
+    for (let i=0; i<triangles.maxCount*3; i++) ind[i] = i;
+    this.device.queue.writeBuffer(indexBuffer, 0, ind);
 
-    triangles.meshBuffers = {vertexBuffer:this.triangleVertexBuffer, normalBuffer:this.triangleNormalBuffer, indexBuffer:triangleIndexBuffer};
+    triangles.meshBuffers = {vertexBuffer:this.triangleVertexBuffer, normalBuffer:this.triangleNormalBuffer, indexBuffer:indexBuffer};
 
     // bindgroups and pipelines
 
@@ -134,6 +145,7 @@ export class Compute {
         {binding:5, visibility:GPUShaderStage.COMPUTE, buffer:{type:'storage'}}, // out
         {binding:6, visibility:GPUShaderStage.COMPUTE, buffer:{type:'storage'}}, // triangleVertex
         {binding:7, visibility:GPUShaderStage.COMPUTE, buffer:{type:'storage'}}, // triangleNormal
+        {binding:8, visibility:GPUShaderStage.COMPUTE, buffer:{type:'read-only-storage'}}, // triangleIndex
       ]
     });
 
@@ -141,6 +153,7 @@ export class Compute {
 
     this.ballsPipeline = this.createCompPipe(pipelineLayout, header+intersection+ballsShader);
     this.rodsPipeline = this.createCompPipe(pipelineLayout, header+intersection+rodsShader);
+    this.trianglesPipeline = this.createCompPipe(pipelineLayout, header+trianglesShader);
     this.selectionDepthPipeline = this.createCompPipe(pipelineLayout, header+intersection+selectionDepth);
 
     this.bindGroup = this.device.createBindGroup({
@@ -154,19 +167,21 @@ export class Compute {
         {binding: 5, resource: {buffer: this.outBuffer}},
         {binding: 6, resource: {buffer: this.triangleVertexBuffer}},
         {binding: 7, resource: {buffer: this.triangleNormalBuffer}},
+        {binding: 8, resource: {buffer: this.triangleIndexBuffer}},
       ]
     });
 
     return this.device;
   }
 
-  integration = (encoder:GPUCommandEncoder, ballCount:number, rodCount:number) => {
+  integration = (encoder:GPUCommandEncoder, ballCount:number, rodCount:number, triangleCount:number) => {
 
     this.computePass(encoder, this.rodsPipeline, this.bindGroup, rodCount);
 
     for (let s=0; s<this.subSteps; s++)
       this.computePass(encoder, this.ballsPipeline, this.bindGroup, ballCount);
 
+    this.computePass(encoder, this.trianglesPipeline, this.bindGroup, triangleCount);
   }
 
   depthTest = (rodCount:number) => {
@@ -222,20 +237,16 @@ export class Compute {
   }
 
   setTimeAndSubStep = (dt:number, sub:number) => {
-    this.device.queue.writeBuffer(this.globalParameterBuffer, 8, new Float32Array([
+    this.device.queue.writeBuffer(this.globalParameterBuffer, 12, new Float32Array([
       dt/sub
     ]));
   };
   
   setGravity = (g:number) =>
-    this.device.queue.writeBuffer(this.globalParameterBuffer, 12, new Float32Array([g]));
+    this.device.queue.writeBuffer(this.globalParameterBuffer, 44, new Float32Array([g]));
 
-  // hideFaces = (areHidden:boolean) => {
-  //   this.device.queue.writeBuffer(this.triangleBuffer, 3*4, new Float32Array([areHidden?0:1]));
-  // }
-
-  setCount = (ballCount:number, rodCount:number) =>
-    this.device.queue.writeBuffer(this.globalParameterBuffer, 0, new Uint32Array([ballCount, rodCount]));
+  setCount = (ballCount:number, rodCount:number, triangleCount:number) =>
+    this.device.queue.writeBuffer(this.globalParameterBuffer, 0, new Uint32Array([ballCount, rodCount, triangleCount]));
 
   setHalfEdgeBuffer = (halfEdges:Uint32Array) =>
     this.device.queue.writeBuffer(this.halfEdgeBuffer, 0, halfEdges);
@@ -254,9 +265,9 @@ export class Compute {
     this.device.queue.writeBuffer(this.rodsBuffer, 0, rods);
   }
 
-  resetTriangleVertexBuffer = () => {
-    const zero = new Float32Array(this.triangleVertexBuffer.size/4);
-    this.device.queue.writeBuffer(this.triangleVertexBuffer,0,zero)
+  setTriangleIndexBuffer = (indexArray:Uint32Array) => {
+    // const zero = new Float32Array(this.triangleVertexBuffer.size/4);
+    this.device.queue.writeBuffer(this.triangleIndexBuffer, 0, indexArray)
   }
 
   setMouseRayAndEye = (ray:Float32Array, eye:Float32Array) => {

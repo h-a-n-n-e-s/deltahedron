@@ -1,19 +1,18 @@
-
-documentation (japanese too)
+stl out
 counter
-remove triangles when removing edges 
 subdivide faces
 merge vertices
 equilibrium acceleration algorithm
 smoothing algo
 newton
 centroid
+remove triangles when removing edges 
 undo
-stl out
+
 environment lighting
 show only edges connecting vertices with coordination number n
 from face description to half edge
-
+documentation (japanese too)
 
 
 torus: 48v 144e 96f

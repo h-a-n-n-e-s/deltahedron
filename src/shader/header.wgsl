@@ -4,12 +4,12 @@ const DEQUANTIZE_FACTOR = 1.0/2097152.0;
 struct GlobalParameter {
   ballCount: u32,
   rodCount: u32,
+  triangleCount: u32,
   timeStep: f32,
-  gravity: f32,
   mouseRay: vec3f,
   mouseChanged: f32,
   eye: vec3f,
-  empty: u32
+  gravity: f32
 }
 
 struct Object {
