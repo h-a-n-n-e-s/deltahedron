@@ -1,6 +1,5 @@
+ray triangle intersection
 stl out
-counter
-subdivide faces
 merge vertices
 equilibrium acceleration algorithm
 smoothing algo

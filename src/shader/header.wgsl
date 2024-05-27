@@ -9,7 +9,11 @@ struct GlobalParameter {
   mouseRay: vec3f,
   mouseChanged: f32,
   eye: vec3f,
-  gravity: f32
+  gravity: f32,
+  newBallRodIndex: u32,
+  empty1: i32,
+  empty2: i32,
+  empty3: i32
 }
 
 struct Object {

@@ -24,6 +24,12 @@ hideFacesButton.onPush(() => ballPark.hideFaces(hideFacesButton.on));
 const hideScaffoldButton = new SwitchButton('hide scaffold', true);
 hideScaffoldButton.onPush(() => ballPark.hideBallsAndRods(hideScaffoldButton.on));
 
+const subdivideButton = new PushButton('subdivide', true);
+subdivideButton.onPush(() => {
+  // if(confirm('Are you sure you want to subdivide?'))
+    ballPark.startSubdivide(true);
+});
+
 const erasseAllButton = new PushButton('erase all', true);
 erasseAllButton.onPush(() => {
   if(confirm('Are you sure you want to erase this structure? If not you should save it first.'))

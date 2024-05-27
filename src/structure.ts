@@ -267,9 +267,11 @@ export class Structure {
     
     l = this.halfEdges[4*nb+3];
     this.changeCoordinationNumberAndColor(l, 1);
+    const vertexB = l;
     
     l = this.halfEdges[4*nd+3];
     this.changeCoordinationNumberAndColor(l, 1);
+    const vertexD = l;
 
     l = this.balls.count;
     this.createBall(l, this.rods.data.slice(rodIndex*q,rodIndex*q+3));
@@ -292,6 +294,7 @@ export class Structure {
 
     // console.log(this.halfEdges.slice(0, 8*this.rods.count));
     
+    return [vertexB, vertexD];
   }
 
   flipEdge(rodIndex:number) {

@@ -60,6 +60,10 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   atomicAdd(&velocityUpdate[3 * k    ], i32(-velocity.x * QUANTIZE_FACTOR));
   atomicAdd(&velocityUpdate[3 * k + 1], i32(-velocity.y * QUANTIZE_FACTOR));
   atomicAdd(&velocityUpdate[3 * k + 2], i32(-velocity.z * QUANTIZE_FACTOR));
+
+  if i == global.newBallRodIndex {
+    balls[global.ballCount].position = rods[i].position;
+  }
 }
 
 fn quaternionFromDirection(v:vec3f) -> vec4f {

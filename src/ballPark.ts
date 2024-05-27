@@ -15,9 +15,9 @@ export class BallPark {
   freeze = false;
   rotate = false;
 
-  maxEdgeCount = 1000;
-  maxVertexCount = 1000;
-  maxFaceCount = 1000;
+  maxEdgeCount = 1e4;
+  maxVertexCount = 1e4;
+  maxFaceCount = 1e4;
 
   deltahedron!: Structure;
 
@@ -26,6 +26,9 @@ export class BallPark {
   add = false;
   flip = false;
   remove = false;
+  subdivide = false;
+
+  updateTriangleCountDisplay!: () => void;
 
   async initialize() {
 
@@ -61,11 +64,17 @@ export class BallPark {
 
     camera.mouseInteraction(render.getCanvas());
 
-    // frames per second counter
+    // display
 
     const divFps = document.createElement('div');
     divFps.id = 'fps';
     document.body.appendChild(divFps);
+
+    const divTriangleCount = document.createElement('div');
+    divTriangleCount.id = 'triangleCount';
+    document.body.appendChild(divTriangleCount);
+    this.updateTriangleCountDisplay = () => divTriangleCount.innerHTML = triangles.count.toFixed() + ' triangles';
+    this.updateTriangleCountDisplay();
 
     let i = 0
     let time = Date.now();
@@ -75,60 +84,88 @@ export class BallPark {
 
     let checkSelection = false;
 
+    let initEdgeCount:number;
+    let initVertexCount:number;
+    let s = 0;
+    const flipList:Array<number> = [];
+
     const loop = async () => {
 
-      if (!this.freeze) {
-
-        if (camera.mouseCoords.haveChanged) {
-          camera.mouseCoords.haveChanged = false;
-          checkSelection = true;
-          this.compute.setMouseRayAndEye(camera.getMouseRay(), camera.getEye())
-        }
-        
-        /////////////////////////////////////////////////////////////
-        const commandEncoder = gpuDevice.createCommandEncoder();
-
-        // if (!slowmo)
-        this.compute.integration(commandEncoder, balls.count, rods.count, triangles.count);
-
-        render.render(camera, commandEncoder);
-
-        gpuDevice.queue.submit([commandEncoder.finish()]);
-        /////////////////////////////////////////////////////////////
-        
-        if (this.rotate) camera.raiseAzimuth();
-
-        if (checkSelection) {
-
-          await this.compute.workDone(); // wait for min distance
-          this.compute.depthTest(rods.count);
-          const out = await this.compute.getOutBuffer(); // get edge index
-          const selectedEdgeIndex = out[1];
-
-          if (selectedEdgeIndex !== -1) { // edge selected
-            // console.log('e', selectedEdgeIndex);
-            
-            if (this.add)
-              this.deltahedron.addVertex(selectedEdgeIndex);
-            else if (this.flip)
-              this.deltahedron.flipEdge(selectedEdgeIndex);
-            else if (this.remove)
-              this.deltahedron.removeEdge(selectedEdgeIndex);
-           
-            // this.compute.setTimeAndSubStep(0.001, 1);
-            // slowmo = true;
-            // setTimeout(() => {endSlowmo = true;}, 1000);
-          }
-          checkSelection = false;
-          this.compute.makeMouseCoordsOldNews();
-        }
-        
-        // if (slowmo && endSlowmo) {
-        //   this.compute.setTimeAndSubStep(0.05, 1);
-        //   slowmo = false;
-        //   endSlowmo = false;
-        // }
+      if (camera.mouseCoords.haveChanged) {
+        camera.mouseCoords.haveChanged = false;
+        checkSelection = true;
+        this.compute.setMouseRayAndEye(camera.getMouseRay(), camera.getEye())
       }
+      
+      /////////////////////////////////////////////////////////////
+      const commandEncoder = gpuDevice.createCommandEncoder();
+
+      // if (!slowmo)
+      this.compute.integration(commandEncoder, balls.count, rods.count, triangles.count);
+
+      render.render(camera, commandEncoder);
+
+      gpuDevice.queue.submit([commandEncoder.finish()]);
+      /////////////////////////////////////////////////////////////
+      
+      if (this.rotate) camera.raiseAzimuth();
+
+      if (checkSelection) {
+
+        await this.compute.workDone(); // wait for min distance
+        this.compute.depthTest(rods.count);
+        const out = await this.compute.getOutBuffer(); // get edge index
+        const selectedEdgeIndex = out[1];
+
+        if (selectedEdgeIndex !== -1) { // edge selected
+          // console.log('e', selectedEdgeIndex);
+          
+          if (this.add)
+            this.deltahedron.addVertex(selectedEdgeIndex);
+          else if (this.flip)
+            this.deltahedron.flipEdge(selectedEdgeIndex);
+          else if (this.remove)
+            this.deltahedron.removeEdge(selectedEdgeIndex);
+          
+          this.updateTriangleCountDisplay();
+
+          // this.compute.setTimeAndSubStep(0.001, 1);
+          // slowmo = true;
+          // setTimeout(() => {endSlowmo = true;}, 1000);
+        }
+        checkSelection = false;
+        this.compute.makeMouseCoordsOldNews();
+      }
+      
+      if (this.subdivide) {
+        if (s === 0) {
+          initEdgeCount = rods.count;
+          initVertexCount = balls.count;
+        }
+
+        if (s < initEdgeCount) {
+          this.compute.setNewBallRodIndex(s);
+          const [vB, vD] = this.deltahedron.addVertex(s);
+          if (vB < initVertexCount) flipList.push(rods.count-3);
+          if (vD < initVertexCount) flipList.push(rods.count-1);
+          s++;
+          this.updateTriangleCountDisplay();
+        }
+
+        if (s === initEdgeCount) {
+          this.deltahedron.flipEdge(flipList.pop() as number);
+          if (flipList.length === 0) {
+            this.subdivide = false;
+            s = 0;
+          }
+        }
+      }
+
+      // if (slowmo && endSlowmo) {
+      //   this.compute.setTimeAndSubStep(0.05, 1);
+      //   slowmo = false;
+      //   endSlowmo = false;
+      // }
 
       // calculate fps every frameIntegration frames
       i++;
@@ -138,12 +175,7 @@ export class BallPark {
         time = Date.now();
         divFps.innerHTML = fps.toFixed() + ' fps';
 
-        // const origin = balls.data.slice(0,3);
-        // console.log(vec3.triple(
-        //   vec3.subtract(balls.data.slice(  q,  q+3), origin),
-        //   vec3.subtract(balls.data.slice(2*q,2*q+3), origin),
-        //   vec3.subtract(balls.data.slice(3*q,3*q+3), origin)
-        // ));
+        
       }
 
       requestAnimationFrame(loop);
@@ -162,6 +194,8 @@ export class BallPark {
   addVertex(add:boolean) {this.add = add;}
   flipEdges(flip:boolean) {this.flip = flip;}
   removeEdges(remove:boolean) {this.remove = remove;}
+  startSubdivide(sub:boolean) {this.subdivide = sub;}
+
   async saveData() {await this.deltahedron.saveData();}
 
   setData = (heData:Uint32Array, posData?:Float32Array) => {
@@ -172,6 +206,7 @@ export class BallPark {
     this.compute.setTriangleIndexBuffer(triangles.mesh.indices);
     this.compute.setHalfEdgeBuffer(halfEdges);
     this.compute.setCount(balls.count, rods.count, triangles.count);
+    this.updateTriangleCountDisplay();
   }
 
   loadData = async () => {

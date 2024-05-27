@@ -50,7 +50,7 @@ export class Compute {
     // buffers ////////////////////////////////////////////
 
     this.globalParameterBuffer = this.device.createBuffer({
-      size: 4*12,
+      size: 4*16,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC
     });
     this.setTimeAndSubStep(timeStep, subSteps);
@@ -242,6 +242,10 @@ export class Compute {
     ]));
   };
   
+  setNewBallRodIndex = (index:number) => {
+    this.device.queue.writeBuffer(this.globalParameterBuffer, 48, new Int32Array([index]));
+  };
+
   setGravity = (g:number) =>
     this.device.queue.writeBuffer(this.globalParameterBuffer, 44, new Float32Array([g]));
 

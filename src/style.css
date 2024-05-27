@@ -45,44 +45,23 @@ body {
   outline: none;
 }
 
-#fps {
+#fps, #triangleCount {
   position:absolute;
   text-align:right;
-  top:10px;
   right:10px;
+  height:22px;
+  user-select: none;
+  /* background-color: #077; */
+}
+#fps {
+  top: 10px;
   width:80px;
-  height:22px;
-  user-select: none;
-  /* background-color: #077; */
 }
-#info {
-  position:absolute;
-  text-align:right;
-  bottom:5px;
-  right:5px;
-  width:100px;
-  height:16px;
-  font-size:12px;
-  user-select: none;
-  /* background-color: #077; */
-}
-#noteDisplay {
-  position:absolute;
-  text-align:left;
-  top:10px;
-  right:10px; /*100px*/
-  width:40px;
-  height:22px;
-  /* background-color: #070; */
+#triangleCount {
+  bottom:10px;
+  width:160px;
 }
 
-#sliderDiv, #sliderDiv2 {
-  position: absolute;
-  top: 62px;
-  width: 500px;
-}
-#sliderDiv { left: 10px; }
-#sliderDiv2 { right: 10px; }
 
 button {
   position: absolute;
@@ -196,8 +175,9 @@ svg > path {
   position: absolute;
   top: 10px;
 }
-#gravitySlider {left: 590px;}
+#gravitySlider {left: 700px;}
 
 #addRadioBut {left: 10px; top:42px;}
 #flipRadioBut {left: 60px; top:42px;}
 #removeRadioBut {left: 120px; top:42px;}
+#subdivideRadioBut {left: 200px; top:42px;}
