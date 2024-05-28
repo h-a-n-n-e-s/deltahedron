@@ -1,7 +1,6 @@
-ray triangle intersection
-stl out
 merge vertices
 equilibrium acceleration algorithm
+flat faces limit
 smoothing algo
 newton
 centroid

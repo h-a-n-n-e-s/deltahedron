@@ -18,14 +18,14 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   var newBall = a;
 
   // mouse pick test
-  if global.mouseChanged > 0 {
+  if global.mouseChanged > 0 && global.ballsVisible == 1 {
 
     let distance = raySphereIntersection(global, newBall);
 
     if distance > 0 {
       // newBall.color = vec4f(0,0,0,1);
-      newBall.prop3 = i32(distance * QUANTIZE_FACTOR);
-      atomicMin(&out[0], newBall.prop3);
+      // newBall.prop3 = i32(distance * QUANTIZE_FACTOR);
+      atomicMin(&out[0], i32(distance * QUANTIZE_FACTOR));
     }
     else {
       newBall.prop3 = -1;

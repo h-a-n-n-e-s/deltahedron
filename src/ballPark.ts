@@ -58,6 +58,9 @@ export class BallPark {
     this.compute.setHalfEdgeBuffer(halfEdges);
     this.compute.setCount(balls.count, rods.count, triangles.count);
 
+    this.compute.setBallsAndRodsVisibility(balls.visible, rods.visible);
+    this.compute.setTrianglesVisibility(true);
+
     const render = new Render(gpuDevice, 'canvas', camera, [balls, rods, triangles]);
 
     // interaction
@@ -197,6 +200,7 @@ export class BallPark {
   startSubdivide(sub:boolean) {this.subdivide = sub;}
 
   async saveData() {await this.deltahedron.saveData();}
+  async exportSTL() {await this.deltahedron.exportSTL();}
 
   setData = (heData:Uint32Array, posData?:Float32Array) => {
     const [balls, rods, triangles, halfEdges] = 

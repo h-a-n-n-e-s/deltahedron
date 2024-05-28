@@ -1,7 +1,7 @@
 // routines from "Real-Time Collision Detection" by Christer Ericson
 // return -1 means no intersection
 
-fn raySphereIntersection(global:GlobalParameter, obj:Object) -> f32{
+fn raySphereIntersection(global:GlobalParameter, obj:Object) -> f32 {
 
   let m = global.eye - obj.position;
   let b = dot(m, global.mouseRay);
@@ -73,4 +73,24 @@ fn rayCylinderIntersection(global:GlobalParameter, obj:Object) -> f32 {
   }
 
   return t0;
+}
+
+fn rayTriangleIntersection(global:GlobalParameter, a:vec3f, b:vec3f, c:vec3f) -> f32 {
+
+  let m = cross(global.mouseRay, global.eye);
+  let s = dot(m, c - b);
+  let t = dot(m, a - c);
+  
+  let u = dot(global.mouseRay, cross(c, b)) + s;
+  if u < 0 {return -1;}
+  let v = dot(global.mouseRay, cross(a, c)) + t;
+  if v < 0 {return -1;}
+  let w = dot(global.mouseRay, cross(b, a)) - s - t;
+  if w < 0 {return -1;}
+
+  let d = 1.0 / (u + v + w);
+
+  let intersectionPoint = a * u * d + b * v * d + c * w * d;
+
+  return length(intersectionPoint - global.eye);
 }

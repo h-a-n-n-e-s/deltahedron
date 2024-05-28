@@ -31,7 +31,7 @@ export class Compute {
   private triangleNormalBuffer!: GPUBuffer;
   private triangleIndexBuffer!: GPUBuffer;
   private stagingOutBuffer!: GPUBuffer;
-  private stagingBallsBuffer!: GPUBuffer;
+  private stagingBuffer!: GPUBuffer;
 
   initialize = async (objects:Array<Object>, timeStep:number, subSteps:number) => {
 
@@ -91,11 +91,6 @@ export class Compute {
       usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
     });
 
-    this.stagingBallsBuffer = this.device.createBuffer({
-      size: this.ballsBuffer.size,
-      usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
-    });
-
     this.resetOutBuffer();
 
     // triangle buffers
@@ -109,7 +104,7 @@ export class Compute {
 
     this.triangleVertexBuffer = this.device.createBuffer({
       size: triangles.maxCount*9 * 4,
-      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_SRC
     });
 
     this.triangleNormalBuffer = this.device.createBuffer({
@@ -119,7 +114,7 @@ export class Compute {
 
     this.triangleIndexBuffer = this.device.createBuffer({
       size: triangles.maxCount*3 * 4,
-      usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.STORAGE
+      usage:  GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
     });
     this.device.queue.writeBuffer(this.triangleIndexBuffer, 0, triangles.mesh.indices);
 
@@ -132,6 +127,12 @@ export class Compute {
     this.device.queue.writeBuffer(indexBuffer, 0, ind);
 
     triangles.meshBuffers = {vertexBuffer:this.triangleVertexBuffer, normalBuffer:this.triangleNormalBuffer, indexBuffer:indexBuffer};
+
+    // general staging buffer
+    this.stagingBuffer = this.device.createBuffer({
+      size: Math.max(this.ballsBuffer.size, this.triangleVertexBuffer.size),
+      usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
+    });
 
     // bindgroups and pipelines
 
@@ -153,7 +154,7 @@ export class Compute {
 
     this.ballsPipeline = this.createCompPipe(pipelineLayout, header+intersection+ballsShader);
     this.rodsPipeline = this.createCompPipe(pipelineLayout, header+intersection+rodsShader);
-    this.trianglesPipeline = this.createCompPipe(pipelineLayout, header+trianglesShader);
+    this.trianglesPipeline = this.createCompPipe(pipelineLayout, header+intersection+trianglesShader);
     this.selectionDepthPipeline = this.createCompPipe(pipelineLayout, header+intersection+selectionDepth);
 
     this.bindGroup = this.device.createBindGroup({
@@ -205,16 +206,22 @@ export class Compute {
     this.device.queue.writeBuffer(this.outBuffer, 0, new Int32Array([2147483647, -1]));
   }
 
-  getBallsBuffer = async () => {
-    this.stagingBallsBuffer.unmap();
+  getBuffer = async (bufferName:string) => {
+    
+    let buffer;
+    if (bufferName === 'balls') buffer = this.ballsBuffer;
+    else if (bufferName === 'triangles') buffer = this.triangleVertexBuffer;
+    else throw new Error('no buffer');
+    
+    this.stagingBuffer.unmap();
 
     const encoder = this.device.createCommandEncoder();
-    encoder.copyBufferToBuffer(this.ballsBuffer, 0, this.stagingBallsBuffer, 0, this.ballsBuffer.size);
+    encoder.copyBufferToBuffer(buffer, 0, this.stagingBuffer, 0, buffer.size);
     this.device.queue.submit([encoder.finish()]);
 
-    await this.stagingBallsBuffer.mapAsync(GPUMapMode.READ);
+    await this.stagingBuffer.mapAsync(GPUMapMode.READ);
     
-    return new Float32Array(this.stagingBallsBuffer.getMappedRange());  
+    return new Float32Array(this.stagingBuffer.getMappedRange());
   }
 
   createCompPipe = (layout:GPUPipelineLayout, code:string, constants={}, entry='main') => {
@@ -274,6 +281,12 @@ export class Compute {
     this.device.queue.writeBuffer(this.triangleIndexBuffer, 0, indexArray)
   }
 
+  setBallsAndRodsVisibility = (ballsVisible:boolean, rodsVisible:boolean) =>
+    this.device.queue.writeBuffer(this.globalParameterBuffer, 52, new Uint32Array([ballsVisible ? 1 : 0, rodsVisible ? 1 : 0]));
+
+  setTrianglesVisibility = (visible:boolean) =>
+    this.device.queue.writeBuffer(this.globalParameterBuffer, 60, new Uint32Array([visible ? 1 : 0]));
+  
   setMouseRayAndEye = (ray:Float32Array, eye:Float32Array) => {
     this.device.queue.writeBuffer(this.globalParameterBuffer, 16, ray);
     this.device.queue.writeBuffer(this.globalParameterBuffer, 28, new Float32Array([1]));

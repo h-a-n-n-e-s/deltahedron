@@ -11,9 +11,9 @@ struct GlobalParameter {
   eye: vec3f,
   gravity: f32,
   newBallRodIndex: u32,
-  empty1: i32,
-  empty2: i32,
-  empty3: i32
+  ballsVisible: u32,
+  rodsVisible: u32,
+  trianglesVisible: u32
 }
 
 struct Object {

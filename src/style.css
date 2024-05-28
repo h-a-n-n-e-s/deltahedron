@@ -173,9 +173,9 @@ svg > path {
 
 #gravitySlider {
   position: absolute;
-  top: 10px;
+  top: 42px;
 }
-#gravitySlider {left: 700px;}
+#gravitySlider {left: 200px;}
 
 #addRadioBut {left: 10px; top:42px;}
 #flipRadioBut {left: 60px; top:42px;}

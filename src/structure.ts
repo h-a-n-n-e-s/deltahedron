@@ -1,6 +1,6 @@
 import { q } from "./ballPark";
 import { Compute } from "./compute";
-import { saveBinary } from "./io";
+import { exportSTL, saveBinary } from "./io";
 import { Mesh, MeshBuffers, cylinderMesh, icoSphereMesh } from "./mesh";
 
 export interface Object {
@@ -371,7 +371,7 @@ export class Structure {
     const floatCount = this.balls.count*3;
 
     // vertex positions
-    const b = await this.compute.getBallsBuffer();
+    const b = await this.compute.getBuffer('balls');
     const p = new Float32Array(floatCount);
     for (let i=0; i<this.balls.count; i++)
       p.set(b.slice(q*i,q*i+3),3*i);
@@ -390,11 +390,20 @@ export class Structure {
     console.log(this.rods.count+' edges and '+this.balls.count+' vertices saved to file.');
   }
 
-  hideFaces = (areHidden:boolean) =>
+  async exportSTL() {
+    const v = await this.compute.getBuffer('triangles');
+    exportSTL(v.slice(0,9*this.triangles.count));
+    console.log(this.triangles.count+' triangles exported.');
+  }
+
+  hideFaces = (areHidden:boolean) => {
     this.triangles.visible = !areHidden;
+    this.compute.setTrianglesVisibility(!areHidden);
+  }
 
   hideBallsAndRods = (areHidden:boolean) => {
     this.balls.visible = !areHidden;
     this.rods.visible = !areHidden;
+    this.compute.setBallsAndRodsVisibility(!areHidden, !areHidden);
   }
 }

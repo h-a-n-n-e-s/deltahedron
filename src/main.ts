@@ -30,11 +30,18 @@ subdivideButton.onPush(() => {
     ballPark.startSubdivide(true);
 });
 
-const erasseAllButton = new PushButton('erase all', true);
-erasseAllButton.onPush(() => {
+const eraseAllButton = new PushButton('erase all', true);
+eraseAllButton.onPush(() => {
   if(confirm('Are you sure you want to erase this structure? If not you should save it first.'))
     ballPark.loadTetrahedron();
 });
+
+const exportSTLButton = new PushButton('export STL', true);
+exportSTLButton.onPush(async () => await ballPark.exportSTL());
+
+const gravitySlider = new InfoSlider(0, 10, 1, 1, 'inflation: ', 0, '', 200, document.body);
+gravitySlider.onSlide(() => ballPark.setGravity(gravitySlider.value));
+gravitySlider.setId('gravitySlider');
 
 const operationButtons = new RadioButton([
   {name:'add', func:(on) => ballPark.addVertex(on)},
@@ -42,10 +49,6 @@ const operationButtons = new RadioButton([
   {name:'remove', func:(on) => ballPark.removeEdges(on)},
 ], false);
 operationButtons.click(0); // activate 'add' button
-
-const gravitySlider = new InfoSlider(0, 10, 1, 1, 'inflation: ', 0, '', 200, document.body);
-gravitySlider.onSlide(() => ballPark.setGravity(gravitySlider.value));
-gravitySlider.setId('gravitySlider');
 
 await ballPark.initialize();
 ballPark.setGravity(gravitySlider.value);

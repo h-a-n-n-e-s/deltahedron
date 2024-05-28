@@ -32,7 +32,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   let velocity = (d - lenab) * nor;
 
   // mouse pick test
-  if global.mouseChanged > 0 {
+  if global.mouseChanged > 0 && global.rodsVisible == 1 {
 
     // for factor 1000 see intersection.wgsl l.28 
     let distance = 1000 * rayCylinderIntersection(global, rods[i]);
