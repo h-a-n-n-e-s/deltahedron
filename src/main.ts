@@ -46,7 +46,7 @@ gravitySlider.setId('gravitySlider');
 const operationButtons = new RadioButton([
   {name:'add', func:(on) => ballPark.addVertex(on)},
   {name:'flip', func:(on) => ballPark.flipEdges(on)},
-  {name:'remove', func:(on) => ballPark.removeEdges(on)},
+  {name:'collapse', func:(on) => ballPark.collapseEdges(on)},
 ], false);
 operationButtons.click(0); // activate 'add' button
 

@@ -25,6 +25,7 @@ export class BallPark {
 
   add = false;
   flip = false;
+  collapse = false;
   remove = false;
   subdivide = false;
 
@@ -127,8 +128,10 @@ export class BallPark {
             this.deltahedron.addVertex(selectedEdgeIndex);
           else if (this.flip)
             this.deltahedron.flipEdge(selectedEdgeIndex);
-          else if (this.remove)
-            this.deltahedron.removeEdge(selectedEdgeIndex);
+          else if (this.collapse)
+            this.deltahedron.collapseEdge(selectedEdgeIndex);
+          // else if (this.remove)
+          //   this.deltahedron.removeEdge(selectedEdgeIndex);
           
           this.updateTriangleCountDisplay();
 
@@ -196,6 +199,7 @@ export class BallPark {
 
   addVertex(add:boolean) {this.add = add;}
   flipEdges(flip:boolean) {this.flip = flip;}
+  collapseEdges(collapse:boolean) {this.collapse = collapse;}
   removeEdges(remove:boolean) {this.remove = remove;}
   startSubdivide(sub:boolean) {this.subdivide = sub;}
 

@@ -130,6 +130,33 @@ export class Structure {
     this.balls.data.set([coordinationNumber], index*q+19); // pro4 used for coordinationNumber
   }
 
+  getRodIndex = (halfEdgeIndex:number) =>
+    halfEdgeIndex%2 === 0 ? halfEdgeIndex/2 : (halfEdgeIndex-1)/2;
+
+  getTwinHalfEdge = (index:number) =>
+    index%2 === 0 ? index + 1 : index - 1;
+
+  copyHalfEdge = (sourceIndex:number, targetIndex:number) => {
+    if (sourceIndex !== targetIndex)
+      this.halfEdges.set(
+        this.halfEdges.slice(4*sourceIndex, 4*sourceIndex+4),
+        4*targetIndex
+      );
+  }
+
+  moveWholeEdge = (sourceIndex:number, targetIndex:number) => {
+    const a = 2*sourceIndex;
+    const b = a + 1;
+    const c = 2*targetIndex;
+    const d = c + 1;
+    this.copyHalfEdge(a, c);
+    this.copyHalfEdge(b, d);
+    this.halfEdges[4*this.halfEdges[4*c+1]+2] = c;
+    this.halfEdges[4*this.halfEdges[4*c+2]+1] = c;
+    this.halfEdges[4*this.halfEdges[4*d+1]+2] = d;
+    this.halfEdges[4*this.halfEdges[4*d+2]+1] = d;
+  }
+
   connectionsToColor = (coordinationNumber:number) => {
     if (coordinationNumber === 3) return [1,0,1, 1]
     else if (coordinationNumber === 4) return [0,0,1, 1];
@@ -334,6 +361,50 @@ export class Structure {
     this.setFace(this.halfEdges[4*cd], cd, ca, bc);
 
     this.compute.setTriangleIndexBuffer(this.triangles.mesh.indices);
+    this.compute.setHalfEdgeBuffer(this.halfEdges);
+  }
+
+  collapseEdge(rodIndex:number) {
+    const ac = 2*rodIndex;
+    const ca = ac+1;
+    const ab = this.halfEdges[4*ca+2];
+    const bc = this.halfEdges[4*ca+1];
+    const cd = this.halfEdges[4*ac+2];
+    const da = this.halfEdges[4*ac+1];
+    // const ba = this.getTwinHalfEdge(ab);
+    const cb = this.getTwinHalfEdge(bc);
+    const dc = this.getTwinHalfEdge(cd);
+    // const ad = this.getTwinHalfEdge(da);
+
+    // reset vertex
+    const vertexA = this.halfEdges[4*da+3];
+    let i = dc;
+    let j = -1;
+    while (j !== cb) {
+      this.halfEdges[4*i+3] = vertexA;
+      j = this.halfEdges[4*i+2];
+      i = this.getTwinHalfEdge(j);
+    }
+    // relocation in memory
+
+    // reset edges
+    this.copyHalfEdge(dc, da);
+    this.copyHalfEdge(cb, ab);
+    // relocation in memory
+    this.moveWholeEdge(this.rods.count-1, this.getRodIndex(dc));
+    this.rods.count--;
+    this.moveWholeEdge(this.rods.count-1, this.getRodIndex(cb));
+    this.rods.count--;
+    this.moveWholeEdge(this.rods.count-1, this.getRodIndex(ac));
+    this.rods.count--;
+
+
+    // reset faces
+
+    // color
+    this.changeCoordinationNumberAndColor(this.halfEdges[4*cb+3], -1);
+    this.changeCoordinationNumberAndColor(this.halfEdges[4*cd+3], -1);
+
     this.compute.setHalfEdgeBuffer(this.halfEdges);
   }
 

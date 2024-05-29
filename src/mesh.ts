@@ -294,18 +294,18 @@ export const icosahedronEdges = new Uint32Array([
 ]);
 
 export const tetrahedronHalfEdges = new Uint32Array([
-  1, 4, 2, 0,
+  0, 4, 2, 0,
   0, 6, 8, 1,
-  3, 0, 4, 2,
-  2,10, 7, 0,
-  5, 2, 0, 1,
-  4, 9,11, 2,
-  7, 8, 1, 0,
-  6, 3,10, 3,
-  9, 1, 6, 3,
-  8,11, 5, 1,
- 11, 7, 3, 2,
- 10, 5, 9, 3
+  0, 0, 4, 2,
+  0,10, 7, 0,
+  0, 2, 0, 1,
+  0, 9,11, 2,
+  0, 8, 1, 0,
+  0, 3,10, 3,
+  0, 1, 6, 3,
+  0,11, 5, 1,
+  0, 7, 3, 2,
+  0, 5, 9, 3
 ]);
 
 export const tetrahedronVertexPositions = new Float32Array([
@@ -322,13 +322,6 @@ export const torusHalfEdges = () => {
   for (let i=0; i<4; i++) {
     const v = 12 * i;
     const e = 72 * i;
-    
-    // twin
-    // for (let j=0; j<36; j++) {
-    //   const o = e+2*j;
-    //   h[4*o] = o+1;
-    //   h[4*(o+1)] = o; 
-    // }
 
     const previous = new Int32Array([
       -14, 24,-10, 11, -6, 13, -2, 17,  1, 18,
