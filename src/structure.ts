@@ -20,6 +20,7 @@ export class Structure {
   private rods: Object;
   private triangles: Object;
   private halfEdges: Uint32Array;
+  private vertexEdgeMap: Uint32Array;
 
   private ballRadius: number;
   private cylinderRadius: number;
@@ -36,6 +37,7 @@ export class Structure {
     this.cylinderLength = cylinderLength;
 
     this.halfEdges = new Uint32Array(8*maxEdgeCount);
+    this.vertexEdgeMap = new Uint32Array(maxVertexCount);
 
     this.balls = {
       data: new Float32Array(maxVertexCount * q),
@@ -72,8 +74,9 @@ export class Structure {
   init(halfEdgesInit:Uint32Array, vertexPositions?:Float32Array) {
 
     this.halfEdges = new Uint32Array(this.halfEdges.length);
-
     this.halfEdges.set(halfEdgesInit);
+
+    this.vertexEdgeMap = new Uint32Array(this.vertexEdgeMap.length);
     
     this.balls.data = new Float32Array(this.balls.maxCount * q);
 
@@ -88,7 +91,7 @@ export class Structure {
 
     for (let i=0; i<this.balls.count; i++) {
       this.createBall(i, p.slice(3*i,3*i+3));
-      const coordinationNumber = this.vertexEdgeCount(halfEdgesInit, i);
+      const coordinationNumber = this.vertexCoordinationCount(halfEdgesInit, i);
       this.setCoordinationNumber(i, coordinationNumber);
       this.setColor(i, this.connectionsToColor(coordinationNumber));
     }
@@ -100,6 +103,8 @@ export class Structure {
     this.triangles.data.set([1], 3); // size
     this.triangles.data.set([.8, .7, .5, 1], 8); // color
 
+    console.log(this.vertexEdgeMap);
+    
     return [this.balls, this.rods, this.triangles, this.halfEdges] as [Object, Object, Object, Uint32Array];
   }
 
@@ -126,6 +131,10 @@ export class Structure {
     this.balls.data.set(color, index*q+8);
   }
 
+  // setBallHalfEdge(index:number, halfEdgeIndex:number) {
+  //   this.balls.data.set([halfEdgeIndex], index*q+15);
+  // }
+
   setCoordinationNumber(index:number, coordinationNumber:number) {
     this.balls.data.set([coordinationNumber], index*q+19); // pro4 used for coordinationNumber
   }
@@ -136,18 +145,18 @@ export class Structure {
   getTwinHalfEdge = (index:number) =>
     index%2 === 0 ? index + 1 : index - 1;
 
-  copyHalfEdge = (sourceIndex:number, targetIndex:number) => {
-    if (sourceIndex !== targetIndex)
+  copyHalfEdge = (sourceIndex:number, destinationIndex:number) => {
+    if (sourceIndex !== destinationIndex)
       this.halfEdges.set(
         this.halfEdges.slice(4*sourceIndex, 4*sourceIndex+4),
-        4*targetIndex
+        4*destinationIndex
       );
   }
 
-  moveWholeEdge = (sourceIndex:number, targetIndex:number) => {
+  moveWholeEdge = (sourceIndex:number, destinationIndex:number) => {
     const a = 2*sourceIndex;
     const b = a + 1;
-    const c = 2*targetIndex;
+    const c = 2*destinationIndex;
     const d = c + 1;
     this.copyHalfEdge(a, c);
     this.copyHalfEdge(b, d);
@@ -172,7 +181,7 @@ export class Structure {
     let prevCoordinationNumber = this.balls.data[q*index+19];
     this.setCoordinationNumber(index, prevCoordinationNumber+diff);
     this.setColor(index, this.connectionsToColor(prevCoordinationNumber+diff));
-    this.compute.setBallsBuffer(index, this.balls.data.slice(q*index,q*index+q));
+    this.compute.setBallsBuffer(index, this.balls.data.slice(q*index,q*index+q), false);
   }
 
   vertexCount = (halfEdges:Uint32Array) => {
@@ -185,11 +194,14 @@ export class Structure {
     return count + 1;
   }
 
-  vertexEdgeCount = (halfEdges:Uint32Array, vertexIndex:number) => {
+  vertexCoordinationCount = (halfEdges:Uint32Array, vertexIndex:number) => {
     let count = 0;
     for(let i=0; i<halfEdges.length/4; ++i){
-      if(halfEdges[4*i+3] === vertexIndex)
-      count++;
+      const index = halfEdges[4*i+3];
+      if(index === vertexIndex) {
+        if (count === 0) this.vertexEdgeMap[vertexIndex] = i;
+        count++;
+      }
     }
     return count;
   }
@@ -304,7 +316,8 @@ export class Structure {
     this.createBall(l, this.rods.data.slice(rodIndex*q,rodIndex*q+3));
     this.setCoordinationNumber(l, 4);
     this.setColor(l, this.connectionsToColor(4));
-    this.compute.setBallsBuffer(l, this.balls.data.slice(q*l,q*l+q));
+    this.vertexEdgeMap[l] = bn;
+    this.compute.setBallsBuffer(l, this.balls.data.slice(q*l,q*l+q), false);
     this.balls.count++;
 
     // faces
@@ -347,8 +360,16 @@ export class Structure {
     this.halfEdges[4*ca+2] = bc;
 
     // vertex pointer
-    this.halfEdges[4*ac+3] = this.halfEdges[4*cd+3];
-    this.halfEdges[4*ca+3] = this.halfEdges[4*ab+3];
+    const vertexA = this.halfEdges[4*da+3];
+    const vertexB = this.halfEdges[4*ab+3];
+    const vertexC = this.halfEdges[4*bc+3];
+    const vertexD = this.halfEdges[4*cd+3];
+    this.halfEdges[4*ac+3] = vertexD;
+    this.halfEdges[4*ca+3] = vertexB;
+    this.vertexEdgeMap[vertexA] = da;
+    this.vertexEdgeMap[vertexB] = ab;
+    this.vertexEdgeMap[vertexC] = bc;
+    this.vertexEdgeMap[vertexD] = cd;
 
     // color
     this.changeCoordinationNumberAndColor(this.halfEdges[4*da+3], -1);
@@ -378,14 +399,25 @@ export class Structure {
 
     // reset vertex
     const vertexA = this.halfEdges[4*da+3];
+    this.changeCoordinationNumberAndColor(vertexA, -1);
     let i = dc;
-    let j = -1;
+    let j = this.halfEdges[4*i+2];
     while (j !== cb) {
       this.halfEdges[4*i+3] = vertexA;
+      this.changeCoordinationNumberAndColor(vertexA, 1);
       j = this.halfEdges[4*i+2];
       i = this.getTwinHalfEdge(j);
     }
+    this.changeCoordinationNumberAndColor(this.halfEdges[4*cb+3], -1); // B
+    this.changeCoordinationNumberAndColor(this.halfEdges[4*cd+3], -1); // D
     // relocation in memory
+    // const vertexC = this.halfEdges[4*bc+3];
+    // const l = this.balls.count-1;
+    // const lastBall = this.balls.data.slice(q*l,q*l+q);
+    // this.balls.data.set(lastBall, q*vertexC);
+    // this.compute.copyBallBuffer(l, vertexC);
+    // this.compute.setBallsBuffer(vertexC, lastBall);
+    // this.balls.count--;
 
     // reset edges
     this.copyHalfEdge(dc, da);
@@ -398,44 +430,40 @@ export class Structure {
     this.moveWholeEdge(this.rods.count-1, this.getRodIndex(ac));
     this.rods.count--;
 
-
     // reset faces
 
-    // color
-    this.changeCoordinationNumberAndColor(this.halfEdges[4*cb+3], -1);
-    this.changeCoordinationNumberAndColor(this.halfEdges[4*cd+3], -1);
-
     this.compute.setHalfEdgeBuffer(this.halfEdges);
+    this.compute.setCount(this.balls.count, this.rods.count, this.triangles.count);
   }
 
-  removeEdge(rodIndex:number) {
-    const ac = 2*rodIndex;
-    const ca = ac+1;
-    const ab = this.halfEdges[4*ca+2];
-    const bc = this.halfEdges[4*ca+1];
-    const cd = this.halfEdges[4*ac+2];
-    const da = this.halfEdges[4*ac+1];
+  // removeEdge(rodIndex:number) {
+  //   const ac = 2*rodIndex;
+  //   const ca = ac+1;
+  //   const ab = this.halfEdges[4*ca+2];
+  //   const bc = this.halfEdges[4*ca+1];
+  //   const cd = this.halfEdges[4*ac+2];
+  //   const da = this.halfEdges[4*ac+1];
 
-    this.halfEdges[4*da+2] = ab;
-    this.halfEdges[4*ab+1] = da;
-    this.halfEdges[4*bc+2] = cd;
-    this.halfEdges[4*cd+1] = bc;
+  //   this.halfEdges[4*da+2] = ab;
+  //   this.halfEdges[4*ab+1] = da;
+  //   this.halfEdges[4*bc+2] = cd;
+  //   this.halfEdges[4*cd+1] = bc;
 
-    // deactivate edge
-    this.halfEdges[4*ac+1] = 0;
-    this.halfEdges[4*ac+2] = 0;
+  //   // deactivate edge
+  //   this.halfEdges[4*ac+1] = 0;
+  //   this.halfEdges[4*ac+2] = 0;
 
-    // color
-    this.changeCoordinationNumberAndColor(this.halfEdges[4*ac+3], -1);
-    this.changeCoordinationNumberAndColor(this.halfEdges[4*ca+3], -1);
+  //   // color
+  //   this.changeCoordinationNumberAndColor(this.halfEdges[4*ac+3], -1);
+  //   this.changeCoordinationNumberAndColor(this.halfEdges[4*ca+3], -1);
 
-    this.compute.setHalfEdgeBuffer(this.halfEdges);
+  //   this.compute.setHalfEdgeBuffer(this.halfEdges);
 
-    // make edge invisible
-    const l = rodIndex;
-    this.rods.data.set([0], l*q+3); // size
-    this.compute.setRodsBuffer(l, this.rods.data.slice(q*l,q*l+q));
-  }
+  //   // make edge invisible
+  //   const l = rodIndex;
+  //   this.rods.data.set([0], l*q+3); // size
+  //   this.compute.setRodsBuffer(l, this.rods.data.slice(q*l,q*l+q));
+  // }
 
   async saveData() {
     const intCount = this.rods.count*8;

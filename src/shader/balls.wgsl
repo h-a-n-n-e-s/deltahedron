@@ -11,8 +11,6 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   let i = global_id.x;
   if i >= global.ballCount {return;}
 
-  let dt = global.timeStep;
-
   let a = balls[i];
 
   var newBall = a;
@@ -54,7 +52,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
     newBall.velocity += repulsionFactor * global.gravity * ab / pow(lenab,2);
   }
 
-  newBall.position += newBall.velocity * dt;
+  newBall.position += newBall.velocity * global.timeStep;
 
   balls[i] = newBall;
 }

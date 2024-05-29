@@ -224,6 +224,12 @@ export class Compute {
     return new Float32Array(this.stagingBuffer.getMappedRange());
   }
 
+  // copyBallBuffer = (sourceIndex:number, destinationIndex:number) => {
+  //   const encoder = this.device.createCommandEncoder();
+  //   encoder.copyBufferToBuffer(this.ballsBuffer, sourceIndex*q*4, this.ballsBuffer, destinationIndex*q*4, q*4);
+  //   this.device.queue.submit([encoder.finish()]);
+  // }
+
   createCompPipe = (layout:GPUPipelineLayout, code:string, constants={}, entry='main') => {
     return this.device.createComputePipeline({
       layout: layout,
@@ -262,10 +268,13 @@ export class Compute {
   setHalfEdgeBuffer = (halfEdges:Uint32Array) =>
     this.device.queue.writeBuffer(this.halfEdgeBuffer, 0, halfEdges);
 
-  setBallsBuffer = (index:number, ball:Float32Array) => {
-    // exclude postion and velocity
-    this.device.queue.writeBuffer(this.ballsBuffer, (index*q+3)*4, ball.slice(3,12));
-    this.device.queue.writeBuffer(this.ballsBuffer, (index*q+15)*4, ball.slice(15,q));
+  setBallsBuffer = (index:number, ball:Float32Array, complete=true) => {
+    if (complete)
+      this.device.queue.writeBuffer(this.ballsBuffer, index*q*4, ball);
+    else { // exclude postion and velocity
+      this.device.queue.writeBuffer(this.ballsBuffer, (index*q+3)*4, ball.slice(3,12));
+      this.device.queue.writeBuffer(this.ballsBuffer, (index*q+15)*4, ball.slice(15,q));
+    }
   }
   
   setRodsBuffer = (index:number, rod:Float32Array) =>
