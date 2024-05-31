@@ -8,11 +8,10 @@
     "build": "tsc && vite build",
     "preview": "vite preview"
   },
-  "packageManager":
-    "pnpm@9.0.6",
+  "packageManager": "pnpm@9.0.6",
   "devDependencies": {
-    "@webgpu/types": "^0.1.40",
+    "@webgpu/types": "^0.1.42",
     "typescript": "^5.4.5",
-    "vite": "^5.2.11"
+    "vite": "^5.2.12"
   }
 }

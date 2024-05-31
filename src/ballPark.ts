@@ -5,7 +5,7 @@ import { Camera } from './camera';
 import { Structure } from './structure';
 import { readFile } from './io';
 
-export const q = 20; // scalar quantities per object in buffer
+export const q = 24; // scalar quantities per object in buffer
 
 export class BallPark {
 
@@ -58,6 +58,7 @@ export class BallPark {
 
     this.compute.setHalfEdgeBuffer(halfEdges);
     this.compute.setCount(balls.count, rods.count, triangles.count);
+    this.compute.setNextBallInPool(balls.count);
 
     this.compute.setBallsAndRodsVisibility(balls.visible, rods.visible);
     this.compute.setTrianglesVisibility(true);
@@ -115,7 +116,7 @@ export class BallPark {
       if (this.rotate) camera.raiseAzimuth();
 
       if (checkSelection) {
-
+        
         await this.compute.workDone(); // wait for min distance
         this.compute.depthTest(rods.count);
         const out = await this.compute.getOutBuffer(); // get edge index
@@ -147,21 +148,23 @@ export class BallPark {
         if (s === 0) {
           initEdgeCount = rods.count;
           initVertexCount = balls.count;
+          this.compute.selectJustSetNextBallPosition(true);
         }
-
         if (s < initEdgeCount) {
-          this.compute.setNewBallRodIndex(s);
+          this.compute.setNextBallPosition(s, rods.count);
           const [vB, vD] = this.deltahedron.addVertex(s);
+          // check if opposing vertices are old ones
+          // (means triangles have not been modified before)
           if (vB < initVertexCount) flipList.push(rods.count-3);
           if (vD < initVertexCount) flipList.push(rods.count-1);
           s++;
           this.updateTriangleCountDisplay();
         }
-
         if (s === initEdgeCount) {
           this.deltahedron.flipEdge(flipList.pop() as number);
           if (flipList.length === 0) {
             this.subdivide = false;
+            this.compute.selectJustSetNextBallPosition(false);
             s = 0;
           }
         }
@@ -214,6 +217,7 @@ export class BallPark {
     this.compute.setTriangleIndexBuffer(triangles.mesh.indices);
     this.compute.setHalfEdgeBuffer(halfEdges);
     this.compute.setCount(balls.count, rods.count, triangles.count);
+    this.compute.setNextBallInPool(balls.count);
     this.updateTriangleCountDisplay();
   }
 

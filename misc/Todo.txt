@@ -1,17 +1,24 @@
-merge vertices
+
+error display
+edge error indication color
+
 equilibrium acceleration algorithm
 flat faces limit
 smoothing algo
 newton
+
 centroid
 remove triangles when removing edges 
 undo
 
 environment lighting
+textures
 show only edges connecting vertices with coordination number n
 from face description to half edge
 sound
 documentation (japanese too)
+
+rewrite without objects
 
 
 torus: 48v 144e 96f

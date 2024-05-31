@@ -1,6 +1,6 @@
 import './style.css';
 import { BallPark } from "./ballPark";
-import { Button, InfoSlider, PushButton, RadioButton, SwitchButton } from './button-slider';
+import { Button, InfoSlider, PushButton, RadioButton, SwitchButton } from './ui';
 
 Button.initialize(10, 10, 10);
 
@@ -46,7 +46,7 @@ gravitySlider.setId('gravitySlider');
 const operationButtons = new RadioButton([
   {name:'add', func:(on) => ballPark.addVertex(on)},
   {name:'flip', func:(on) => ballPark.flipEdges(on)},
-  // {name:'collapse', func:(on) => ballPark.collapseEdges(on)},
+  {name:'collapse', func:(on) => ballPark.collapseEdges(on)},
 ], false);
 operationButtons.click(0); // activate 'add' button
 

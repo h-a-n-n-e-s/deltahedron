@@ -10,14 +10,25 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   let i = global_id.x;
   if i >= global.rodCount {return;}
 
-  // check if this rod was hit first
-  if rods[i].prop3 == out[0] {
+  if global.justSetNextBallPosition == 0 {
 
-    // rods[i].color = vec4f(1,0,1,1);
+    // check if this rod was hit first
+    if rods[i].prop3 == out[0] {
 
-    out[1] = i32(i);
+      // rods[i].color = vec4f(1,0,1,1);
 
-    balls[global.ballCount].position = rods[i].position; // possible new ball
+      out[1] = i32(i);
+
+      // possible new ball
+      balls[global.nextBallInPool].position = rods[i].position;
+    }
+  }
+  else {
+
+    // check if this rod will get the next ball
+    if i == global.newBallRodIndex {
+      balls[global.nextBallInPool].position = rods[i].position;
+    }
   }
 
 }

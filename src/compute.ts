@@ -50,7 +50,7 @@ export class Compute {
     // buffers ////////////////////////////////////////////
 
     this.globalParameterBuffer = this.device.createBuffer({
-      size: 4*16,
+      size: 4*20,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC
     });
     this.setTimeAndSubStep(timeStep, subSteps);
@@ -152,10 +152,14 @@ export class Compute {
 
     const pipelineLayout = this.device.createPipelineLayout({bindGroupLayouts: [bindGroupLayout]});
 
-    this.ballsPipeline = this.createCompPipe(pipelineLayout, header+intersection+ballsShader);
-    this.rodsPipeline = this.createCompPipe(pipelineLayout, header+intersection+rodsShader);
-    this.trianglesPipeline = this.createCompPipe(pipelineLayout, header+intersection+trianglesShader);
-    this.selectionDepthPipeline = this.createCompPipe(pipelineLayout, header+intersection+selectionDepth);
+    this.ballsPipeline = this.createCompPipe(pipelineLayout,
+      header+intersection+ballsShader);
+    this.rodsPipeline = this.createCompPipe(pipelineLayout,
+      header+intersection+rodsShader);
+    this.trianglesPipeline = this.createCompPipe(pipelineLayout,
+      header+intersection+trianglesShader);
+    this.selectionDepthPipeline = this.createCompPipe(pipelineLayout,
+      header+selectionDepth);
 
     this.bindGroup = this.device.createBindGroup({
       layout: bindGroupLayout,
@@ -192,6 +196,11 @@ export class Compute {
     this.device.queue.submit([encoder.finish()]);
   }
 
+  setNextBallPosition = (rodIndex:number, rodCount:number) => {
+    this.setNewBallRodIndex(rodIndex);
+    this.depthTest(rodCount);
+  }
+
   workDone = async () => await this.device.queue.onSubmittedWorkDone();
 
   getOutBuffer = async () => {
@@ -224,12 +233,6 @@ export class Compute {
     return new Float32Array(this.stagingBuffer.getMappedRange());
   }
 
-  // copyBallBuffer = (sourceIndex:number, destinationIndex:number) => {
-  //   const encoder = this.device.createCommandEncoder();
-  //   encoder.copyBufferToBuffer(this.ballsBuffer, sourceIndex*q*4, this.ballsBuffer, destinationIndex*q*4, q*4);
-  //   this.device.queue.submit([encoder.finish()]);
-  // }
-
   createCompPipe = (layout:GPUPipelineLayout, code:string, constants={}, entry='main') => {
     return this.device.createComputePipeline({
       layout: layout,
@@ -254,9 +257,16 @@ export class Compute {
       dt/sub
     ]));
   };
+
+  setNextBallInPool = (index:number) =>
+    this.device.queue.writeBuffer(this.globalParameterBuffer, 64, new Uint32Array([index]));
   
-  setNewBallRodIndex = (index:number) => {
-    this.device.queue.writeBuffer(this.globalParameterBuffer, 48, new Int32Array([index]));
+  setNewBallRodIndex = (newBallRodIndex:number) => {
+    this.device.queue.writeBuffer(this.globalParameterBuffer, 68, new Uint32Array([newBallRodIndex, 1]));
+  };
+
+  selectJustSetNextBallPosition = (select:boolean) => {
+    this.device.queue.writeBuffer(this.globalParameterBuffer, 72, new Uint32Array([select ? 1 : 0]));
   };
 
   setGravity = (g:number) =>

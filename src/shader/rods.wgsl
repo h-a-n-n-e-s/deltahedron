@@ -13,9 +13,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   if i >= global.rodCount {return;}
 
   // inactive edge
-  if halfEdges[2 * i].prev == halfEdges[2 * i].next {
-    return;
-  }
+  if rods[i].used == 0 {return;}
 
   let j = halfEdges[2 * i].vertex;
   let k = halfEdges[2 * i + 1].vertex;
@@ -61,9 +59,6 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   atomicAdd(&velocityUpdate[3 * k + 1], i32(-velocity.y * QUANTIZE_FACTOR));
   atomicAdd(&velocityUpdate[3 * k + 2], i32(-velocity.z * QUANTIZE_FACTOR));
 
-  if i == global.newBallRodIndex {
-    balls[global.ballCount].position = rods[i].position;
-  }
 }
 
 fn quaternionFromDirection(v:vec3f) -> vec4f {

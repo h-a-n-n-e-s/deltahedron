@@ -13,6 +13,9 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
 
   let a = balls[i];
 
+  // inactive ball
+  if a.used == 0 {return;}
+
   var newBall = a;
 
   // mouse pick test
@@ -45,6 +48,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   for (var j=0u; j<global.ballCount; j++) {
     if i == j {continue;}
     let b = balls[j];
+    if b.used == 0 {continue;}
     let ab = a.position - b.position;
     let d = a.prop1 + b.prop1;
     let lenab = length(ab);
