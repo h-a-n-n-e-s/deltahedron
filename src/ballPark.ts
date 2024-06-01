@@ -68,7 +68,7 @@ export class BallPark {
     // interaction
 
     camera.mouseInteraction(render.getCanvas());
-
+    
     // display
 
     const divFps = document.createElement('div');
@@ -82,8 +82,8 @@ export class BallPark {
     this.updateTriangleCountDisplay();
 
     let i = 0
-    let time = Date.now();
-    const frameIntegration = 60;
+    // let time = Date.now();
+    const frameIntegration = 30;
     // let slowmo = false;
     // let endSlowmo = false;
 
@@ -99,6 +99,7 @@ export class BallPark {
       if (camera.mouseCoords.haveChanged) {
         camera.mouseCoords.haveChanged = false;
         checkSelection = true;
+        this.compute.selectRodScanBranch('depthTest');
         this.compute.setMouseRayAndEye(camera.getMouseRay(), camera.getEye())
       }
       
@@ -118,7 +119,7 @@ export class BallPark {
       if (checkSelection) {
         
         await this.compute.workDone(); // wait for min distance
-        this.compute.depthTest(rods.count);
+        this.compute.rodScan(rods.count);
         const out = await this.compute.getOutBuffer(); // get edge index
         const selectedEdgeIndex = out[1];
 
@@ -148,10 +149,11 @@ export class BallPark {
         if (s === 0) {
           initEdgeCount = rods.count;
           initVertexCount = balls.count;
-          this.compute.selectJustSetNextBallPosition(true);
+          this.compute.selectRodScanBranch('nextBall');
         }
         if (s < initEdgeCount) {
-          this.compute.setNextBallPosition(s, rods.count);
+          this.compute.setNewBallRodIndex(s);
+          this.compute.rodScan(rods.count);
           const [vB, vD] = this.deltahedron.addVertex(s);
           // check if opposing vertices are old ones
           // (means triangles have not been modified before)
@@ -164,7 +166,6 @@ export class BallPark {
           this.deltahedron.flipEdge(flipList.pop() as number);
           if (flipList.length === 0) {
             this.subdivide = false;
-            this.compute.selectJustSetNextBallPosition(false);
             s = 0;
           }
         }
@@ -178,13 +179,19 @@ export class BallPark {
 
       // calculate fps every frameIntegration frames
       i++;
-      if ( i == frameIntegration) {
+      if (i >= frameIntegration && !this.subdivide) {
         i = 0;
-        const fps = frameIntegration * 1e3 / (Date.now() - time);
-        time = Date.now();
-        divFps.innerHTML = fps.toFixed() + ' fps';
+        // const fps = frameIntegration * 1e3 / (Date.now() - time);
+        // time = Date.now();
+        // divFps.innerHTML = fps.toFixed() + ' fps';
 
-        
+        this.compute.selectRodScanBranch('maxError');
+        this.compute.rodScan(rods.count);
+        await this.compute.workDone();
+        const out = await this.compute.getOutBuffer();
+        const error = 100 * out[2] / 2097152;
+        divFps.innerHTML = error.toFixed(3) + '%';
+        this.compute.resetError();
       }
 
       requestAnimationFrame(loop);

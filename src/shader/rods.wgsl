@@ -27,7 +27,13 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   let lenab = length(ab);
   var nor = vec3f(0);
   if lenab > 0.0 {nor = normalize(ab);}
+  let error = abs(1 - lenab / d);
+  // var f = 1.0;
+  // if error < 0.05 {f = 0.1;}
   let velocity = (d - lenab) * nor;
+
+  // error check
+  rods[i].prop4 = i32(error * QUANTIZE_FACTOR);
 
   // mouse pick test
   if global.mouseChanged > 0 && global.rodsVisible == 1 {

@@ -1,7 +1,4 @@
 
-error display
-edge error indication color
-
 equilibrium acceleration algorithm
 flat faces limit
 smoothing algo
@@ -10,6 +7,7 @@ newton
 centroid
 remove triangles when removing edges 
 undo
+edge error indication color
 
 environment lighting
 textures

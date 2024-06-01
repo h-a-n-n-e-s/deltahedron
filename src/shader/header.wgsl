@@ -20,7 +20,7 @@ struct GlobalParameter {
 
   nextBallInPool: u32,
   newBallRodIndex: u32,
-  justSetNextBallPosition: u32,
+  rodScanBranch: u32,
 }
 
 struct Object {

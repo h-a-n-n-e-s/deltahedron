@@ -5,7 +5,7 @@ import intersection from './shader/intersection.wgsl?raw';
 import ballsShader from './shader/balls.wgsl?raw';
 import rodsShader from './shader/rods.wgsl?raw';
 import trianglesShader from './shader/triangles.wgsl?raw';
-import selectionDepth from './shader/selectionDepth.wgsl?raw';
+import rodScan from './shader/rodScan.wgsl?raw';
 import { Object } from './structure';
 
 export class Compute {
@@ -16,7 +16,7 @@ export class Compute {
   private ballsPipeline!: GPUComputePipeline;
   private rodsPipeline!: GPUComputePipeline;
   private trianglesPipeline!: GPUComputePipeline;
-  private selectionDepthPipeline!: GPUComputePipeline;
+  private rodScanPipeline!: GPUComputePipeline;
 
   private subSteps!: number;
 
@@ -158,8 +158,8 @@ export class Compute {
       header+intersection+rodsShader);
     this.trianglesPipeline = this.createCompPipe(pipelineLayout,
       header+intersection+trianglesShader);
-    this.selectionDepthPipeline = this.createCompPipe(pipelineLayout,
-      header+selectionDepth);
+    this.rodScanPipeline = this.createCompPipe(pipelineLayout,
+      header+rodScan);
 
     this.bindGroup = this.device.createBindGroup({
       layout: bindGroupLayout,
@@ -189,17 +189,26 @@ export class Compute {
     this.computePass(encoder, this.trianglesPipeline, this.bindGroup, triangleCount);
   }
 
-  depthTest = (rodCount:number) => {
+  rodScan = (rodCount:number) => {
+
     const encoder = this.device.createCommandEncoder();
-    this.computePass(encoder, this.selectionDepthPipeline, this.bindGroup, rodCount);
+
+    this.computePass(encoder, this.rodScanPipeline, this.bindGroup, rodCount);
+
     encoder.copyBufferToBuffer(this.outBuffer, 0, this.stagingOutBuffer, 0, this.outBuffer.size);
+
     this.device.queue.submit([encoder.finish()]);
   }
 
-  setNextBallPosition = (rodIndex:number, rodCount:number) => {
-    this.setNewBallRodIndex(rodIndex);
-    this.depthTest(rodCount);
-  }
+  selectRodScanBranch = (branch:string) => {
+    let branchIndex = 0;
+    
+    if (branch === 'depthTest') branchIndex = 1;
+    else if (branch === 'nextBall') branchIndex = 2;
+    else if (branch === 'maxError') branchIndex = 3;
+    
+    this.device.queue.writeBuffer(this.globalParameterBuffer, 72, new Uint32Array([branchIndex]));
+  };
 
   workDone = async () => await this.device.queue.onSubmittedWorkDone();
 
@@ -213,6 +222,11 @@ export class Compute {
   resetOutBuffer = () => {
     this.stagingOutBuffer.unmap();
     this.device.queue.writeBuffer(this.outBuffer, 0, new Int32Array([2147483647, -1]));
+  }
+
+  resetError = () => {
+    this.stagingOutBuffer.unmap();
+    this.device.queue.writeBuffer(this.outBuffer, 8, new Int32Array([0]));
   }
 
   getBuffer = async (bufferName:string) => {
@@ -262,11 +276,7 @@ export class Compute {
     this.device.queue.writeBuffer(this.globalParameterBuffer, 64, new Uint32Array([index]));
   
   setNewBallRodIndex = (newBallRodIndex:number) => {
-    this.device.queue.writeBuffer(this.globalParameterBuffer, 68, new Uint32Array([newBallRodIndex, 1]));
-  };
-
-  selectJustSetNextBallPosition = (select:boolean) => {
-    this.device.queue.writeBuffer(this.globalParameterBuffer, 72, new Uint32Array([select ? 1 : 0]));
+    this.device.queue.writeBuffer(this.globalParameterBuffer, 68, new Uint32Array([newBallRodIndex]));
   };
 
   setGravity = (g:number) =>
