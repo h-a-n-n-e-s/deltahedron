@@ -139,6 +139,10 @@ export class Structure {
     this.balls.data.set([coordinationNumber], index*q+19); // prop4
   }
 
+  getCoordinationNumber(index:number) {
+    return this.balls.data[index*q+19]; // prop4
+  }
+
   connectionsToColor(coordinationNumber:number) {
     if (coordinationNumber === 3) return [1,0,1, 1]
     else if (coordinationNumber === 4) return [0,0,1, 1];
@@ -163,7 +167,7 @@ export class Structure {
   }
 
   changeCoordinationNumberAndColor(index:number, diff:number) {
-    let prevCoordinationNumber = this.balls.data[q*index+19];
+    let prevCoordinationNumber = this.getCoordinationNumber(index);
     this.setCoordinationNumber(index, prevCoordinationNumber+diff);
     this.setColor(index, this.connectionsToColor(prevCoordinationNumber+diff));
     this.compute.setBallsBuffer(index, this.balls.data.slice(q*index,q*index+q), false);
@@ -213,9 +217,10 @@ export class Structure {
     if (source !== destination) {
       let i = this.vertexHalfEdgeMap[source];
       this.vertexHalfEdgeMap[destination] = i;
-      const c = this.balls.data[source*q+19]; // coordination number
+      const c = this.getCoordinationNumber(source);
       for (let o=0; o<c; o++) {
         this.halfEdges[4*i+3] = destination;
+        // reset face vertices because of new vertex
         this.setFace(this.halfEdges[4*i], i);
         const next = this.halfEdges[4*i+2];
         i = this.getTwinHalfEdge(next);
@@ -267,7 +272,7 @@ export class Structure {
       this.rods.count++;
     }
 
-    const addedBallIndex = this.balls.count;// this.getFromBallIndexPool();
+    const addedBallIndex = this.balls.count;
     this.balls.count++;
     this.compute.setNextBallInPool(this.balls.count);
     
@@ -380,12 +385,12 @@ export class Structure {
     const vertexB = this.halfEdges[4*ab+3];
     const vertexC = this.halfEdges[4*bc+3];
     const vertexD = this.halfEdges[4*cd+3];
-    this.halfEdges[4*ac+3] = vertexD;
     this.halfEdges[4*ca+3] = vertexB;
-    this.vertexHalfEdgeMap[vertexD] = ac;
-    this.vertexHalfEdgeMap[vertexB] = ca;
-    this.vertexHalfEdgeMap[vertexC] = bc;
+    this.halfEdges[4*ac+3] = vertexD;
     this.vertexHalfEdgeMap[vertexA] = da;
+    this.vertexHalfEdgeMap[vertexB] = ab;
+    this.vertexHalfEdgeMap[vertexC] = bc;
+    this.vertexHalfEdgeMap[vertexD] = cd;
     this.changeCoordinationNumberAndColor(vertexA, -1);
     this.changeCoordinationNumberAndColor(vertexB,  1);
     this.changeCoordinationNumberAndColor(vertexC, -1);
@@ -401,7 +406,7 @@ export class Structure {
 
   async collapseEdge(rodIndex:number) {
     
-    if (this.triangles.count <= 4) return;
+    if (this.triangles.count < 5) return 1;
 
     const ac = 2*rodIndex;
     const ca = ac+1;
@@ -415,39 +420,78 @@ export class Structure {
     const ad = this.getTwinHalfEdge(da);
 
     // vertex
-    const vertexA = this.halfEdges[4*da+3];
-    const vertexB = this.halfEdges[4*ab+3];
-    const vertexC = this.halfEdges[4*ac+3];
-    const vertexD = this.halfEdges[4*ad+3];
+    let vertexA = this.halfEdges[4*da+3];
+    let vertexB = this.halfEdges[4*ab+3];
+    let vertexC = this.halfEdges[4*ac+3];
+    let vertexD = this.halfEdges[4*ad+3];
 
-    this.changeCoordinationNumberAndColor(vertexA, -1);
+    // check if a tetrahedron would be flattened
+    if (this.getCoordinationNumber(vertexB) < 4 ||
+        this.getCoordinationNumber(vertexD) < 4 ) return 1;
+    
+    const faceABC = this.halfEdges[4*ab];
+    const faceACD = this.halfEdges[4*da];
+
+    // edges
+    let vertexACoordinationNumberDifference = -1;
     let i = dc;
     this.halfEdges[4*i+3] = vertexA;
     let next = this.halfEdges[4*i+2];
-    const count = this.balls.data[q*vertexC+19];
+    const coordinationNumberVertexC = this.getCoordinationNumber(vertexC);
     const cToAEdgeList = [];
-    for (let o=0; o<count-3; o++) {
+    for (let o=0; o<coordinationNumberVertexC-3; o++) {
       i = this.getTwinHalfEdge(next);
       cToAEdgeList.push(i);
       this.halfEdges[4*i+3] = vertexA;
-      this.changeCoordinationNumberAndColor(vertexA, 1);
+      vertexACoordinationNumberDifference++;
       next = this.halfEdges[4*i+2];
     }
+    this.copyHalfEdge(dc, da);
+    this.copyHalfEdge(cb, ab);
+
+    this.vertexHalfEdgeMap[vertexA] = ba;
+    this.vertexHalfEdgeMap[vertexB] = ab;
+    this.vertexHalfEdgeMap[vertexD] = ad;
+
+    // edges memory relocation
+    const removableRodList = [];
+    for (const halfEdge of [dc, cb, ac])
+      removableRodList.push(this.getRodIndex(halfEdge));
+    removableRodList.sort((a,b)=>a-b);
+    for (let o=0; o<3; o++) {
+      const x = removableRodList.pop() as number;
+      // console.log(this.rods.count-1, x);
+      this.moveRod(this.rods.count-1, x);
+      this.rods.count--;
+    }
+    
+    // vertex memory relocation (remove vertexC)
+    let l = this.balls.count-1;
+    if (l !== vertexC) {
+      this.redirectVertex(l, vertexC);
+      // console.log(l, vertexA, vertexB, vertexC);
+      const p = (await this.compute.getBuffer('balls')).slice(q*l,q*l+3);
+      this.balls.data.set(p, q*l);
+      this.balls.data.set(this.balls.data.slice(q*l,q*l+q), q*vertexC);
+      this.compute.setBallsBuffer(vertexC, this.balls.data.slice(q*l,q*l+q));
+      if (l === vertexA) vertexA = vertexC;
+      if (l === vertexB) vertexB = vertexC;
+      if (l === vertexD) vertexD = vertexC;
+    }
+    this.balls.count--;
+    
+    this.changeCoordinationNumberAndColor(vertexA, vertexACoordinationNumberDifference);
     this.changeCoordinationNumberAndColor(vertexB, -1);
     this.changeCoordinationNumberAndColor(vertexD, -1);
-
-    // vertex memory relocation
-    let l = this.balls.count-1;
-    this.redirectVertex(l, vertexC);
-    const p = (await this.compute.getBuffer('balls')).slice(q*l,q*l+3);
-    this.balls.data.set(p, q*l);
-    this.balls.data.set(this.balls.data.slice(q*l,q*l+q), q*vertexC);
-    this.compute.setBallsBuffer(vertexC, this.balls.data.slice(q*l,q*l+q));
-    this.balls.count--;
-
+    
+    // faces
+    cToAEdgeList.push(da);
+    for (let o=0; o<coordinationNumberVertexC-2; o++) {
+      const e = cToAEdgeList.pop() as number;
+      this.setFace(this.halfEdges[4*e], e);
+    }
+    
     // faces memory relocation
-    const faceABC = this.halfEdges[4*ab];
-    const faceACD = this.halfEdges[4*da];
     const removableFaceList = [faceABC, faceACD];
     removableFaceList.sort((a,b)=>a-b);
     for (let o=0; o<2; o++) {
@@ -458,34 +502,11 @@ export class Structure {
       this.triangles.count--;
     }
 
-    // edges
-    this.copyHalfEdge(dc, da);
-    this.copyHalfEdge(cb, ab);
-
-    // edges memory relocation
-    const removableRodList = [];
-    for (const halfEdge of [dc, cb, ac])
-      removableRodList.push(this.getRodIndex(halfEdge));
-    removableRodList.sort((a,b)=>a-b);
-    for (let o=0; o<3; o++) {
-      this.moveRod(this.rods.count-1, removableRodList.pop() as number);
-      this.rods.count--;
-    }
-    
-    this.vertexHalfEdgeMap[vertexA] = ba;
-    this.vertexHalfEdgeMap[vertexB] = ab;
-    this.vertexHalfEdgeMap[vertexD] = ad;
-
-    // faces
-    cToAEdgeList.push(da);
-    for (let o=0; o<count-2; o++) {
-      const e = cToAEdgeList.pop() as number;
-      this.setFace(this.halfEdges[4*e], e);
-    }
-
     this.compute.setHalfEdgeBuffer(this.halfEdges);
     this.compute.setTriangleIndexBuffer(this.triangles.mesh.indices);
     this.compute.setCount(this.balls.count, this.rods.count, this.triangles.count);
+
+    return 0;
   }
 
   async saveData() {

@@ -31,6 +31,7 @@ export class BallPark {
 
   updateTriangleCountDisplay!: () => void;
   updateDihedralAngleDisplay!: (a:number) => void;
+  updateInfoDisplay!: (a:string) => void;
 
   async initialize() {
 
@@ -87,6 +88,11 @@ export class BallPark {
     document.body.appendChild(divDihedralAngle);
     this.updateDihedralAngleDisplay = (a:number) => divDihedralAngle.innerHTML = a.toFixed(3) + '°';
 
+    const divInfo = document.createElement('div');
+    divInfo.id = 'info';
+    document.body.appendChild(divInfo);
+    this.updateInfoDisplay = (info:string) => divInfo.innerHTML = info;
+
     let i = 0
     // let time = Date.now();
     const frameIntegration = 30;
@@ -106,7 +112,8 @@ export class BallPark {
         camera.mouseCoords.haveChanged = false;
         checkSelection = true;
         this.compute.selectRodScanBranch('depthTest');
-        this.compute.setMouseRayAndEye(camera.getMouseRay(), camera.getEye())
+        this.compute.setMouseRayAndEye(camera.getMouseRay(), camera.getEye());
+        this.updateInfoDisplay('');
       }
       
       /////////////////////////////////////////////////////////////
@@ -139,8 +146,11 @@ export class BallPark {
             this.deltahedron.addVertex(selectedEdgeIndex);
           else if (this.flip)
             this.deltahedron.flipEdge(selectedEdgeIndex);
-          else if (this.collapse)
-            await this.deltahedron.collapseEdge(selectedEdgeIndex);
+          else if (this.collapse) {
+            const status = await this.deltahedron.collapseEdge(selectedEdgeIndex);
+            if (status === 1)
+              this.updateInfoDisplay('A tetrahedron cannot be flattened.');
+          }
           // else if (this.remove)
           //   this.deltahedron.removeEdge(selectedEdgeIndex);
           

@@ -45,7 +45,7 @@ body {
   outline: none;
 }
 
-#fps, #triangleCount, #dihedralAngle {
+#fps, #triangleCount, #dihedralAngle, #info {
   position:absolute;
   text-align:right;
   right:10px;
@@ -65,6 +65,13 @@ body {
   bottom: 10px;
   left: 10px;
   width: 90px;
+}
+#info {
+  bottom: 10px;
+  left: calc(100vw / 2 - 200px);
+  text-align: center;
+  width: 400px;
+  color: #f00;
 }
 
 

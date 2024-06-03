@@ -1,23 +1,25 @@
 
 equilibrium acceleration algorithm
 flat faces limit
-smoothing algo
 newton
+smoothing algo
 
 centroid
-remove triangles when removing edges 
-undo
-edge error indication color
-dihedral angle indication
-
 environment lighting
 textures
 show only edges connecting vertices with coordination number n
-from face description to half edge
+edge error indication color
+
+undo
+
+remove triangles when removing edges
+
 sound
+
 documentation (japanese too)
 
 rewrite without objects
+half edge functions
 
 
 torus: 48v 144e 96f
