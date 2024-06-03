@@ -30,6 +30,7 @@ export class BallPark {
   subdivide = false;
 
   updateTriangleCountDisplay!: () => void;
+  updateDihedralAngleDisplay!: (a:number) => void;
 
   async initialize() {
 
@@ -81,6 +82,11 @@ export class BallPark {
     this.updateTriangleCountDisplay = () => divTriangleCount.innerHTML = triangles.count.toFixed() + ' triangles';
     this.updateTriangleCountDisplay();
 
+    const divDihedralAngle = document.createElement('div');
+    divDihedralAngle.id = 'dihedralAngle';
+    document.body.appendChild(divDihedralAngle);
+    this.updateDihedralAngleDisplay = (a:number) => divDihedralAngle.innerHTML = a.toFixed(3) + '°';
+
     let i = 0
     // let time = Date.now();
     const frameIntegration = 30;
@@ -123,6 +129,9 @@ export class BallPark {
         const out = await this.compute.getOutBuffer(); // get edge index
         const selectedEdgeIndex = out[1];
 
+        const dihedralAngle = out[3] / 2097152;
+        this.updateDihedralAngleDisplay(dihedralAngle);
+
         if (selectedEdgeIndex !== -1) { // edge selected
           // console.log('e', selectedEdgeIndex);
           
@@ -131,7 +140,7 @@ export class BallPark {
           else if (this.flip)
             this.deltahedron.flipEdge(selectedEdgeIndex);
           else if (this.collapse)
-            this.deltahedron.collapseEdge(selectedEdgeIndex);
+            await this.deltahedron.collapseEdge(selectedEdgeIndex);
           // else if (this.remove)
           //   this.deltahedron.removeEdge(selectedEdgeIndex);
           
@@ -159,8 +168,8 @@ export class BallPark {
           // (means triangles have not been modified before)
           if (vB < initVertexCount) flipList.push(rods.count-3);
           if (vD < initVertexCount) flipList.push(rods.count-1);
-          s++;
           this.updateTriangleCountDisplay();
+          s++;
         }
         if (s === initEdgeCount) {
           this.deltahedron.flipEdge(flipList.pop() as number);
@@ -215,6 +224,8 @@ export class BallPark {
 
   async saveData() {await this.deltahedron.saveData();}
   async exportSTL() {await this.deltahedron.exportSTL();}
+
+  // bam() {this.deltahedron.bam();}
 
   setData = (heData:Uint32Array, posData?:Float32Array) => {
     const [balls, rods, triangles, halfEdges] = 

@@ -1,5 +1,6 @@
 const QUANTIZE_FACTOR = 2097152;
 const DEQUANTIZE_FACTOR = 1.0/2097152.0;
+const PI = 3.1415926535897;
 
 struct GlobalParameter {
   ballCount: u32,

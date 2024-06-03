@@ -39,6 +39,9 @@ eraseAllButton.onPush(() => {
 const exportSTLButton = new PushButton('export STL', true);
 exportSTLButton.onPush(async () => await ballPark.exportSTL());
 
+// const bamButton = new PushButton('bam', true);
+// bamButton.onPush( async () => ballPark.bam());
+
 const gravitySlider = new InfoSlider(0, 10, 1, 1, 'inflation: ', 0, '', 200, document.body);
 gravitySlider.onSlide(() => ballPark.setGravity(gravitySlider.value));
 gravitySlider.setId('gravitySlider');

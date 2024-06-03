@@ -8,6 +8,7 @@ centroid
 remove triangles when removing edges 
 undo
 edge error indication color
+dihedral angle indication
 
 environment lighting
 textures
