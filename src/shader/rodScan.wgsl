@@ -24,7 +24,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
       atomicStore(&out[3], i32(dihedralAngle(i) * QUANTIZE_FACTOR));
 
       // possible new ball
-      balls[global.nextBallInPool].position = rods[i].position;
+      balls[global.ballCount].position = rods[i].position;
     }
 
   }
@@ -32,7 +32,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
 
     // check if this rod will get the next ball
     if i == global.newBallRodIndex {
-      balls[global.nextBallInPool].position = rods[i].position;
+      balls[global.ballCount].position = rods[i].position;
     }
   }
   else if global.rodScanBranch == 3 {

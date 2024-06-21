@@ -198,6 +198,7 @@ export class Structure {
       this.halfEdges[4*this.halfEdges[4*destination+1]+2] = destination;
       this.halfEdges[4*this.halfEdges[4*destination+2]+1] = destination;
       this.vertexHalfEdgeMap[this.halfEdges[4*destination+3]] = destination;
+      this.faceHalfEdgeMap[this.halfEdges[4*destination]] = destination;
     }
   }
 
@@ -214,7 +215,7 @@ export class Structure {
   }
 
   redirectVertex(source:number, destination:number) {
-    if (source !== destination) {
+    // if (source !== destination) {
       let i = this.vertexHalfEdgeMap[source];
       this.vertexHalfEdgeMap[destination] = i;
       const c = this.getCoordinationNumber(source);
@@ -225,7 +226,7 @@ export class Structure {
         const next = this.halfEdges[4*i+2];
         i = this.getTwinHalfEdge(next);
       }
-    }
+    // }
   }
 
   setFace(triangleIndex:number, i:number) {
@@ -274,7 +275,6 @@ export class Structure {
 
     const addedBallIndex = this.balls.count;
     this.balls.count++;
-    this.compute.setNextBallInPool(this.balls.count);
     
     const ac = 2*rodIndex;
     const bn = 2*addedRodIndices[0];
@@ -366,6 +366,15 @@ export class Structure {
     const cd = this.halfEdges[4*ac+2];
     const da = this.halfEdges[4*ac+1];
 
+    const vertexA = this.halfEdges[4*da+3];
+    const vertexB = this.halfEdges[4*ab+3];
+    const vertexC = this.halfEdges[4*bc+3];
+    const vertexD = this.halfEdges[4*cd+3];
+
+    // check if a tetrahedron would be flattened
+    if (this.getCoordinationNumber(vertexA) < 4 ||
+        this.getCoordinationNumber(vertexC) < 4 ) return 2;
+
     this.halfEdges[4*ab+1] = da;
     this.halfEdges[4*ab+2] = ac;
     this.halfEdges[4*bc+1] = ca;
@@ -381,10 +390,6 @@ export class Structure {
     this.halfEdges[4*ca+2] = bc;
 
     // vertex pointer
-    const vertexA = this.halfEdges[4*da+3];
-    const vertexB = this.halfEdges[4*ab+3];
-    const vertexC = this.halfEdges[4*bc+3];
-    const vertexD = this.halfEdges[4*cd+3];
     this.halfEdges[4*ca+3] = vertexB;
     this.halfEdges[4*ac+3] = vertexD;
     this.vertexHalfEdgeMap[vertexA] = da;
@@ -402,6 +407,8 @@ export class Structure {
 
     this.compute.setTriangleIndexBuffer(this.triangles.mesh.indices);
     this.compute.setHalfEdgeBuffer(this.halfEdges);
+
+    return 0;
   }
 
   async collapseEdge(rodIndex:number) {
@@ -424,7 +431,7 @@ export class Structure {
     let vertexB = this.halfEdges[4*ab+3];
     let vertexC = this.halfEdges[4*ac+3];
     let vertexD = this.halfEdges[4*ad+3];
-
+    
     // check if a tetrahedron would be flattened
     if (this.getCoordinationNumber(vertexB) < 4 ||
         this.getCoordinationNumber(vertexD) < 4 ) return 1;
@@ -460,16 +467,24 @@ export class Structure {
     removableRodList.sort((a,b)=>a-b);
     for (let o=0; o<3; o++) {
       const x = removableRodList.pop() as number;
-      // console.log(this.rods.count-1, x);
-      this.moveRod(this.rods.count-1, x);
+      const last = this.rods.count-1;
+      // if last is in cToAEdgeList then replace it
+      for (let u=0; u<2; u++)
+        if (cToAEdgeList.includes(2*last+u) )
+          cToAEdgeList[cToAEdgeList.indexOf(2*last+u)] = 2*x+u;
+      this.moveRod(last, x);
       this.rods.count--;
     }
     
+    this.changeCoordinationNumberAndColor(vertexA, vertexACoordinationNumberDifference);
+    this.changeCoordinationNumberAndColor(vertexB, -1);
+    this.changeCoordinationNumberAndColor(vertexD, -1);
+
     // vertex memory relocation (remove vertexC)
     let l = this.balls.count-1;
     if (l !== vertexC) {
+      // the following routine needs the correct coordination number
       this.redirectVertex(l, vertexC);
-      // console.log(l, vertexA, vertexB, vertexC);
       const p = (await this.compute.getBuffer('balls')).slice(q*l,q*l+3);
       this.balls.data.set(p, q*l);
       this.balls.data.set(this.balls.data.slice(q*l,q*l+q), q*vertexC);
@@ -479,10 +494,6 @@ export class Structure {
       if (l === vertexD) vertexD = vertexC;
     }
     this.balls.count--;
-    
-    this.changeCoordinationNumberAndColor(vertexA, vertexACoordinationNumberDifference);
-    this.changeCoordinationNumberAndColor(vertexB, -1);
-    this.changeCoordinationNumberAndColor(vertexD, -1);
     
     // faces
     cToAEdgeList.push(da);
@@ -505,7 +516,7 @@ export class Structure {
     this.compute.setHalfEdgeBuffer(this.halfEdges);
     this.compute.setTriangleIndexBuffer(this.triangles.mesh.indices);
     this.compute.setCount(this.balls.count, this.rods.count, this.triangles.count);
-
+    
     return 0;
   }
 

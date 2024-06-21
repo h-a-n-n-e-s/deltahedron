@@ -60,7 +60,6 @@ export class BallPark {
 
     this.compute.setHalfEdgeBuffer(halfEdges);
     this.compute.setCount(balls.count, rods.count, triangles.count);
-    this.compute.setNextBallInPool(balls.count);
 
     this.compute.setBallsAndRodsVisibility(balls.visible, rods.visible);
     this.compute.setTrianglesVisibility(true);
@@ -140,19 +139,20 @@ export class BallPark {
         this.updateDihedralAngleDisplay(dihedralAngle);
 
         if (selectedEdgeIndex !== -1) { // edge selected
-          // console.log('e', selectedEdgeIndex);
+          
+          let status;
           
           if (this.add)
             this.deltahedron.addVertex(selectedEdgeIndex);
           else if (this.flip)
-            this.deltahedron.flipEdge(selectedEdgeIndex);
-          else if (this.collapse) {
-            const status = await this.deltahedron.collapseEdge(selectedEdgeIndex);
-            if (status === 1)
-              this.updateInfoDisplay('A tetrahedron cannot be flattened.');
-          }
-          // else if (this.remove)
-          //   this.deltahedron.removeEdge(selectedEdgeIndex);
+            status = this.deltahedron.flipEdge(selectedEdgeIndex);
+          else if (this.collapse)
+            status = await this.deltahedron.collapseEdge(selectedEdgeIndex);
+          
+          if (status === 1)
+            this.updateInfoDisplay('A tetrahedron cannot be flattened.');
+          else if (status === 2)
+            this.updateInfoDisplay('A dangling triangle is not allowed.');
           
           this.updateTriangleCountDisplay();
 
@@ -245,7 +245,6 @@ export class BallPark {
     this.compute.setTriangleIndexBuffer(triangles.mesh.indices);
     this.compute.setHalfEdgeBuffer(halfEdges);
     this.compute.setCount(balls.count, rods.count, triangles.count);
-    this.compute.setNextBallInPool(balls.count);
     this.updateTriangleCountDisplay();
   }
 

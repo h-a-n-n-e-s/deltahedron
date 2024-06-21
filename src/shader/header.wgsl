@@ -19,7 +19,7 @@ struct GlobalParameter {
   rodsVisible: u32,
   trianglesVisible: u32,
 
-  nextBallInPool: u32,
+  empty2: u32,
   newBallRodIndex: u32,
   rodScanBranch: u32,
 }

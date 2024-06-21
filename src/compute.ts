@@ -271,9 +271,6 @@ export class Compute {
       dt/sub
     ]));
   };
-
-  setNextBallInPool = (index:number) =>
-    this.device.queue.writeBuffer(this.globalParameterBuffer, 64, new Uint32Array([index]));
   
   setNewBallRodIndex = (newBallRodIndex:number) => {
     this.device.queue.writeBuffer(this.globalParameterBuffer, 68, new Uint32Array([newBallRodIndex]));
