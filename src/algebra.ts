@@ -21,9 +21,13 @@ export const vec3 = {
     return o;
   },
 
+  length(v:Float32Array) {
+    return Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+  },
+
   normalize(v:Float32Array) {
 
-    const length = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+    const length = this.length(v);
 
     if (length > 1e-5) {
       v[0] /= length;
@@ -49,6 +53,35 @@ export const vec3 = {
   triple(a:Float32Array, b:Float32Array, c:Float32Array) {
     return this.dot(a, this.cross(b, c));
   },
+
+  // returns rotation matrix for axis a and angle
+  rotationMatrix(a:Float32Array, angle:number):Float32Array {
+  
+    const s = Math.sin(angle);
+    const c = Math.cos(angle);
+    const m = 1 - c;
+    
+    this.normalize(a);
+
+    return new Float32Array([
+      m*a[0]*a[0]+c,
+      m*a[0]*a[1]-s*a[2],
+      m*a[0]*a[2]+s*a[1],
+      m*a[1]*a[0]+s*a[2],
+      m*a[1]*a[1]+c,
+      m*a[1]*a[2]-s*a[0],
+      m*a[2]*a[0]-s*a[1],
+      m*a[2]*a[1]+s*a[0],
+      m*a[2]*a[2]+c 
+    ]);
+  },
+
+  applyRotation(R:Float32Array, v:Float32Array) {
+    const vx = R[0] * v[0] + R[1] * v[1] + R[2] * v[2];
+    const vy = R[3] * v[0] + R[4] * v[1] + R[5] * v[2];
+    const vz = R[6] * v[0] + R[7] * v[1] + R[8] * v[2];
+    v.set([vx, vy, vz]);
+  }
 };
 
 
@@ -128,16 +161,12 @@ export const mat4 = {
     return o;
   },
 
-  lookAtAndViewMatrix(eye:Float32Array, target:Float32Array, azimuth:number, l:Float32Array, v:Float32Array) {
+  lookAtAndViewMatrix(eye:Float32Array, target:Float32Array, x:Float32Array, l:Float32Array, v:Float32Array) {
 
     const z = vec3.subtract(eye, target);
     vec3.normalize(z);
-
-    // using camera azimuth instead of up vector to avoid singularities at the poles!
-    const x = new Float32Array([Math.cos(azimuth), 0, -Math.sin(azimuth)]);
-
     const y = vec3.cross(z, x);
-    
+
     // lookAt matrix
     l[0] = x[0]; l[4] = y[0]; l[ 8] = z[0]; l[12] = eye[0];
     l[1] = x[1]; l[5] = y[1]; l[ 9] = z[1]; l[13] = eye[1];

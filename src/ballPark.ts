@@ -1,19 +1,36 @@
 import { Compute } from './compute';
 import { Render } from './render';
-import { tetrahedronHalfEdges, tetrahedronVertexPositions, torusHalfEdges, torusVertexPositions } from './mesh';
+import { octahedronHalfEdges, octahedronVertexPositions, torusHalfEdges, torusVertexPositions } from './mesh';
 import { Camera } from './camera';
 import { Structure } from './structure';
 import { readFile } from './io';
 
 export const q = 24; // scalar quantities per object in buffer
 
+const color = {
+  blue: [.2, 0, .8],
+  cyan: [0, .7, .7],
+  white: [.9, .9, .9],
+  red: [.9, 0, 0],
+  yellow: [1, .9, 0],
+  green: [0, .7, 0],
+  magenta: [.8, 0, .8],
+  coal: [.2, .2, .2],
+};
+export const colorArray = Object.values(color).map((c) => c);
+const colorU8Array = Object.values(color).map((c) => c.map((v) => Math.floor(255*v)));
+
 export class BallPark {
+
+  cubemap = 'cubemap/oceansky2hdr';
+  tex = 'textures/scratched_plastic';
 
   timeStep = 0.05; // 0.05
   subSteps = 1; // 5
 
   freeze = false;
   rotate = false;
+  showOnlyIsoRods = false;
 
   maxEdgeCount = 1e4;
   maxVertexCount = 1e4;
@@ -26,21 +43,22 @@ export class BallPark {
   add = false;
   flip = false;
   collapse = false;
-  remove = false;
   subdivide = false;
 
-  updateTriangleCountDisplay!: () => void;
   updateDihedralAngleDisplay!: (a:number) => void;
+  updateFormulaDisplay!: () => void;
+  updateCountDisplay!: () => void;
   updateInfoDisplay!: (a:string) => void;
 
   async initialize() {
 
     const camera = new Camera({
+      arcRotateCamera: false, // if false uses simple endless rotation
       angleResolution: 3,
-      radiusResolution: 1,
+      radiusResolution: 2,
       azimuth: 0,
       inclination: 90,
-      radius: 13,
+      radius: 15,
       target: new Float32Array(3),
       zNear: 0.1,
       zFar: 1000,
@@ -49,7 +67,7 @@ export class BallPark {
     
     const ballRadius = 0.1;
     const cylinderRadius = 0.04;
-    const cylinderLength = 0.8;
+    const cylinderLength = 1;
 
     this.deltahedron = new Structure(this.maxVertexCount, this.maxEdgeCount, this.maxFaceCount, ballRadius, cylinderRadius, cylinderLength, this.compute );
 
@@ -64,28 +82,68 @@ export class BallPark {
     this.compute.setBallsAndRodsVisibility(balls.visible, rods.visible);
     this.compute.setTrianglesVisibility(true);
 
-    const render = new Render(gpuDevice, 'canvas', camera, [balls, rods, triangles]);
+    const render = new Render();
+    await render.init(gpuDevice, 'canvas', camera, [balls, rods, triangles], this.cubemap, this.tex);
 
     // interaction
 
     camera.mouseInteraction(render.getCanvas());
-    
+
     // display
 
     const divFps = document.createElement('div');
     divFps.id = 'fps';
     document.body.appendChild(divFps);
 
-    const divTriangleCount = document.createElement('div');
-    divTriangleCount.id = 'triangleCount';
-    document.body.appendChild(divTriangleCount);
-    this.updateTriangleCountDisplay = () => divTriangleCount.innerHTML = triangles.count.toFixed() + ' triangles';
-    this.updateTriangleCountDisplay();
-
     const divDihedralAngle = document.createElement('div');
     divDihedralAngle.id = 'dihedralAngle';
     document.body.appendChild(divDihedralAngle);
     this.updateDihedralAngleDisplay = (a:number) => divDihedralAngle.innerHTML = a.toFixed(3) + '°';
+
+    const divFormula = document.createElement('div');
+    divFormula.id = 'formula';
+    document.body.appendChild(divFormula);
+    this.updateFormulaDisplay = () => {
+      const count = this.deltahedron.getCoordinationNumberCount();
+      const element = ['T','P','H','S','O','N','D'];
+      let bigCount = 0;
+      let string = '';
+      for (let i=4; i < 16; i++) {
+        if (i > 10 && count[i] > 0) bigCount += count[i]; 
+        else if (count[i] > 0) {
+          const c = colorU8Array[i-4];
+          string = string.concat(
+            '<span style="color:rgb('+c[0]+','+c[1]+','+c[2]+')">'+
+            element[i-4]+'<sub>'+count[i]+'</sub>&emsp14;</span>'
+          );
+        }
+        if (i == 15 && bigCount > 0) string = string.concat(
+          'B'+'<sub>'+bigCount+'</sub>&emsp14;'
+        );
+      }
+      divFormula.innerHTML = string;
+    }
+    this.updateFormulaDisplay();
+
+    
+
+    const divTriangleCount = document.createElement('div');
+    divTriangleCount.id = 'triangleCount';
+    document.body.appendChild(divTriangleCount);
+    const span = document.createElement('span');
+    divTriangleCount.appendChild(span);
+    this.updateCountDisplay = () => {
+      let string = 'F&emsp14;'+triangles.count.toFixed();
+      string = string.concat('&nbsp; E&emsp14;'+rods.count.toFixed());
+      string = string.concat('&nbsp; V&emsp14;'+balls.count.toFixed());
+      span.innerHTML = string;
+    }
+    // const divTriangleCountToolTip = document.body.appendChild(document.createElement('div'));
+    const divTriangleCountToolTip = divTriangleCount.appendChild(document.createElement('div'));
+    divTriangleCountToolTip.className = 'tooltip';
+    divTriangleCountToolTip.innerHTML = 'Number of faces (F), edges (E), and vertices (V).';
+
+    this.updateCountDisplay();
 
     const divInfo = document.createElement('div');
     divInfo.id = 'info';
@@ -99,6 +157,7 @@ export class BallPark {
     // let endSlowmo = false;
 
     let checkSelection = false;
+    let hoveringEdgeIndex = -1;
 
     let initEdgeCount:number;
     let initVertexCount:number;
@@ -107,7 +166,7 @@ export class BallPark {
 
     const loop = async () => {
 
-      if (camera.mouseCoords.haveChanged) {
+      if (camera.mouseCoords.haveChanged || camera.mouseWasPressed) {
         camera.mouseCoords.haveChanged = false;
         checkSelection = true;
         this.compute.selectRodScanBranch('depthTest');
@@ -133,34 +192,50 @@ export class BallPark {
         await this.compute.workDone(); // wait for min distance
         this.compute.rodScan(rods.count);
         const out = await this.compute.getOutBuffer(); // get edge index
-        const selectedEdgeIndex = out[1];
+        const newHoveringEdgeIndex = out[1];
+
+        if (newHoveringEdgeIndex !== hoveringEdgeIndex) {
+          if (hoveringEdgeIndex !== -1)
+            this.deltahedron.changeRodColor(hoveringEdgeIndex, this.deltahedron.rodBaseColor);
+          
+          hoveringEdgeIndex = newHoveringEdgeIndex;
+
+          if (hoveringEdgeIndex === -1)
+            document.body.style.cursor = 'default';
+          else {
+            this.deltahedron.changeRodColor(hoveringEdgeIndex, this.deltahedron.rodHighlightColor);
+            document.body.style.cursor = 'pointer';
+          }
+        }
 
         const dihedralAngle = out[3] / 2097152;
         this.updateDihedralAngleDisplay(dihedralAngle);
+        
+        if (hoveringEdgeIndex !== -1 && camera.mouseWasPressed) { // edge selected
 
-        if (selectedEdgeIndex !== -1) { // edge selected
-          
           let status;
           
           if (this.add)
-            this.deltahedron.addVertex(selectedEdgeIndex);
+            this.deltahedron.addVertex(hoveringEdgeIndex);
           else if (this.flip)
-            status = this.deltahedron.flipEdge(selectedEdgeIndex);
+            status = this.deltahedron.flipEdge(hoveringEdgeIndex);
           else if (this.collapse)
-            status = await this.deltahedron.collapseEdge(selectedEdgeIndex);
+            status = await this.deltahedron.collapseEdge(hoveringEdgeIndex);
           
           if (status === 1)
-            this.updateInfoDisplay('A tetrahedron cannot be flattened.');
-          else if (status === 2)
-            this.updateInfoDisplay('A dangling triangle is not allowed.');
+            this.updateInfoDisplay('Tetrahedral corners are not allowed.');
           
-          this.updateTriangleCountDisplay();
+          if (this.showOnlyIsoRods) this.deltahedron.showOnlyIsoRods();
+          this.updateCountDisplay();
+          this.updateFormulaDisplay();
+          
 
           // this.compute.setTimeAndSubStep(0.001, 1);
           // slowmo = true;
           // setTimeout(() => {endSlowmo = true;}, 1000);
         }
         checkSelection = false;
+        camera.mouseWasPressed = false;
         this.compute.makeMouseCoordsOldNews();
       }
       
@@ -174,11 +249,14 @@ export class BallPark {
           this.compute.setNewBallRodIndex(s);
           this.compute.rodScan(rods.count);
           const [vB, vD] = this.deltahedron.addVertex(s);
+
           // check if opposing vertices are old ones
           // (means triangles have not been modified before)
           if (vB < initVertexCount) flipList.push(rods.count-3);
           if (vD < initVertexCount) flipList.push(rods.count-1);
-          this.updateTriangleCountDisplay();
+
+          this.updateCountDisplay();
+          this.updateFormulaDisplay();
           s++;
         }
         if (s === initEdgeCount) {
@@ -188,6 +266,8 @@ export class BallPark {
             s = 0;
           }
         }
+        if (this.showOnlyIsoRods) this.deltahedron.showOnlyIsoRods();
+        this.updateFormulaDisplay();
       }
 
       // if (slowmo && endSlowmo) {
@@ -224,12 +304,18 @@ export class BallPark {
   setRotation(r:boolean) {this.rotate = r;}
   hideFaces(h:boolean) {this.deltahedron.hideFaces(h);}
   hideBallsAndRods(h:boolean) {this.deltahedron.hideBallsAndRods(h);}
-  loadTetrahedron() {this.setData(tetrahedronHalfEdges, tetrahedronVertexPositions);}
+  // loadTetrahedron() {this.setData(tetrahedronHalfEdges, tetrahedronVertexPositions);}
+  loadOctahedron() {this.setData(octahedronHalfEdges, octahedronVertexPositions);}
+
+  setShowOnlyIsoRods(show:boolean) {
+    this.showOnlyIsoRods = show;
+    if (this.showOnlyIsoRods) this.deltahedron.showOnlyIsoRods();
+    else this.deltahedron.showAllRods()
+  }
 
   addVertex(add:boolean) {this.add = add;}
   flipEdges(flip:boolean) {this.flip = flip;}
   collapseEdges(collapse:boolean) {this.collapse = collapse;}
-  removeEdges(remove:boolean) {this.remove = remove;}
   startSubdivide(sub:boolean) {this.subdivide = sub;}
 
   async saveData() {await this.deltahedron.saveData();}
@@ -245,7 +331,10 @@ export class BallPark {
     this.compute.setTriangleIndexBuffer(triangles.mesh.indices);
     this.compute.setHalfEdgeBuffer(halfEdges);
     this.compute.setCount(balls.count, rods.count, triangles.count);
-    this.updateTriangleCountDisplay();
+
+    if (this.showOnlyIsoRods) this.deltahedron.showOnlyIsoRods();
+    this.updateCountDisplay();
+    this.updateFormulaDisplay();
   }
 
   loadData = async () => {

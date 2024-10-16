@@ -315,6 +315,42 @@ export const tetrahedronVertexPositions = new Float32Array([
    1,-1,-1
 ]);
 
+export const octahedronHalfEdges = new Uint32Array([
+  0,  4, 17,  4,
+  1, 21, 22,  1,
+  2, 15, 16,  2,
+  3, 10,  7,  0,
+  0, 17,  0,  1,
+  4,  9, 11,  2,
+  5, 13, 18,  0,
+  3,  3, 10,  3,
+  6, 23, 12,  3,
+  4, 11,  5,  1,
+  3,  7,  3,  2,
+  4,  5,  9,  3,
+  6,  8, 23,  5,
+  5, 18,  6,  3,
+  7, 19, 20,  4,
+  2, 16,  2,  0,
+  2,  2, 15,  4,
+  0,  0,  4,  2,
+  5,  6, 13,  5,
+  7, 20, 14,  0,
+  7, 14, 19,  5,
+  1, 22,  1,  4,
+  1,  1, 21,  5,
+  6, 12,  8,  1
+])
+
+export const octahedronVertexPositions = new Float32Array([
+  0, 1, 0,
+  0,-1, 0,
+  0, 0, 1,
+ -1, 0, 0,
+  1, 0, 0,
+  0, 0,-1,
+]);
+
 export const torusHalfEdges = () => {
 
   const h = new Uint32Array(72*4*4);

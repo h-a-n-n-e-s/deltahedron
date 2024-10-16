@@ -1,8 +1,7 @@
 import { mat4, vec3 } from "./algebra";
 
-const degToRad = Math.PI/180;
-
-type ArcRotateCameraParameters = {
+type CameraParameters = {
+  arcRotateCamera:boolean; // turntable like camera control
   angleResolution:number;
   radiusResolution:number;
   azimuth:number;
@@ -16,7 +15,12 @@ type ArcRotateCameraParameters = {
 
 export class Camera {
 
-  private para:ArcRotateCameraParameters;
+  private dx = 0;
+  private dy = 0;
+  private tx = new Float32Array([1,0,0]);
+  private ty = new Float32Array([0,1,0]);
+
+  private para:CameraParameters;
 
   private lookAtMatrix!:Float32Array;
   private viewMatrix!:Float32Array;
@@ -27,33 +31,58 @@ export class Camera {
   private inverseProjection = new Float32Array(16);
 
   mouseCoords:{x:number, y:number, haveChanged:boolean} = {x:0, y:0, haveChanged:false};
+  mouseWasPressed = false;
 
   private isNew = true;
 
-  constructor(para:ArcRotateCameraParameters) {this.para = para;}
+  constructor(para:CameraParameters) {this.para = para;}
 
   shaderParameterMapping(shaderParameters:Float32Array) {
     this.eye = shaderParameters.subarray(48, 51);
     this.lookAtMatrix = shaderParameters.subarray(0, 16);
     this.viewMatrix = shaderParameters.subarray(16, 32);
     this.viewProjectionMatrix = shaderParameters.subarray(32, 48);
+    this.sphericalToCartesian();
+  }
+
+  sphericalToCartesian() {
+    const r = this.para.radius;
+    const phi = - this.para.azimuth * Math.PI/180;
+    const theta = this.para.inclination * Math.PI/180;
+    this.eye.set([
+      r * Math.sin(theta) * Math.sin(phi),
+      r * Math.cos(theta), 
+      r * Math.sin(theta) * Math.cos(phi)
+    ]);
+    // set tangent x vector (right)
+    this.tx.set([Math.cos(phi), 0, -Math.sin(phi)]);
   }
 
   getCameraMatrix() {
 
     if (!this.isNew) return;
+    
+    if (this.para.arcRotateCamera)
+      this.sphericalToCartesian();
+    
+    else {
+      // simple endless rotation
+      const speed = 0.01;
+      if (this.dx !== 0 || this.dy !== 0) {
+        const axis = new Float32Array(3);
+        for (let o=0; o<3; o++) axis[o] = this.tx[o] * this.dy + this.ty[o] * this.dx;
+        const angle = speed * Math.sqrt(this.dx*this.dx + this.dy*this.dy);
+        const R = vec3.rotationMatrix(axis, angle);
+        vec3.applyRotation(R, this.eye);
+        vec3.applyRotation(R, this.tx);
+        vec3.applyRotation(R, this.ty);
+      }
+      const l = vec3.length(this.eye);
+      for (let o=0; o<3; o++)
+        this.eye[o] *= this.para.radius / l;
+    }
 
-    // cartesian coordinates of the camera (from spherical coordinates)
-    const t = this.para.inclination * degToRad;
-    const p = - this.para.azimuth * degToRad;
-    const r = this.para.radius * this.para.radiusResolution;
-    this.eye.set([
-      r * Math.sin(t) * Math.sin(p),
-      r * Math.cos(t), 
-      r * Math.sin(t) * Math.cos(p)
-    ]);
-
-    mat4.lookAtAndViewMatrix(this.eye, this.para.target, p, this.lookAtMatrix, this.viewMatrix);
+    mat4.lookAtAndViewMatrix(this.eye, this.para.target, this.tx, this.lookAtMatrix, this.viewMatrix);
     
     mat4.multiply(this.projection, this.viewMatrix, this.viewProjectionMatrix);
 
@@ -80,57 +109,37 @@ export class Camera {
     this.isNew = true;
   }
 
-  raiseAzimuth() {
-    this.para.azimuth = (this.para.azimuth - 0.1*this.para.angleResolution)%360;
-    this.isNew = true;
-  }
-
-  keyboardInteraction() {
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowLeft') {
-        this.para.azimuth -= this.para.angleResolution;
-        if (this.para.azimuth === -this.para.angleResolution) this.para.azimuth = 360 - this.para.angleResolution;
-      }
-      else if (e.key === 'ArrowRight') {
-        this.para.azimuth += this.para.angleResolution;
-        if (this.para.azimuth === 360) this.para.azimuth = 0;
-      }
-      else if (e.key === 'ArrowDown'  && this.para.inclination > 0) this.para.inclination -= this.para.angleResolution;
-      else if (e.key === 'ArrowUp'  && this.para.inclination < 180) this.para.inclination += this.para.angleResolution;
-      else if (e.key === 'f') this.para.radius += 1;
-      else if (e.key === 'd' && this.para.radius > 1) this.para.radius -= 1;
-
-      this.isNew = true;
-    });
-  }
-
   mouseInteraction(canvas:HTMLCanvasElement) {
 
     canvas.addEventListener('pointermove', (e) => {
+
+      this.mouseCoords.x = - 1 + 2 * e.clientX/canvas.clientWidth;
+      this.mouseCoords.y = 1 - 2 * e.clientY/canvas.clientHeight;
+
+      this.mouseCoords.haveChanged = true;
+
       const mouseDown = e.pointerType == 'mouse' ? (e.buttons & 1) !== 0 : true;
       if (mouseDown) {
         this.para.azimuth += 0.1 * this.para.angleResolution * e.movementX;
         this.para.inclination -= 0.1 * this.para.angleResolution * e.movementY;
         this.para.inclination = Math.min( Math.max(this.para.inclination, 0),180)
+
+        this.dx = - e.movementX;
+        this.dy = - e.movementY;
+
         this.isNew = true;
       }
     });
 
     canvas.addEventListener('wheel', (e) => {
       this.para.radius += 0.1 * this.para.radiusResolution * Math.sign(e.deltaY);
+      this.dx = 0;
+      this.dy = 0;
       this.isNew = true;
     });
 
-    canvas.addEventListener('mousedown', (e) => {
-      this.mouseCoords.x = - 1 + 2 * e.clientX/canvas.clientWidth;
-      this.mouseCoords.y = 1 - 2 * e.clientY/canvas.clientHeight;
-      this.mouseCoords.haveChanged = true;
-    });
+    canvas.addEventListener('pointerdown', () => this.mouseWasPressed = true);
   }
-
-  // getMouseCoords() {
-  //   return this.mouseCoords;
-  // }
 
   getMouseRay() {
 
@@ -151,5 +160,31 @@ export class Camera {
 
   getEye() {
     return this.eye;
+  }
+
+  raiseAzimuth() {
+    this.para.azimuth = (this.para.azimuth - 0.1*this.para.angleResolution)%360;
+    this.isNew = true;
+  }
+
+  keyboardInteraction(canvas:HTMLCanvasElement) {
+    
+    // TODO: doesn't react anymore...
+    canvas.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') {
+        this.para.azimuth -= this.para.angleResolution;
+        if (this.para.azimuth === -this.para.angleResolution) this.para.azimuth = 360 - this.para.angleResolution;
+      }
+      else if (e.key === 'ArrowRight') {
+        this.para.azimuth += this.para.angleResolution;
+        if (this.para.azimuth === 360) this.para.azimuth = 0;
+      }
+      else if (e.key === 'ArrowDown'  && this.para.inclination > 0) this.para.inclination -= this.para.angleResolution;
+      else if (e.key === 'ArrowUp'  && this.para.inclination < 180) this.para.inclination += this.para.angleResolution;
+      else if (e.key === 'f') this.para.radius += 1;
+      else if (e.key === 'd' && this.para.radius > 1) this.para.radius -= 1;
+
+      this.isNew = true;
+    });
   }
 }

@@ -3,7 +3,7 @@
 @group(0) @binding(2) var<storage, read_write> velocityUpdate: array< atomic<i32> >;
 @group(0) @binding(3) var<storage, read_write> balls: array<Object>;
 @group(0) @binding(4) var<storage, read_write> rods: array<Object>;
-@group(0) @binding(5) var<storage, read_write> out: array< atomic<i32>, 4>;
+@group(0) @binding(5) var<storage, read_write> out: array< atomic<i32> >;
 
 @compute @workgroup_size(64)
 
@@ -11,9 +11,6 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
 
   let i = global_id.x;
   if i >= global.rodCount {return;}
-
-  // inactive edge
-  if rods[i].used == 0 {return;}
 
   let j = halfEdges[2 * i].vertex;
   let k = halfEdges[2 * i + 1].vertex;
@@ -23,7 +20,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
 
   let ab = a.position - b.position;
   let abMean = (a.position+b.position)/2;
-  let d = 0.8;
+  let d = 1.0;
   let lenab = length(ab);
   var nor = vec3f(0);
   if lenab > 0.0 {nor = normalize(ab);}
@@ -36,7 +33,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   rods[i].prop4 = i32(error * QUANTIZE_FACTOR);
 
   // mouse pick test
-  if global.mouseChanged > 0 && global.rodsVisible == 1 {
+  if global.mouseChanged > 0 && global.rodsVisible == 1 && rods[i].size > 0 {
 
     // for factor 1000 see intersection.wgsl l.28 
     let distance = 1000 * rayCylinderIntersection(global, rods[i]);

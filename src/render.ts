@@ -3,6 +3,8 @@ import { Camera } from './camera';
 import header from './shader/header.wgsl?raw';
 import shader from './shader/render.wgsl?raw';
 import { Object } from './structure';
+import { duplicateTexture, irradianceMap } from './irradiance';
+import { createHDRCubeMapTexture, createHDRCubeMapSampler, createTextureFromImage } from './textures';
 
 export interface ObjectGPUData {
   meshbuffers: MeshBuffers,
@@ -29,7 +31,15 @@ export class Render {
   
   private objectGPUDataList: Array<ObjectGPUData> = [];
 
-  constructor(device:GPUDevice, canvasId:string, camera:Camera, objects:Array<Object>,) {
+  private cubeMapTexture!: GPUTexture;
+  private cubeMapSampler!: GPUSampler;
+  private irradianceTexture!: GPUTexture;
+
+  private albedoTexture!: GPUTexture;
+  private amocTexture!: GPUTexture;
+  private normalTexture!: GPUTexture;
+
+  async init(device:GPUDevice, canvasId:string, camera:Camera, objects:Array<Object>, cubemap:string, tex:string) {
 
     this.device = device;
 
@@ -38,17 +48,33 @@ export class Render {
     document.body.appendChild(this.canvas);
 
     this.context = this.canvas.getContext('webgpu') as GPUCanvasContext;
+
     const presentationFormat = navigator.gpu!.getPreferredCanvasFormat();
+    // const presentationFormat = "rgba32float"
+    
     this.context.configure({
       device: this.device,
       format: presentationFormat,
+      toneMapping: { mode: "extended" },
       alphaMode: 'premultiplied',
     });
+    
+    // cube map ___________________________________________
 
-    /////////////////////////////////////////////////////////
+    this.cubeMapTexture = await createHDRCubeMapTexture(device, cubemap);
+    this.cubeMapSampler = createHDRCubeMapSampler(device);
+
+    this.irradianceTexture = duplicateTexture(device, this.cubeMapTexture);
+
+    await irradianceMap(device, this.cubeMapTexture, this.irradianceTexture);
+
+    this.albedoTexture = await createTextureFromImage(device, tex+'/alb.jpg');
+    this.amocTexture = await createTextureFromImage(device, tex+'/ao.jpg');
+    this.normalTexture = await createTextureFromImage(device, tex+'/norm.jpg');
+
+    // ____________________________________________________
 
     const module = this.device.createShaderModule({
-      label: 'ball shader',
       code: header + shader
     })
 
@@ -76,21 +102,7 @@ export class Render {
       fragment: {
         module,
         entryPoint: 'fs',
-        targets: [{
-          format: presentationFormat,
-          // blend: {
-          //   color: {
-          //     operation: 'add',
-          //     srcFactor: 'one',
-          //     dstFactor: 'one-minus-src-alpha'
-          //   },
-          //   alpha: {
-          //     operation: 'add',
-          //     srcFactor: 'one',
-          //     dstFactor: 'one-minus-src-alpha'
-          //   },
-          // },
-        }]
+        targets: [{format: presentationFormat}]
       },
       primitive: {
         topology: 'triangle-list',
@@ -156,6 +168,12 @@ export class Render {
         entries: [
           { binding: 0, resource: { buffer: this.parameterBuffer }},
           { binding: 1, resource: { buffer: obj.buffer as GPUBuffer }},
+          { binding: 2, resource: this.cubeMapSampler },
+          { binding: 3, resource: this.cubeMapTexture.createView({dimension: 'cube'}) },
+          { binding: 4, resource: this.irradianceTexture.createView({dimension: 'cube'}) },
+          { binding: 5, resource: this.albedoTexture.createView({dimension: '2d'}) },
+          { binding: 6, resource: this.amocTexture.createView({dimension: '2d'}) },
+          { binding: 7, resource: this.normalTexture.createView({dimension: '2d'}) },
         ],
       });
       

@@ -1,21 +1,25 @@
 
-equilibrium acceleration algorithm
-flat faces limit
-newton
-smoothing algo
-
-centroid
-environment lighting
+brightness slider
 textures
-show only edges connecting vertices with coordination number n
+new ball from center bug
+skybox
+cylinder caps
+volume
+tool tips
 edge error indication color
 
+specular term
+ssao
+
+equilibrium acceleration algorithm, newton
+flat faces limit
+smoothing algo
+
+self intersection indicator
+
 undo
-
-remove triangles when removing edges
-
+cut open, change topology
 sound
-
 documentation (japanese too)
 
 rewrite without objects
@@ -23,3 +27,14 @@ half edge functions
 
 
 torus: 48v 144e 96f
+
+T 4 Tetra
+P 5 Penta
+H 6 Hexa
+
+S  7 Sept
+O  8 Oct
+N  9 Nonus
+D 10 Deca
+
+B >10 Big/Beyond

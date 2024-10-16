@@ -2,7 +2,7 @@
 @group(0) @binding(1) var<storage, read> edges: array<HalfEdge>;
 @group(0) @binding(2) var<storage, read_write> velocityUpdate: array<i32>;
 @group(0) @binding(3) var<storage, read_write> balls: array<Object>;
-@group(0) @binding(5) var<storage, read_write> out: array< atomic<i32>, 4>;
+@group(0) @binding(5) var<storage, read_write> out: array< atomic<i32> >;
 
 @compute @workgroup_size(64)
 
@@ -12,9 +12,6 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   if i >= global.ballCount {return;}
 
   let a = balls[i];
-
-  // inactive ball
-  if a.used == 0 {return;}
 
   var newBall = a;
 
@@ -48,15 +45,19 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   for (var j=0u; j<global.ballCount; j++) {
     if i == j {continue;}
     let b = balls[j];
-    if b.used == 0 {continue;}
     let ab = a.position - b.position;
     let d = a.prop1 + b.prop1;
     let lenab = length(ab);
 
-    newBall.velocity += repulsionFactor * global.gravity * ab / pow(lenab,2);
+    newBall.velocity += repulsionFactor * global.gravity * ab / (0.01 + lenab * lenab);
   }
 
   newBall.position += newBall.velocity * global.timeStep;
 
   balls[i] = newBall;
+
+  // centroid
+  atomicAdd(&out[4], i32(newBall.position.x * QUANTIZE_FACTOR));
+  atomicAdd(&out[5], i32(newBall.position.y * QUANTIZE_FACTOR));
+  atomicAdd(&out[6], i32(newBall.position.z * QUANTIZE_FACTOR));
 }

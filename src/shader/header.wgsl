@@ -40,7 +40,8 @@ struct Object {
   prop3: i32,
   prop4: i32,
 
-  used: u32,
+  glossyness: f32,
+  useTexture: f32,
 }
 
 struct HalfEdge {

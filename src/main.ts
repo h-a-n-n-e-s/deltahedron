@@ -24,6 +24,9 @@ hideFacesButton.onPush(() => ballPark.hideFaces(hideFacesButton.on));
 const hideScaffoldButton = new SwitchButton('hide scaffold', true);
 hideScaffoldButton.onPush(() => ballPark.hideBallsAndRods(hideScaffoldButton.on));
 
+const showOnlyIsoRodsButton = new SwitchButton('iso edges', true);
+showOnlyIsoRodsButton.onPush(() => ballPark.setShowOnlyIsoRods(showOnlyIsoRodsButton.on));
+
 const subdivideButton = new PushButton('subdivide', true);
 subdivideButton.onPush(() => {
   // if(confirm('Are you sure you want to subdivide?'))
@@ -32,8 +35,8 @@ subdivideButton.onPush(() => {
 
 const eraseAllButton = new PushButton('erase all', true);
 eraseAllButton.onPush(() => {
-  if(confirm('Are you sure you want to erase this structure? If not you should save it first.'))
-    ballPark.loadTetrahedron();
+  // if(confirm('Are you sure you want to erase this structure? If not you should save it first.'))
+    ballPark.loadOctahedron();
 });
 
 const exportSTLButton = new PushButton('export STL', true);

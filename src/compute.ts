@@ -43,6 +43,7 @@ export class Compute {
 
     this.device = await adapter!.requestDevice({
       // requiredFeatures: ["timestamp-query"]
+      requiredFeatures: ["float32-filterable"] // for hdr 
     });
 
     this.subSteps = subSteps;
@@ -82,7 +83,7 @@ export class Compute {
     });
 
     this.outBuffer = this.device.createBuffer({
-      size: 16,
+      size: 32,
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST
     });
 
@@ -183,6 +184,8 @@ export class Compute {
 
     this.computePass(encoder, this.rodsPipeline, this.bindGroup, rodCount);
 
+    this.resetCentroid();
+
     for (let s=0; s<this.subSteps; s++)
       this.computePass(encoder, this.ballsPipeline, this.bindGroup, ballCount);
 
@@ -222,6 +225,11 @@ export class Compute {
   resetOutBuffer = () => {
     this.stagingOutBuffer.unmap();
     this.device.queue.writeBuffer(this.outBuffer, 0, new Int32Array([2147483647, -1]));
+  }
+
+  resetCentroid = () => {
+    this.stagingOutBuffer.unmap();
+    this.device.queue.writeBuffer(this.outBuffer, 16, new Int32Array([0,0,0]));
   }
 
   resetError = () => {
@@ -296,6 +304,9 @@ export class Compute {
   
   setRodsBuffer = (index:number, rod:Float32Array) =>
     this.device.queue.writeBuffer(this.rodsBuffer, index*q*4, rod);
+
+  setRodsBufferColor = (index:number, rod:Float32Array) =>
+    this.device.queue.writeBuffer(this.rodsBuffer, (index*q+8)*4, rod.slice(8,12));
 
   setCompleteBallsAndRodsBuffer = (balls:Float32Array, rods:Float32Array) => {
     this.device.queue.writeBuffer(this.ballsBuffer, 0, balls);
