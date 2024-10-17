@@ -45,15 +45,20 @@ body {
   outline: none;
 }
 
-#fps, #dihedralAngle, #formula, #triangleCount, #info {
+#error, #volume, #dihedralAngle, #formula, #triangleCount, #info {
   position:absolute;
   text-align:right;
   height:22px;
   user-select: none;
   /* background-color: #077; */
 }
-#fps {
+#error {
   top: 11px;
+  width:80px;
+  right:20px;
+}
+#volume {
+  top: 42px;
   width:80px;
   right:20px;
 }

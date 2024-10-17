@@ -17,6 +17,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   // 2 maximum error
   // 3 dihedral angle
   // 4,5,6 centroid x,y,z
+  // 7 volume
 
   if global.rodScanBranch == 1 {
 

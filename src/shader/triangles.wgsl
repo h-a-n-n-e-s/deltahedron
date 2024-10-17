@@ -42,16 +42,20 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   triVert[9 * i + 7] = c.y;
   triVert[9 * i + 8] = c.z;
 
-  let norm = normalize(cross(b - a, c - a));
-  triNorm[9 * i    ] = norm.x;
-  triNorm[9 * i + 1] = norm.y;
-  triNorm[9 * i + 2] = norm.z;
-  triNorm[9 * i + 3] = norm.x;
-  triNorm[9 * i + 4] = norm.y;
-  triNorm[9 * i + 5] = norm.z;
-  triNorm[9 * i + 6] = norm.x;
-  triNorm[9 * i + 7] = norm.y;
-  triNorm[9 * i + 8] = norm.z;
+  let orth = cross(b - a, c - a);
+  let volume = dot(a, orth) / 6;
+  atomicAdd(&out[7], i32(volume * QUANTIZE_FACTOR));
+
+  let n = normalize(orth);
+  triNorm[9 * i    ] = n.x;
+  triNorm[9 * i + 1] = n.y;
+  triNorm[9 * i + 2] = n.z;
+  triNorm[9 * i + 3] = n.x;
+  triNorm[9 * i + 4] = n.y;
+  triNorm[9 * i + 5] = n.z;
+  triNorm[9 * i + 6] = n.x;
+  triNorm[9 * i + 7] = n.y;
+  triNorm[9 * i + 8] = n.z;
 
 
   // do centroid correction here cuz in rods.wgsl it is

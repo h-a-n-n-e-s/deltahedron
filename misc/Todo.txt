@@ -4,9 +4,9 @@ textures
 new ball from center bug
 skybox
 cylinder caps
-volume
 tool tips
 edge error indication color
+limit zoom range
 
 specular term
 ssao

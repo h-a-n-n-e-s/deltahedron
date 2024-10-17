@@ -184,7 +184,7 @@ export class Compute {
 
     this.computePass(encoder, this.rodsPipeline, this.bindGroup, rodCount);
 
-    this.resetCentroid();
+    this.resetCentroidAndVolume();
 
     for (let s=0; s<this.subSteps; s++)
       this.computePass(encoder, this.ballsPipeline, this.bindGroup, ballCount);
@@ -227,9 +227,9 @@ export class Compute {
     this.device.queue.writeBuffer(this.outBuffer, 0, new Int32Array([2147483647, -1]));
   }
 
-  resetCentroid = () => {
+  resetCentroidAndVolume = () => {
     this.stagingOutBuffer.unmap();
-    this.device.queue.writeBuffer(this.outBuffer, 16, new Int32Array([0,0,0]));
+    this.device.queue.writeBuffer(this.outBuffer, 16, new Int32Array([0,0,0,0]));
   }
 
   resetError = () => {

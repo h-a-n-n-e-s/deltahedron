@@ -91,9 +91,13 @@ export class BallPark {
 
     // display
 
-    const divFps = document.createElement('div');
-    divFps.id = 'fps';
-    document.body.appendChild(divFps);
+    const divError = document.createElement('div');
+    divError.id = 'error';
+    document.body.appendChild(divError);
+
+    const divVolume = document.createElement('div');
+    divVolume.id = 'volume';
+    document.body.appendChild(divVolume);
 
     const divDihedralAngle = document.createElement('div');
     divDihedralAngle.id = 'dihedralAngle';
@@ -289,7 +293,11 @@ export class BallPark {
         await this.compute.workDone();
         const out = await this.compute.getOutBuffer();
         const error = 100 * out[2] / 2097152;
-        divFps.innerHTML = error.toFixed(3) + '%';
+        divError.innerHTML = error.toFixed(3) + '%';
+
+        const volume = out[7] / 2097152;
+        divVolume.innerHTML = volume.toFixed(4);
+
         this.compute.resetError();
       }
 
