@@ -9,13 +9,13 @@ export const q = 24; // scalar quantities per object in buffer
 
 const color = {
   blue: [.2, 0, .8],
-  cyan: [0, .7, .7],
+  cyan: [0, .6, .6],
   white: [.9, .9, .9],
   red: [.9, 0, 0],
   yellow: [1, .9, 0],
   green: [0, .7, 0],
   magenta: [.8, 0, .8],
-  coal: [.2, .2, .2],
+  coal: [.3, .3, .3],
 };
 export const colorArray = Object.values(color).map((c) => c);
 const colorU8Array = Object.values(color).map((c) => c.map((v) => Math.floor(255*v)));
@@ -24,6 +24,10 @@ export class BallPark {
 
   cubemap = 'cubemap/oceansky2hdr';
   tex = 'textures/scratched_plastic';
+
+  ballRadius = 0.1;
+  cylinderRadius = 0.04;
+  cylinderLength = 1;
 
   timeStep = 0.05; // 0.05
   subSteps = 1; // 5
@@ -55,7 +59,7 @@ export class BallPark {
     const camera = new Camera({
       arcRotateCamera: false, // if false uses simple endless rotation
       angleResolution: 3,
-      radiusResolution: 2,
+      radiusResolution: 6,
       azimuth: 0,
       inclination: 90,
       radius: 15,
@@ -65,11 +69,7 @@ export class BallPark {
       fieldOfViewAngle: 27 * Math.PI/180, // (approximately vertical angle of 50 mm full frame)
     });
     
-    const ballRadius = 0.1;
-    const cylinderRadius = 0.04;
-    const cylinderLength = 1;
-
-    this.deltahedron = new Structure(this.maxVertexCount, this.maxEdgeCount, this.maxFaceCount, ballRadius, cylinderRadius, cylinderLength, this.compute );
+    this.deltahedron = new Structure(this.maxVertexCount, this.maxEdgeCount, this.maxFaceCount, this.ballRadius, this.cylinderRadius, this.cylinderLength, this.compute );
 
     const [balls, rods, triangles, halfEdges] = this.deltahedron.init(torusHalfEdges(), torusVertexPositions);
     // this.deltahedron.init(tetrahedronHalfEdges);
@@ -79,8 +79,9 @@ export class BallPark {
     this.compute.setHalfEdgeBuffer(halfEdges);
     this.compute.setCount(balls.count, rods.count, triangles.count);
 
-    this.compute.setBallsAndRodsVisibility(balls.visible, rods.visible);
-    this.compute.setTrianglesVisibility(true);
+    this.compute.setBallsVisibility(balls.visible);
+    this.compute.setBallsVisibility(rods.visible);
+    this.compute.setTrianglesVisibility(triangles.visible);
 
     const render = new Render();
     await render.init(gpuDevice, 'canvas', camera, [balls, rods, triangles], this.cubemap, this.tex);
@@ -112,17 +113,19 @@ export class BallPark {
       const element = ['T','P','H','S','O','N','D'];
       let bigCount = 0;
       let string = '';
-      for (let i=4; i < 16; i++) {
-        if (i > 10 && count[i] > 0) bigCount += count[i]; 
+      for (let i=4; i < 12; i++) {
+        const c = colorU8Array[i-4];
+        if (i > 10 && count[i] > 0) bigCount += count[i];
         else if (count[i] > 0) {
-          const c = colorU8Array[i-4];
+          
           string = string.concat(
             '<span style="color:rgb('+c[0]+','+c[1]+','+c[2]+')">'+
             element[i-4]+'<sub>'+count[i]+'</sub>&emsp14;</span>'
           );
         }
-        if (i == 15 && bigCount > 0) string = string.concat(
-          'B'+'<sub>'+bigCount+'</sub>&emsp14;'
+        if (i == 11 && bigCount > 0) string = string.concat(
+          '<span style="color:rgb('+c[0]+','+c[1]+','+c[2]+')">'+
+          'B'+'<sub>'+bigCount+'</sub>&emsp14;</span>'
         );
       }
       divFormula.innerHTML = string;
@@ -170,15 +173,17 @@ export class BallPark {
 
     const loop = async () => {
 
-      if (camera.mouseCoords.haveChanged || camera.mouseWasPressed) {
-        camera.mouseCoords.haveChanged = false;
-        checkSelection = true;
-        this.compute.selectRodScanBranch('depthTest');
-        this.compute.setMouseRayAndEye(camera.getMouseRay(), camera.getEye());
-        this.updateInfoDisplay('');
+      if (!this.subdivide) {
+        if (camera.mouseCoords.haveChanged || camera.mouseWasPressed) {
+          camera.mouseCoords.haveChanged = false;
+          checkSelection = true;
+          this.compute.selectRodScanBranch('depthTest');
+          this.compute.setMouseRayAndEye(camera.getMouseRay(), camera.getEye());
+          this.updateInfoDisplay('');
+        }
       }
-      
-      /////////////////////////////////////////////////////////////
+
+      //_______________________________________________________________________
       const commandEncoder = gpuDevice.createCommandEncoder();
 
       // if (!slowmo)
@@ -187,7 +192,7 @@ export class BallPark {
       render.render(camera, commandEncoder);
 
       gpuDevice.queue.submit([commandEncoder.finish()]);
-      /////////////////////////////////////////////////////////////
+      //_______________________________________________________________________
       
       if (this.rotate) camera.raiseAzimuth();
 
@@ -310,9 +315,11 @@ export class BallPark {
   setGravity(g:number) {this.compute.setGravity(g);}
   setHold(h:boolean) {this.freeze = h;}
   setRotation(r:boolean) {this.rotate = r;}
-  hideFaces(h:boolean) {this.deltahedron.hideFaces(h);}
-  hideBallsAndRods(h:boolean) {this.deltahedron.hideBallsAndRods(h);}
-  // loadTetrahedron() {this.setData(tetrahedronHalfEdges, tetrahedronVertexPositions);}
+  
+  showFaces(s:boolean) {this.deltahedron.showFaces(s);}
+  showRods(s:boolean) {this.deltahedron.showRods(s);}
+  showBalls(s:boolean) {this.deltahedron.showBalls(s);}
+
   loadOctahedron() {this.setData(octahedronHalfEdges, octahedronVertexPositions);}
 
   setShowOnlyIsoRods(show:boolean) {

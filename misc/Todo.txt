@@ -1,12 +1,9 @@
 
-brightness slider
 textures
-new ball from center bug
+brightness slider
 skybox
-cylinder caps
 tool tips
 edge error indication color
-limit zoom range
 
 specular term
 ssao
@@ -14,6 +11,8 @@ ssao
 equilibrium acceleration algorithm, newton
 flat faces limit
 smoothing algo
+
+store computed textures in binaries?
 
 self intersection indicator
 
@@ -26,7 +25,6 @@ rewrite without objects
 half edge functions
 
 
-torus: 48v 144e 96f
 
 T 4 Tetra
 P 5 Penta

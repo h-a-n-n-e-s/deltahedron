@@ -19,12 +19,14 @@ export class Render {
   private canvas!: HTMLCanvasElement;
   private context!: GPUCanvasContext;
 
+  private canvasTexture!: GPUTexture;
   private depthTexture!: GPUTexture;
   private multisampleTexture!: GPUTexture;
 
   private parameters!:Float32Array;
 
   private pipeline!:GPURenderPipeline;
+  private trianglePipeline!:GPURenderPipeline;
   private renderPassDescriptor!:GPURenderPassDescriptor;
 
   private parameterBuffer!:GPUBuffer;
@@ -72,36 +74,50 @@ export class Render {
     this.amocTexture = await createTextureFromImage(device, tex+'/ao.jpg');
     this.normalTexture = await createTextureFromImage(device, tex+'/norm.jpg');
 
+
+    // parameter buffer /////////////////////////
+
+    this.parameters = new Float32Array(60);
+    
+    this.parameterBuffer = this.device.createBuffer({
+      label: 'parameter',
+      size: this.parameters.byteLength,
+      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+    });
+
+    // map camera position and relevant matrices to parameter array
+    camera.shaderParameterMapping(this.parameters);
+
     // ____________________________________________________
 
     const module = this.device.createShaderModule({
       code: header + shader
     })
 
-    this.pipeline = this.device.createRenderPipeline({
+    const vertexBufferParas = (location:number) => {
+      return {
+        arrayStride: 12,
+        attributes: [
+          {shaderLocation: location, offset: 0, format: 'float32x3'}
+        ]
+      } as GPUVertexBufferLayout
+    }
+
+    const createPipeline = (fragmentShader:string, layout:GPUPipelineLayout) => this.device.createRenderPipeline({
       label: 'pope',
-      layout: 'auto',
+      layout: layout,
       vertex: {
         module,
         entryPoint: 'vs',
         buffers: [
-          {
-            arrayStride: 12,
-            attributes: [
-              {shaderLocation: 0, offset:  0, format: 'float32x3'},  // position
-            ],
-          },
-          {
-            arrayStride: 12,
-            attributes: [
-              {shaderLocation: 1, offset: 0, format: 'float32x3'},  // normal
-            ],
-          }
-        ],
+          vertexBufferParas(0), // position
+          vertexBufferParas(1), // normal
+          vertexBufferParas(2), // tangent (only used for triangles)
+        ]
       },
       fragment: {
         module,
-        entryPoint: 'fs',
+        entryPoint: fragmentShader,
         targets: [{format: presentationFormat}]
       },
       primitive: {
@@ -139,52 +155,54 @@ export class Render {
       },
     };
 
-    // parameter buffer /////////////////////////
+    const ssv = GPUShaderStage.VERTEX;
+    const ssf = GPUShaderStage.FRAGMENT;
 
-    this.parameters = new Float32Array(60);
-    
-    this.parameterBuffer = this.device.createBuffer({
-      label: 'parameter',
-      size: this.parameters.byteLength,
-      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+    const bindGroupLayout = this.device.createBindGroupLayout({
+      entries: [
+        {binding:0, visibility:ssv|ssf, buffer:{type:'uniform'}},
+        {binding:1, visibility:ssv, buffer:{type:'read-only-storage'}},
+        {binding:2, visibility:ssf, sampler:{}},
+        {binding:3, visibility:ssf, texture:{viewDimension:'cube'}},
+        {binding:4, visibility:ssf, texture:{viewDimension:'cube'}},
+        {binding:5, visibility:ssf, texture:{}},
+        {binding:6, visibility:ssf, texture:{}},
+        {binding:7, visibility:ssf, texture:{}},
+      ]
     });
 
-    // directional light
-    this.parameters.set([0, 0, -1, 1], 52); // direction and intensity
-    // point light
-    this.parameters.set([0, 0, 0, 0], 56); // position and intensity (0,0,-10,1)
-    // kira
-    this.parameters.set([0.15], 51);
+    const pipelineLayout = this.device.createPipelineLayout({bindGroupLayouts: [bindGroupLayout]});
 
-    // map camera position and relevant matrices to parameter array
-    camera.shaderParameterMapping(this.parameters);
+    this.pipeline = createPipeline('fs', pipelineLayout);
+    this.trianglePipeline = createPipeline('fs_texture', pipelineLayout);
 
     // objects
 
     for (const obj of objects) {
 
+      let meshBuff:MeshBuffers;
+
+      if (obj.isInstancedMesh) // normal object
+        meshBuff = getMeshBuffers(this.device, obj.mesh as Mesh);
+      else if (obj.meshBuffers !== undefined)
+        meshBuff = obj.meshBuffers;
+      else
+        throw new Error('no mesh buffer');
+
       const bindGroup = this.device.createBindGroup({
-        layout: this.pipeline.getBindGroupLayout(0),
+        layout: bindGroupLayout,
         entries: [
           { binding: 0, resource: { buffer: this.parameterBuffer }},
           { binding: 1, resource: { buffer: obj.buffer as GPUBuffer }},
           { binding: 2, resource: this.cubeMapSampler },
           { binding: 3, resource: this.cubeMapTexture.createView({dimension: 'cube'}) },
           { binding: 4, resource: this.irradianceTexture.createView({dimension: 'cube'}) },
-          { binding: 5, resource: this.albedoTexture.createView({dimension: '2d'}) },
-          { binding: 6, resource: this.amocTexture.createView({dimension: '2d'}) },
-          { binding: 7, resource: this.normalTexture.createView({dimension: '2d'}) },
+          { binding: 5, resource: this.albedoTexture.createView() },
+          { binding: 6, resource: this.amocTexture.createView() },
+          { binding: 7, resource: this.normalTexture.createView() },
         ],
       });
-      
-      let meshBuff:MeshBuffers;
-      if (obj.isInstancedMesh) // normal object
-        meshBuff = getMeshBuffers(this.device, obj.mesh as Mesh);
-      else if (obj.meshBuffers !== undefined)
-        meshBuff = obj.meshBuffers;
-      else 
-        throw new Error('no mesh buffer');
-        
+              
       this.objectGPUDataList.push({
         meshbuffers: meshBuff!,
         bindGroup: bindGroup,
@@ -197,34 +215,7 @@ export class Render {
 
   render(camera:Camera, commandEncoder?:GPUCommandEncoder) {
 
-    const canvasTexture = this.context.getCurrentTexture();
-
-    if (!this.depthTexture ||
-      this.depthTexture.width !== canvasTexture.width ||
-      this.depthTexture.height !== canvasTexture.height) {
-      if (this.depthTexture) {
-        this.depthTexture.destroy();
-        this.multisampleTexture.destroy();
-      }
-      this.depthTexture = this.device.createTexture({
-        size: [canvasTexture.width, canvasTexture.height],
-        format: 'depth24plus',
-        usage: GPUTextureUsage.RENDER_ATTACHMENT,
-        sampleCount: 4,
-      });
-      this.multisampleTexture = this.device.createTexture({
-        size: [canvasTexture.width, canvasTexture.height],
-        format: canvasTexture.format,
-        usage: GPUTextureUsage.RENDER_ATTACHMENT,
-        sampleCount: 4,
-      });
-    }
-    this.renderPassDescriptor.depthStencilAttachment!.view = this.depthTexture.createView();
-    // @ts-ignore
-    this.renderPassDescriptor.colorAttachments[0].view = this.multisampleTexture.createView();
-    // @ts-ignore
-    this.renderPassDescriptor.colorAttachments[0].resolveTarget = canvasTexture.createView(); // only in last render pass
-
+    this.getCanvasDepthMultisampleTextures();
 
     camera.getCameraMatrix();
     this.device.queue.writeBuffer(this.parameterBuffer, 0, this.parameters);
@@ -232,7 +223,6 @@ export class Render {
     const encoder = commandEncoder!==undefined ? commandEncoder : this.device.createCommandEncoder();
 
     const pass = encoder.beginRenderPass(this.renderPassDescriptor);
-    pass.setPipeline(this.pipeline);
 
     for (const o of this.objectGPUDataList) {
       
@@ -242,10 +232,17 @@ export class Render {
       pass.setVertexBuffer(1, o.meshbuffers.normalBuffer);
       pass.setIndexBuffer(o.meshbuffers.indexBuffer, 'uint32');
       pass.setBindGroup(0, o.bindGroup);
-      if (o.object.isInstancedMesh)
+      if (o.object.isInstancedMesh) {
+        pass.setPipeline(this.pipeline);
+        pass.setVertexBuffer(2, o.meshbuffers.normalBuffer); // dummy but needs to be set
         pass.drawIndexed(o.meshbuffers.indexBuffer.size/4, o.object.count);
-      else
+      }
+      else {
+        pass.setPipeline(this.trianglePipeline);
+        if (o.meshbuffers.tangentBuffer !== undefined)
+          pass.setVertexBuffer(2, o.meshbuffers.tangentBuffer);
         pass.drawIndexed(3*o.object.count, 1);
+      }
     }
 
     pass.end();
@@ -276,6 +273,36 @@ export class Render {
     } catch {
       observer.observe(this.canvas, { box: 'content-box' });
     }
+  }
+
+  getCanvasDepthMultisampleTextures() {
+    this.canvasTexture = this.context.getCurrentTexture();
+
+    if (!this.depthTexture ||
+      this.depthTexture.width !== this.canvasTexture.width ||
+      this.depthTexture.height !== this.canvasTexture.height) {
+      if (this.depthTexture) {
+        this.depthTexture.destroy();
+        this.multisampleTexture.destroy();
+      }
+      this.depthTexture = this.device.createTexture({
+        size: [this.canvasTexture.width, this.canvasTexture.height],
+        format: 'depth24plus',
+        usage: GPUTextureUsage.RENDER_ATTACHMENT,
+        sampleCount: 4,
+      });
+      this.multisampleTexture = this.device.createTexture({
+        size: [this.canvasTexture.width, this.canvasTexture.height],
+        format: this.canvasTexture.format,
+        usage: GPUTextureUsage.RENDER_ATTACHMENT,
+        sampleCount: 4,
+      });
+    }
+    this.renderPassDescriptor.depthStencilAttachment!.view = this.depthTexture.createView();
+    // @ts-ignore
+    this.renderPassDescriptor.colorAttachments[0].view = this.multisampleTexture.createView();
+    // @ts-ignore
+    this.renderPassDescriptor.colorAttachments[0].resolveTarget = this.canvasTexture.createView(); // only in last render pass
   }
 
   getCanvas = () => this.canvas;

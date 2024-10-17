@@ -12,6 +12,7 @@ export class Compute {
 
   private device!: GPUDevice;
   private bindGroup!: GPUBindGroup;
+  private triangleBindGroup!: GPUBindGroup;
 
   private ballsPipeline!: GPUComputePipeline;
   private rodsPipeline!: GPUComputePipeline;
@@ -29,6 +30,7 @@ export class Compute {
   private triangleBuffer!: GPUBuffer;
   private triangleVertexBuffer!: GPUBuffer;
   private triangleNormalBuffer!: GPUBuffer;
+  private triangleTangentBuffer!: GPUBuffer;
   private triangleIndexBuffer!: GPUBuffer;
   private stagingOutBuffer!: GPUBuffer;
   private stagingBuffer!: GPUBuffer;
@@ -113,6 +115,11 @@ export class Compute {
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX
     });
 
+    this.triangleTangentBuffer = this.device.createBuffer({
+      size: triangles.maxCount*9 * 4,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX
+    });
+
     this.triangleIndexBuffer = this.device.createBuffer({
       size: triangles.maxCount*3 * 4,
       usage:  GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
@@ -127,7 +134,7 @@ export class Compute {
     for (let i=0; i<triangles.maxCount*3; i++) ind[i] = i;
     this.device.queue.writeBuffer(indexBuffer, 0, ind);
 
-    triangles.meshBuffers = {vertexBuffer:this.triangleVertexBuffer, normalBuffer:this.triangleNormalBuffer, indexBuffer:indexBuffer};
+    triangles.meshBuffers = {vertexBuffer:this.triangleVertexBuffer, normalBuffer:this.triangleNormalBuffer, indexBuffer:indexBuffer, tangentBuffer:this.triangleTangentBuffer};
 
     // general staging buffer
     this.stagingBuffer = this.device.createBuffer({
@@ -135,29 +142,43 @@ export class Compute {
       usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
     });
 
-    // bindgroups and pipelines
+    // bindgroups and pipelines _______________________________________________
+
+    const ssc = GPUShaderStage.COMPUTE;
 
     const bindGroupLayout = this.device.createBindGroupLayout({
       entries: [
-        {binding:0, visibility:GPUShaderStage.COMPUTE, buffer:{type:'uniform'}}, // global parameters
-        {binding:1, visibility:GPUShaderStage.COMPUTE, buffer:{type:'read-only-storage'}}, // halfEdges
-        {binding:2, visibility:GPUShaderStage.COMPUTE, buffer:{type:'storage'}}, // velocityUpdate
-        {binding:3, visibility:GPUShaderStage.COMPUTE, buffer:{type:'storage'}}, // balls
-        {binding:4, visibility:GPUShaderStage.COMPUTE, buffer:{type:'storage'}}, // rods
-        {binding:5, visibility:GPUShaderStage.COMPUTE, buffer:{type:'storage'}}, // out
-        {binding:6, visibility:GPUShaderStage.COMPUTE, buffer:{type:'storage'}}, // triangleVertex
-        {binding:7, visibility:GPUShaderStage.COMPUTE, buffer:{type:'storage'}}, // triangleNormal
-        {binding:8, visibility:GPUShaderStage.COMPUTE, buffer:{type:'read-only-storage'}}, // triangleIndex
+        {binding:0, visibility:ssc, buffer:{type:'uniform'}}, // global parameters
+        {binding:1, visibility:ssc, buffer:{type:'read-only-storage'}}, // halfEdges
+        {binding:2, visibility:ssc, buffer:{type:'storage'}}, // velocityUpdate
+        {binding:3, visibility:ssc, buffer:{type:'storage'}}, // balls
+        {binding:4, visibility:ssc, buffer:{type:'storage'}}, // rods
+        {binding:5, visibility:ssc, buffer:{type:'storage'}}, // out
+      ]
+    });
+
+    // necessary to separate the triangle stage cuz total storage buffer count > 8
+    const triangleBindGroupLayout = this.device.createBindGroupLayout({
+      entries: [
+        {binding:0, visibility:ssc, buffer:{type:'uniform'}}, // global parameters
+        {binding:1, visibility:ssc, buffer:{type:'storage'}}, // velocityUpdate
+        {binding:2, visibility:ssc, buffer:{type:'storage'}}, // balls
+        {binding:3, visibility:ssc, buffer:{type:'storage'}}, // out
+        {binding:4, visibility:ssc, buffer:{type:'storage'}}, // triangleVertex
+        {binding:5, visibility:ssc, buffer:{type:'storage'}}, // triangleNormal
+        {binding:6, visibility:ssc, buffer:{type:'storage'}}, // triangleTangent
+        {binding:7, visibility:ssc, buffer:{type:'read-only-storage'}}, // triangleIndex
       ]
     });
 
     const pipelineLayout = this.device.createPipelineLayout({bindGroupLayouts: [bindGroupLayout]});
+    const trianglePipelineLayout = this.device.createPipelineLayout({bindGroupLayouts: [triangleBindGroupLayout]});
 
     this.ballsPipeline = this.createCompPipe(pipelineLayout,
       header+intersection+ballsShader);
     this.rodsPipeline = this.createCompPipe(pipelineLayout,
       header+intersection+rodsShader);
-    this.trianglesPipeline = this.createCompPipe(pipelineLayout,
+    this.trianglesPipeline = this.createCompPipe(trianglePipelineLayout,
       header+intersection+trianglesShader);
     this.rodScanPipeline = this.createCompPipe(pipelineLayout,
       header+rodScan);
@@ -171,9 +192,20 @@ export class Compute {
         {binding: 3, resource: {buffer: this.ballsBuffer}},
         {binding: 4, resource: {buffer: this.rodsBuffer}},
         {binding: 5, resource: {buffer: this.outBuffer}},
-        {binding: 6, resource: {buffer: this.triangleVertexBuffer}},
-        {binding: 7, resource: {buffer: this.triangleNormalBuffer}},
-        {binding: 8, resource: {buffer: this.triangleIndexBuffer}},
+      ]
+    });
+
+    this.triangleBindGroup = this.device.createBindGroup({
+      layout: triangleBindGroupLayout,
+      entries: [
+        {binding: 0, resource: {buffer: this.globalParameterBuffer}},
+        {binding: 1, resource: {buffer: this.velocityUpdateBuffer}},
+        {binding: 2, resource: {buffer: this.ballsBuffer}},
+        {binding: 3, resource: {buffer: this.outBuffer}},
+        {binding: 4, resource: {buffer: this.triangleVertexBuffer}},
+        {binding: 5, resource: {buffer: this.triangleNormalBuffer}},
+        {binding: 6, resource: {buffer: this.triangleTangentBuffer}},
+        {binding: 7, resource: {buffer: this.triangleIndexBuffer}},
       ]
     });
 
@@ -189,7 +221,7 @@ export class Compute {
     for (let s=0; s<this.subSteps; s++)
       this.computePass(encoder, this.ballsPipeline, this.bindGroup, ballCount);
 
-    this.computePass(encoder, this.trianglesPipeline, this.bindGroup, triangleCount);
+    this.computePass(encoder, this.trianglesPipeline, this.triangleBindGroup, triangleCount);
   }
 
   rodScan = (rodCount:number) => {
@@ -318,12 +350,15 @@ export class Compute {
     this.device.queue.writeBuffer(this.triangleIndexBuffer, 0, indexArray)
   }
 
-  setBallsAndRodsVisibility = (ballsVisible:boolean, rodsVisible:boolean) =>
-    this.device.queue.writeBuffer(this.globalParameterBuffer, 52, new Uint32Array([ballsVisible ? 1 : 0, rodsVisible ? 1 : 0]));
-
   setTrianglesVisibility = (visible:boolean) =>
     this.device.queue.writeBuffer(this.globalParameterBuffer, 60, new Uint32Array([visible ? 1 : 0]));
   
+  setRodsVisibility = (rodsVisible:boolean) =>
+    this.device.queue.writeBuffer(this.globalParameterBuffer, 56, new Uint32Array([rodsVisible ? 1 : 0]));
+
+  setBallsVisibility = (ballsVisible:boolean) =>
+    this.device.queue.writeBuffer(this.globalParameterBuffer, 52, new Uint32Array([ballsVisible ? 1 : 0]));
+
   setMouseRayAndEye = (ray:Float32Array, eye:Float32Array) => {
     this.device.queue.writeBuffer(this.globalParameterBuffer, 16, ray);
     this.device.queue.writeBuffer(this.globalParameterBuffer, 28, new Float32Array([1]));

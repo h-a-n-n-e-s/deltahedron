@@ -5,7 +5,7 @@ import { Mesh, MeshBuffers, cylinderMesh, icoSphereMesh } from "./mesh";
 
 export interface Object {
   data: Float32Array,
-  buffer?: GPUBuffer,
+  buffer?: GPUBuffer, // holds data for individual instances
   mesh: Mesh,
   isInstancedMesh: boolean,
   meshBuffers?: MeshBuffers, // optional for individual triangles
@@ -53,7 +53,7 @@ export class Structure {
       data: new Float32Array(maxVertexCount * q),
       mesh: icoSphereMesh(this.ballRadius, 4),
       isInstancedMesh: true,
-      visible: true,
+      visible: false,
       count: 0,
       maxCount: maxVertexCount
     }
@@ -62,7 +62,7 @@ export class Structure {
       data: new Float32Array(maxEdgeCount * q),
       mesh: cylinderMesh(32, this.cylinderRadius, this.cylinderLength/2, true),
       isInstancedMesh: true,
-      visible: true,
+      visible: false,
       count: 0,
       maxCount: maxEdgeCount
     }
@@ -75,7 +75,7 @@ export class Structure {
         indices: new Uint32Array()
       },
       isInstancedMesh: false,
-      visible: true,
+      visible: false,
       count: 0,
       maxCount: maxFaceCount
     }
@@ -565,15 +565,19 @@ export class Structure {
     console.log(this.triangles.count+' triangles exported.');
   }
 
-  hideFaces = (areHidden:boolean) => {
-    this.triangles.visible = !areHidden;
-    this.compute.setTrianglesVisibility(!areHidden);
+  showFaces = (show:boolean) => {
+    this.triangles.visible = show;
+    this.compute.setTrianglesVisibility(show);
   }
 
-  hideBallsAndRods = (areHidden:boolean) => {
-    this.balls.visible = !areHidden;
-    this.rods.visible = !areHidden;
-    this.compute.setBallsAndRodsVisibility(!areHidden, !areHidden);
+  showRods = (show:boolean) => {
+    this.rods.visible = show;
+    this.compute.setRodsVisibility(show);
+  }
+
+  showBalls = (show:boolean) => {
+    this.balls.visible = show;
+    this.compute.setBallsVisibility(show);
   }
 
   showAllRods = () => {

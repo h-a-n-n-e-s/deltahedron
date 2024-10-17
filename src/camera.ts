@@ -133,6 +133,7 @@ export class Camera {
 
     canvas.addEventListener('wheel', (e) => {
       this.para.radius += 0.1 * this.para.radiusResolution * Math.sign(e.deltaY);
+      this.para.radius = Math.max(this.para.radius, this.para.zNear);
       this.dx = 0;
       this.dy = 0;
       this.isNew = true;

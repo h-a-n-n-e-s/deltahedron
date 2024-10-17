@@ -8,6 +8,7 @@ export type MeshBuffers = {
   vertexBuffer: GPUBuffer;
   normalBuffer: GPUBuffer;
   indexBuffer: GPUBuffer;
+  tangentBuffer?: GPUBuffer;
 }
 
 export function getMeshBuffers(device:GPUDevice, mesh:Mesh):MeshBuffers {

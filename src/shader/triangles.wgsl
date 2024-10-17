@@ -1,10 +1,12 @@
 @group(0) @binding(0) var<uniform> global: GlobalParameter;
-@group(0) @binding(2) var<storage, read_write> velocityUpdate: array< atomic<i32> >;
-@group(0) @binding(3) var<storage, read_write> balls: array<Object>;
-@group(0) @binding(5) var<storage, read_write> out: array< atomic<i32> >;
-@group(0) @binding(6) var<storage, read_write> triVert: array<f32>;
-@group(0) @binding(7) var<storage, read_write> triNorm: array<f32>;
-@group(0) @binding(8) var<storage, read> triIndex: array<u32>;
+@group(0) @binding(1) var<storage, read_write> velocityUpdate: array< atomic<i32> >;
+@group(0) @binding(2) var<storage, read_write> balls: array<Object>;
+@group(0) @binding(3) var<storage, read_write> out: array< atomic<i32> >;
+@group(0) @binding(4) var<storage, read_write> triVert: array<f32>;
+@group(0) @binding(5) var<storage, read_write> triNorm: array<f32>;
+@group(0) @binding(6) var<storage, read_write> triTang: array<f32>;
+@group(0) @binding(7) var<storage, read> triIndex: array<u32>;
+
 
 @compute @workgroup_size(64)
 
@@ -57,6 +59,16 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   triNorm[9 * i + 7] = n.y;
   triNorm[9 * i + 8] = n.z;
 
+  let t = normalize(b - a);
+  triTang[9 * i    ] = t.x;
+  triTang[9 * i + 1] = t.y;
+  triTang[9 * i + 2] = t.z;
+  triTang[9 * i + 3] = t.x;
+  triTang[9 * i + 4] = t.y;
+  triTang[9 * i + 5] = t.z;
+  triTang[9 * i + 6] = t.x;
+  triTang[9 * i + 7] = t.y;
+  triTang[9 * i + 8] = t.z;
 
   // do centroid correction here cuz in rods.wgsl it is
   // interfering with other velocity updates

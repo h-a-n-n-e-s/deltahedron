@@ -18,11 +18,14 @@ saveButton.onPush(async () => await ballPark.saveData());
 const rotateButton = new SwitchButton('rotate', true);
 rotateButton.onPush(() => ballPark.setRotation(rotateButton.on));
 
-const hideFacesButton = new SwitchButton('hide faces', true);
-hideFacesButton.onPush(() => ballPark.hideFaces(hideFacesButton.on));
+const faceButton = new SwitchButton('faces', true);
+faceButton.onPush(() => ballPark.showFaces(faceButton.on));
 
-const hideScaffoldButton = new SwitchButton('hide scaffold', true);
-hideScaffoldButton.onPush(() => ballPark.hideBallsAndRods(hideScaffoldButton.on));
+const rodButton = new SwitchButton('rods', true);
+rodButton.onPush(() => ballPark.showRods(rodButton.on));
+
+const ballButton = new SwitchButton('balls', true);
+ballButton.onPush(() => ballPark.showBalls(ballButton.on));
 
 const showOnlyIsoRodsButton = new SwitchButton('iso edges', true);
 showOnlyIsoRodsButton.onPush(() => ballPark.setShowOnlyIsoRods(showOnlyIsoRodsButton.on));
@@ -57,4 +60,10 @@ const operationButtons = new RadioButton([
 operationButtons.click(0); // activate 'add' button
 
 await ballPark.initialize();
+
+// show stuff
+faceButton.click();
+rodButton.click();
+ballButton.click();
+
 ballPark.setGravity(gravitySlider.value);
