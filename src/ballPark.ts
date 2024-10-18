@@ -24,6 +24,7 @@ export class BallPark {
 
   cubemap = 'cubemap/oceansky2hdr';
   tex = 'textures/scratched_plastic';
+  // tex = 'textures/metal';
 
   ballRadius = 0.1;
   cylinderRadius = 0.04;
@@ -43,6 +44,7 @@ export class BallPark {
   deltahedron!: Structure;
 
   compute = new Compute();
+  render = new Render();
 
   add = false;
   flip = false;
@@ -83,12 +85,11 @@ export class BallPark {
     this.compute.setBallsVisibility(rods.visible);
     this.compute.setTrianglesVisibility(triangles.visible);
 
-    const render = new Render();
-    await render.init(gpuDevice, 'canvas', camera, [balls, rods, triangles], this.cubemap, this.tex);
+    await this.render.init(gpuDevice, 'canvas', camera, this.compute.getGlobalParameterBuffer(), [balls, rods, triangles], this.cubemap, this.tex);
 
     // interaction
 
-    camera.mouseInteraction(render.getCanvas());
+    camera.mouseInteraction(this.render.getCanvas());
 
     // display
 
@@ -108,6 +109,8 @@ export class BallPark {
     const divFormula = document.createElement('div');
     divFormula.id = 'formula';
     document.body.appendChild(divFormula);
+    const spanFormula = document.createElement('span');
+    divFormula.appendChild(spanFormula);
     this.updateFormulaDisplay = () => {
       const count = this.deltahedron.getCoordinationNumberCount();
       const element = ['T','P','H','S','O','N','D'];
@@ -128,8 +131,13 @@ export class BallPark {
           'B'+'<sub>'+bigCount+'</sub>&emsp14;</span>'
         );
       }
-      divFormula.innerHTML = string;
+      spanFormula.innerHTML = string;
     }
+    const divFormulaToolTip = divFormula.appendChild(document.createElement('div'));
+    divFormulaToolTip.className = 'tooltip';
+    divFormulaToolTip.style.top = '-74px';
+    divFormulaToolTip.innerHTML = 'T 4 Tetra, P 5 Penta, H 6 Hexa, S  7 Sept, O  8 Oct, N  9 Nonus, D 10 Deca, B >10 Big/Beyond';
+
     this.updateFormulaDisplay();
 
     
@@ -145,9 +153,9 @@ export class BallPark {
       string = string.concat('&nbsp; V&emsp14;'+balls.count.toFixed());
       span.innerHTML = string;
     }
-    // const divTriangleCountToolTip = document.body.appendChild(document.createElement('div'));
     const divTriangleCountToolTip = divTriangleCount.appendChild(document.createElement('div'));
     divTriangleCountToolTip.className = 'tooltip';
+    divTriangleCountToolTip.style.top = '-42px';
     divTriangleCountToolTip.innerHTML = 'Number of faces (F), edges (E), and vertices (V).';
 
     this.updateCountDisplay();
@@ -189,7 +197,7 @@ export class BallPark {
       // if (!slowmo)
       this.compute.integration(commandEncoder, balls.count, rods.count, triangles.count);
 
-      render.render(camera, commandEncoder);
+      this.render.render(camera, commandEncoder);
 
       gpuDevice.queue.submit([commandEncoder.finish()]);
       //_______________________________________________________________________

@@ -41,7 +41,7 @@ struct Object {
   prop4: i32,
 
   glossyness: f32,
-  useTexture: f32,
+  triangleCount: u32,
 }
 
 struct HalfEdge {

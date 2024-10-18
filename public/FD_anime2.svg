@@ -1,0 +1,184 @@
+<svg
+version='1.1'
+xmlns='http://www.w3.org/2000/svg'
+viewBox='0 0 128 128'
+style='background:#a11'
+shape-rendering='crispEdges'>
+
+<style>
+
+<!-- blocks -->
+#b1, #b2, #b3, #b4, #b5, #b6, #b7, #b8, #b9, #b10, #b11, #b12, #b13, #text {
+  fill: #fed;
+  animation-duration: 20s;
+  animation-iteration-count: infinite;
+  animation-fill-mode: forwards;
+}
+#b1 { animation-name: m1 }
+@keyframes m1 {
+ 65% { transform:translate( 0px, 0px) }
+ 70% { transform:translate(16px, 0px) }
+ 75% { transform:translate(16px,16px) }
+ 85% { transform:translate(16px,16px) }
+ 90% { transform:translate(16px, 0px) }
+100% { transform:translate(16px, 0px) }
+}
+#b2 { animation-name: m2 }
+@keyframes m2 {
+ 15% { transform:translate(  0px, 0px) }
+ 20% { transform:translate(  0px,16px) }
+ 65% { transform:translate(  0px,16px) }
+ 70% { transform:translate(-16px,16px) }
+ 75% { transform:translate(-16px,32px) }
+ 85% { transform:translate(-16px,32px) }
+ 90% { transform:translate(-16px,16px) }
+ 95% { transform:translate(  0px,16px) }
+100% { transform:translate(  0px,16px) }
+}
+#b3 { animation-name: m3 }
+@keyframes m3 {
+ 10% { transform:translate(  0px, 0px) }
+ 15% { transform:translate(-16px, 0px) }
+ 20% { transform:translate(-32px, 0px) }
+ 65% { transform:translate(-32px, 0px) }
+ 70% { transform:translate(-48px, 0px) }
+ 75% { transform:translate(-48px,16px) }
+ 90% { transform:translate(-48px,16px) }
+ 95% { transform:translate(-64px,16px) }
+100% { transform:translate(-80px,16px) }
+}
+#b4 { animation-name: m4 }
+@keyframes m4 {
+ 10% { transform:translate(  0px, 0px) }
+ 15% { transform:translate(-16px, 0px) }
+ 20% { transform:translate(-32px, 0px) }
+ 90% { transform:translate(-32px, 0px) }
+ 95% { transform:translate(-16px, 0px) }
+100% { transform:translate(  0px, 0px) }
+}
+#b5 { animation-name: m5 }
+@keyframes m5 {
+ 15% { transform:translate( 0px,  0px) }
+ 20% { transform:translate( 0px,-16px) }
+ 85% { transform:translate( 0px,-16px) }
+ 90% { transform:translate( 0px,  0px) }
+100% { transform:translate( 0px,  0px) }
+}
+#b6 { animation-name: m6 }
+@keyframes m6 {
+ 65% { transform:translate( 0px,  0px) }
+ 70% { transform:translate( 0px,-16px) }
+ 85% { transform:translate( 0px,-16px) }
+ 90% { transform:translate( 0px,  0px) }
+100% { transform:translate( 0px,  0px) }
+}
+#b7 { animation-name: m7  }
+@keyframes m7 {
+ 10% { transform:translate(  0px,  0px) }
+ 15% { transform:translate(  0px,-16px) }
+ 65% { transform:translate(  0px,-16px) }
+ 70% { transform:translate(-16px,-16px) }
+ 85% { transform:translate(-16px,-16px) }
+ 90% { transform:translate(-16px,  0px) }
+100% { transform:translate(-16px,  0px) }
+}
+#b8 { animation-name: m8 }
+@keyframes m8 {
+ 15% { transform:translate( 0px,  0px) }
+ 20% { transform:translate(16px,  0px) }
+ 70% { transform:translate(16px,  0px) }
+ 75% { transform:translate(16px,-16px) }
+ 85% { transform:translate(16px,-16px) }
+ 90% { transform:translate(16px,  0px) }
+100% { transform:translate(16px,  0px) }
+}
+#b9 { animation-name: m9 }
+@keyframes m9 {
+ 10% { transform:translate(  0px,  0px) }
+ 15% { transform:translate(  0px,-16px) }
+ 20% { transform:translate(  0px,-32px) }
+ 85% { transform:translate(  0px,-32px) }
+ 90% { transform:translate(  0px,-48px) }
+ 95% { transform:translate(-16px,-48px) }
+100% { transform:translate(-16px,-48px) }
+}
+#b10 { animation-name: m10 }
+@keyframes m10 {
+ 65% { transform:translate( 0px,  0px) }
+ 70% { transform:translate(16px,  0px) }
+ 75% { transform:translate(16px,-16px) }
+ 85% { transform:translate(16px,-16px) }
+ 90% { transform:translate(16px,  0px) }
+100% { transform:translate(16px,  0px) }
+}
+#b11 { animation-name: m11 }
+@keyframes m11 {
+ 85% { transform:translate( 0px, 0px) }
+ 90% { transform:translate( 0px,16px) }
+100% { transform:translate( 0px,16px) }
+}
+#b12 { animation-name: m12 }
+@keyframes m12 {
+ 85% { transform:translate( 0px, 0px) }
+ 90% { transform:translate( 0px,16px) }
+100% { transform:translate( 0px,16px) }
+}
+#b13 { animation-name: m13 }
+@keyframes m13 {
+ 85% { transform:translate( 0px,  0px) }
+ 90% { transform:translate( 0px,-16px) }
+100% { transform:translate( 0px,-16px) }
+}
+
+#text {
+  animation-name: showText;
+  animation-iteration-count: 1;
+}
+@keyframes showText {
+  0% { opacity: 0 }
+ 20% { opacity: 0 }
+ 30% { opacity: 1 }
+100% { opacity: 1 }
+}
+
+</style>
+
+<!-- blocks -->
+<path id='b1'  d='M16 16 16 32 96 32 96 16Z'/>
+<path id='b2'  d='M96 16 96 32 112 32 112 16Z'/>
+<path id='b3'  d='M96 32 96 48 112 48 112 32Z'/>
+<path id='b4'  d='M96 48 96 64 112 64 112 48Z'/>
+<path id='b5'  d='M96 64 96 96 112 96 112 64Z'/>
+<path id='b6'  d='M80 80 80 96 96 96 96 80Z'/>
+<path id='b7'  d='M64 80 64 96 80 96 80 80Z'/>
+<path id='b8'  d='M48 80 48 96 64 96 64 80Z'/>
+<path id='b9'  d='M32 80 32 96 48 96 48 80Z'/>
+<path id='b10' d='M16 80 16 96 32 96 32 80Z'/>
+<path id='b11' d='M16 64 16 80 32 80 32 64Z'/>
+<path id='b12' d='M16 48 16 64 32 64 32 48Z'/>
+<path id='b13' d='M16 32 16 48 32 48 32 32Z'/>
+
+<g id='text'>
+  <path d='M16 112 16 102 22 102 22 104 18 104 18 106 20 106 20 108 18 108 18 112Z'/>
+  <path d='M24 111 24 103 25 103 25 102 29 102 29 103 30 103 30 111 29 111 29 112 25 112 25 111Z
+    M26 110 28 110 28 104 26 104Z'/>
+  <path d='M32 112 32 102 37 102 37 103 38 103 38 106 37 106 37 108 38 108 38 112 36 112 36 108 34 108 34 112Z
+    M34 106 36 106 36 104 34 104Z'/>
+  <path d='M40 112 40 102 42 102 42 103 43 103 43 104 45 104 45 103 46 103 46 102 48 102 48 112 46 112 46 106
+    45 106 45 107 43 107 43 106 42 106 42 112Z'/>
+  <path d='M50 112 50 103 51 103 51 102 55 102 55 103 56 103 56 112 54 112 54 108 52 108 52 112Z
+    M52 106 54 106 54 104 52 104Z'/>
+  <path d='M58 112 58 102 60 102 60 110 64 110 64 112Z'/>
+  <path d='M66 112 66 102 70 102 70 104 72 104 72 110 70 110 70 104 68 104 68 110 70 110 70 112Z'/>
+  <path d='M74 112 74 102 80 102 80 104 76 104 76 106 78 106 78 108 76 108 76 110 80 110 80 112Z'/>
+  <path d='M82 111 82 109 84 109 84 110 86 110 86 109 85 109 85 108 84 108 84 107 83 107 83 106 82 106 82 103
+    83 103 83 102 87 102 87 103 88 103 88 105 86 105 86 104 84 104 84 105 85 105 85 106 86 106 86 107 87 107
+    87 108 88 108 88 111 87 111 87 112 83 112 83 111Z'/>
+  <path d='M90 112 90 110 92 110 92 104 90 104 90 102 96 102 96 104 94 104 94 110 96 110 96 112Z'/>
+  <path d='M98 111 98 103 99 103 99 102 103 102 103 103 104 103 104 105 102 105 102 104 100 104 100 110 102 110
+    102 108 101 108 101 106 104 106 104 111 103 111 103 112 99 112 99 111Z'/>
+  <path d='M106 112 106 102 108 102 108 104 109 104 109 106 110 106 110 102 112 102 112 112 110 112 110 110
+    109 110 109 108 108 108 108 112Z'/>
+</g>
+
+</svg>

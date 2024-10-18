@@ -1,5 +1,5 @@
 import './style.css';
-import { BallPark } from "./ballPark";
+import { BallPark } from './ballPark';
 import { Button, InfoSlider, PushButton, RadioButton, SwitchButton } from './ui';
 
 Button.initialize(10, 10, 10);
@@ -27,7 +27,7 @@ rodButton.onPush(() => ballPark.showRods(rodButton.on));
 const ballButton = new SwitchButton('balls', true);
 ballButton.onPush(() => ballPark.showBalls(ballButton.on));
 
-const showOnlyIsoRodsButton = new SwitchButton('iso edges', true);
+const showOnlyIsoRodsButton = new SwitchButton('iso rods', true);
 showOnlyIsoRodsButton.onPush(() => ballPark.setShowOnlyIsoRods(showOnlyIsoRodsButton.on));
 
 const subdivideButton = new PushButton('subdivide', true);
@@ -67,3 +67,13 @@ rodButton.click();
 ballButton.click();
 
 ballPark.setGravity(gravitySlider.value);
+
+// logo
+const a = document.createElement('a');
+a.href = 'https://formaldesign.net';
+a.target = '_blank';
+document.body.appendChild(a);
+const img = document.createElement('img');
+img.id = 'logo';
+img.src = '/FD_anime2.svg';
+a.appendChild(img);

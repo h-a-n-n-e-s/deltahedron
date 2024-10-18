@@ -41,7 +41,7 @@ export class Render {
   private amocTexture!: GPUTexture;
   private normalTexture!: GPUTexture;
 
-  async init(device:GPUDevice, canvasId:string, camera:Camera, objects:Array<Object>, cubemap:string, tex:string) {
+  async init(device:GPUDevice, canvasId:string, camera:Camera, globalParameterBuffer:GPUBuffer, objects:Array<Object>, cubemap:string, tex:string) {
 
     this.device = device;
 
@@ -52,12 +52,12 @@ export class Render {
     this.context = this.canvas.getContext('webgpu') as GPUCanvasContext;
 
     const presentationFormat = navigator.gpu!.getPreferredCanvasFormat();
-    // const presentationFormat = "rgba32float"
+    // const presentationFormat = 'rgba32float'
     
     this.context.configure({
       device: this.device,
       format: presentationFormat,
-      toneMapping: { mode: "extended" },
+      toneMapping: { mode: 'extended' },
       alphaMode: 'premultiplied',
     });
     
@@ -103,12 +103,12 @@ export class Render {
       } as GPUVertexBufferLayout
     }
 
-    const createPipeline = (fragmentShader:string, layout:GPUPipelineLayout) => this.device.createRenderPipeline({
+    const createPipeline = (vertexShader:string, fragmentShader:string, layout:GPUPipelineLayout) => this.device.createRenderPipeline({
       label: 'pope',
       layout: layout,
       vertex: {
         module,
-        entryPoint: 'vs',
+        entryPoint: vertexShader,
         buffers: [
           vertexBufferParas(0), // position
           vertexBufferParas(1), // normal
@@ -141,7 +141,7 @@ export class Render {
         {
           view: {},
           resolveTarget: {},
-          clearValue: [0, 0, 0, 1],
+          clearValue: [0, 0, 0, 0],
           loadOp: 'clear',
           storeOp: 'store',
         },
@@ -155,26 +155,27 @@ export class Render {
       },
     };
 
-    const ssv = GPUShaderStage.VERTEX;
-    const ssf = GPUShaderStage.FRAGMENT;
+    const ssV = GPUShaderStage.VERTEX;
+    const ssF = GPUShaderStage.FRAGMENT;
 
     const bindGroupLayout = this.device.createBindGroupLayout({
       entries: [
-        {binding:0, visibility:ssv|ssf, buffer:{type:'uniform'}},
-        {binding:1, visibility:ssv, buffer:{type:'read-only-storage'}},
-        {binding:2, visibility:ssf, sampler:{}},
-        {binding:3, visibility:ssf, texture:{viewDimension:'cube'}},
-        {binding:4, visibility:ssf, texture:{viewDimension:'cube'}},
-        {binding:5, visibility:ssf, texture:{}},
-        {binding:6, visibility:ssf, texture:{}},
-        {binding:7, visibility:ssf, texture:{}},
+        {binding:0, visibility:ssV, buffer:{type:'uniform'}},
+        {binding:1, visibility:ssV, buffer:{type:'uniform'}},
+        {binding:2, visibility:ssV, buffer:{type:'read-only-storage'}},
+        {binding:3, visibility:ssF, sampler:{}},
+        {binding:4, visibility:ssF, texture:{viewDimension:'cube'}},
+        {binding:5, visibility:ssF, texture:{viewDimension:'cube'}},
+        {binding:6, visibility:ssF, texture:{}},
+        {binding:7, visibility:ssF, texture:{}},
+        {binding:8, visibility:ssF, texture:{}},
       ]
     });
 
     const pipelineLayout = this.device.createPipelineLayout({bindGroupLayouts: [bindGroupLayout]});
 
-    this.pipeline = createPipeline('fs', pipelineLayout);
-    this.trianglePipeline = createPipeline('fs_texture', pipelineLayout);
+    this.pipeline = createPipeline('vs_instance', 'fs', pipelineLayout);
+    this.trianglePipeline = createPipeline('vs_triangle', 'fs_texture', pipelineLayout);
 
     // objects
 
@@ -192,14 +193,15 @@ export class Render {
       const bindGroup = this.device.createBindGroup({
         layout: bindGroupLayout,
         entries: [
-          { binding: 0, resource: { buffer: this.parameterBuffer }},
-          { binding: 1, resource: { buffer: obj.buffer as GPUBuffer }},
-          { binding: 2, resource: this.cubeMapSampler },
-          { binding: 3, resource: this.cubeMapTexture.createView({dimension: 'cube'}) },
-          { binding: 4, resource: this.irradianceTexture.createView({dimension: 'cube'}) },
-          { binding: 5, resource: this.albedoTexture.createView() },
-          { binding: 6, resource: this.amocTexture.createView() },
-          { binding: 7, resource: this.normalTexture.createView() },
+          { binding: 0, resource: { buffer: globalParameterBuffer }},
+          { binding: 1, resource: { buffer: this.parameterBuffer }},
+          { binding: 2, resource: { buffer: obj.buffer as GPUBuffer }},
+          { binding: 3, resource: this.cubeMapSampler },
+          { binding: 4, resource: this.cubeMapTexture.createView({dimension: 'cube'}) },
+          { binding: 5, resource: this.irradianceTexture.createView({dimension: 'cube'}) },
+          { binding: 6, resource: this.albedoTexture.createView() },
+          { binding: 7, resource: this.amocTexture.createView() },
+          { binding: 8, resource: this.normalTexture.createView() },
         ],
       });
               
@@ -218,6 +220,7 @@ export class Render {
     this.getCanvasDepthMultisampleTextures();
 
     camera.getCameraMatrix();
+    this.updateTextureScan(0.3);
     this.device.queue.writeBuffer(this.parameterBuffer, 0, this.parameters);
 
     const encoder = commandEncoder!==undefined ? commandEncoder : this.device.createCommandEncoder();
@@ -248,6 +251,15 @@ export class Render {
     pass.end();
 
     if (commandEncoder===undefined) this.device.queue.submit([encoder.finish()]);
+  }
+
+  updateTextureScan(scale:number) {
+    let height = Math.sqrt(3/2);
+    let total = this.objectGPUDataList[2].object.count; // triangleCount
+    let linearTextureSteps = Math.ceil(Math.sqrt(total));
+    let dx = (1 - scale) / linearTextureSteps;
+    let dy = (1 - scale * height) / linearTextureSteps;
+    this.parameters.set([scale, linearTextureSteps, dx, dy, height], 51);
   }
 
   resize(camera:Camera) {

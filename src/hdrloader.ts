@@ -223,7 +223,7 @@ export class HDRLoader {
     for (let y = 0; y < height; ++y) {
       if (data.getUint16(offset) !== 0x0202) throw new Error('Incorrect scanline start hash')
 
-      if (data.getUint16(offset + 2) !== width) throw new Error("Scanline doesn't match picture dimension!")
+      if (data.getUint16(offset + 2) !== width) throw new Error('Scanline does not match picture dimension!')
 
       offset += 4
       const numComps = width * 4

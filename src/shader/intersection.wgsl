@@ -1,4 +1,4 @@
-// routines from "Real-Time Collision Detection" by Christer Ericson
+// routines from 'Real-Time Collision Detection' by Christer Ericson
 // return -1 means no intersection
 
 fn raySphereIntersection(global:GlobalParameter, obj:Object) -> f32 {

@@ -1,4 +1,4 @@
-import { mat4, vec3 } from "./algebra";
+import { mat4, vec3 } from './algebra';
 
 type CameraParameters = {
   arcRotateCamera:boolean; // turntable like camera control
@@ -38,10 +38,10 @@ export class Camera {
   constructor(para:CameraParameters) {this.para = para;}
 
   shaderParameterMapping(shaderParameters:Float32Array) {
-    this.eye = shaderParameters.subarray(48, 51);
     this.lookAtMatrix = shaderParameters.subarray(0, 16);
     this.viewMatrix = shaderParameters.subarray(16, 32);
     this.viewProjectionMatrix = shaderParameters.subarray(32, 48);
+    this.eye = shaderParameters.subarray(48, 51);
     this.sphericalToCartesian();
   }
 
@@ -134,6 +134,7 @@ export class Camera {
     canvas.addEventListener('wheel', (e) => {
       this.para.radius += 0.1 * this.para.radiusResolution * Math.sign(e.deltaY);
       this.para.radius = Math.max(this.para.radius, this.para.zNear);
+      this.para.radius = Math.min(this.para.radius, 200);
       this.dx = 0;
       this.dy = 0;
       this.isNew = true;

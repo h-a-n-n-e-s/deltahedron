@@ -58,13 +58,13 @@ body {
   right:20px;
 }
 #volume {
-  top: 42px;
+  top: 38px;
   width:80px;
   right:20px;
 }
 #dihedralAngle {
-  bottom: 10px;
-  left: 10px;
+  top: 65px;
+  right: 20px;
   width: 90px;
 }
 #formula {
@@ -90,6 +90,13 @@ sub {
   color: #f00;
 }
 
+#logo {
+  opacity:0.5;
+  height:32px; position:absolute; left:0; bottom:0; margin:12px;
+}
+#logo:hover {
+  opacity: 1;
+}
 
 button {
   position: absolute;
@@ -212,7 +219,7 @@ svg > path {
 /* #subdivideRadioBut {left: 200px; top:42px;} */
 
 .tooltip {
-  visibility: hidden;
+  /* visibility: hidden; */
   width: 200px;
   font-size: 12px;
   background-color: #333;
@@ -220,11 +227,8 @@ svg > path {
   text-align: center;
   padding: 5px;
   border-radius: 4px;
-  opacity: 0;
+  opacity: 0.8;
   transition: all 1s;
-
-  top: -42px;
-  /* right: 5px; */
   position: absolute;
   z-index: 1;
 }

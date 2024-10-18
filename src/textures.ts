@@ -1,4 +1,4 @@
-import { HDRImageData, HDRLoader } from "./hdrloader";
+import { HDRImageData, HDRLoader } from './hdrloader';
 
 // translated to TypeScript and modified for hdr format from
 // https://webgpufundamentals.org/webgpu/lessons/webgpu-environment-maps.html

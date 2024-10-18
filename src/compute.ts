@@ -44,8 +44,8 @@ export class Compute {
     // console.log(adapter!.limits);
 
     this.device = await adapter!.requestDevice({
-      // requiredFeatures: ["timestamp-query"]
-      requiredFeatures: ["float32-filterable"] // for hdr 
+      // requiredFeatures: ['timestamp-query']
+      requiredFeatures: ['float32-filterable'] // for hdr 
     });
 
     this.subSteps = subSteps;
@@ -287,6 +287,8 @@ export class Compute {
     return new Float32Array(this.stagingBuffer.getMappedRange());
   }
 
+  getGlobalParameterBuffer = () => this.globalParameterBuffer;
+  
   createCompPipe = (layout:GPUPipelineLayout, code:string, constants={}, entry='main') => {
     return this.device.createComputePipeline({
       layout: layout,

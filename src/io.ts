@@ -1,4 +1,4 @@
-import { vec3 } from "./algebra";
+import { vec3 } from './algebra';
 
 export function saveBinary(data:ArrayBuffer, filename:string) {
   let blob = new Blob([data], {type: 'octet/stream'});

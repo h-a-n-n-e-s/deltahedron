@@ -1,12 +1,11 @@
 
-textures
-brightness slider
-skybox
-tool tips
+tool tips, documentation
 edge error indication color
 
 specular term
 ssao
+textures
+one reflection path tracing
 
 equilibrium acceleration algorithm, newton
 flat faces limit
@@ -16,15 +15,14 @@ store computed textures in binaries?
 
 self intersection indicator
 
-undo
-cut open, change topology
 sound
-documentation (japanese too)
+
+undo
+
+cut open, change topology
 
 rewrite without objects
 half edge functions
-
-
 
 T 4 Tetra
 P 5 Penta

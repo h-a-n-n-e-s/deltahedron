@@ -1,7 +1,7 @@
-import { colorArray, q } from "./ballPark";
-import { Compute } from "./compute";
-import { exportSTL, saveBinary } from "./io";
-import { Mesh, MeshBuffers, cylinderMesh, icoSphereMesh } from "./mesh";
+import { colorArray, q } from './ballPark';
+import { Compute } from './compute';
+import { exportSTL, saveBinary } from './io';
+import { Mesh, MeshBuffers, cylinderMesh, icoSphereMesh } from './mesh';
 
 export interface Object {
   data: Float32Array,
@@ -113,8 +113,8 @@ export class Structure {
 
     this.triangles.data.set([1], 3); // size
     this.triangles.data.set(this.triangleColor, 8); // color
-    this.triangles.data.set([1], 11); // alpha
-    this.triangles.data.set([1], 21); // texture
+    // this.triangles.data.set([1], 11); // mass
+    // this.triangles.data.set([this.triangles.count], 21); // triangleCount
     
     return [this.balls, this.rods, this.triangles, this.halfEdges] as [Object, Object, Object, Uint32Array];
   }
