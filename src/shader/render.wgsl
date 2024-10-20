@@ -20,15 +20,14 @@ struct Inter {
   @location(5) uv: vec2f,
 }
 
-@group(0) @binding(0) var<uniform> global: GlobalParameter;
-@group(0) @binding(1) var<uniform> para: Para;
-@group(0) @binding(2) var<storage, read> object: array<Object>;
-@group(0) @binding(3) var sam: sampler;
-@group(0) @binding(4) var cubeMapTexture: texture_cube<f32>;
-@group(0) @binding(5) var irradianceTexture: texture_cube<f32>;
-@group(0) @binding(6) var albedoTexture: texture_2d<f32>;
-@group(0) @binding(7) var amocTexture: texture_2d<f32>;
-@group(0) @binding(8) var normalTexture: texture_2d<f32>;
+@group(0) @binding(0) var<uniform> para: Para;
+@group(0) @binding(1) var<storage, read> object: array<Object>;
+@group(0) @binding(2) var sam: sampler;
+@group(0) @binding(3) var cubeMapTexture: texture_cube<f32>;
+@group(0) @binding(4) var irradianceTexture: texture_cube<f32>;
+@group(0) @binding(5) var albedoTexture: texture_2d<f32>;
+@group(0) @binding(6) var amocTexture: texture_2d<f32>;
+@group(0) @binding(7) var normalTexture: texture_2d<f32>;
 
 //_____________________________________________________________________________
 

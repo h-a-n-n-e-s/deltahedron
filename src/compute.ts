@@ -287,8 +287,6 @@ export class Compute {
     return new Float32Array(this.stagingBuffer.getMappedRange());
   }
 
-  getGlobalParameterBuffer = () => this.globalParameterBuffer;
-  
   createCompPipe = (layout:GPUPipelineLayout, code:string, constants={}, entry='main') => {
     return this.device.createComputePipeline({
       layout: layout,

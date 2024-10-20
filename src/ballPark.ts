@@ -85,7 +85,7 @@ export class BallPark {
     this.compute.setBallsVisibility(rods.visible);
     this.compute.setTrianglesVisibility(triangles.visible);
 
-    await this.render.init(gpuDevice, 'canvas', camera, this.compute.getGlobalParameterBuffer(), [balls, rods, triangles], this.cubemap, this.tex);
+    await this.render.init(gpuDevice, 'canvas', camera, [balls, rods, triangles], this.cubemap, this.tex);
 
     // interaction
 
@@ -135,8 +135,10 @@ export class BallPark {
     }
     const divFormulaToolTip = divFormula.appendChild(document.createElement('div'));
     divFormulaToolTip.className = 'tooltip';
-    divFormulaToolTip.style.top = '-74px';
-    divFormulaToolTip.innerHTML = 'T 4 Tetra, P 5 Penta, H 6 Hexa, S  7 Sept, O  8 Oct, N  9 Nonus, D 10 Deca, B >10 Big/Beyond';
+    divFormulaToolTip.style.top = '-144px';
+    divFormulaToolTip.style.right = '-120px';
+    divFormulaToolTip.style.width = '420px';
+    divFormulaToolTip.innerHTML = 'The formula summarizing how many different vertices are present in the deltahedron. A vertex is characterized by its coordination number, which equals the number of edges connected to it. The initials of greek numerals for 4 T (Tetra), 5 P (Penta), 6 H (Hexa), and latin numerals for 7 S (Sept), 8 O (Oct), 9 N (Nonus), 10 D (Deca) are used to identify the coordination number (for numbers larger than 10 B ("Big" or "Beyond" is used). The subscripts equal the number of vertices for each vertex type.';
 
     this.updateFormulaDisplay();
 
@@ -156,6 +158,7 @@ export class BallPark {
     const divTriangleCountToolTip = divTriangleCount.appendChild(document.createElement('div'));
     divTriangleCountToolTip.className = 'tooltip';
     divTriangleCountToolTip.style.top = '-42px';
+    divTriangleCountToolTip.style.width = '200px;'
     divTriangleCountToolTip.innerHTML = 'Number of faces (F), edges (E), and vertices (V).';
 
     this.updateCountDisplay();

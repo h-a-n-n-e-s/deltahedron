@@ -1,11 +1,13 @@
 
+inflation slider color
+tool tips hover
+fix texture scan
 tool tips, documentation
-edge error indication color
 
 specular term
 ssao
 textures
-one reflection path tracing
+one reflection ray tracing
 
 equilibrium acceleration algorithm, newton
 flat faces limit
@@ -13,12 +15,11 @@ smoothing algo
 
 store computed textures in binaries?
 
+edge error indication color
 self intersection indicator
 
 sound
-
 undo
-
 cut open, change topology
 
 rewrite without objects

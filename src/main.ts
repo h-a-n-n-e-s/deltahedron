@@ -52,6 +52,10 @@ const gravitySlider = new InfoSlider(0, 10, 1, 1, 'inflation: ', 0, '', 200, doc
 gravitySlider.onSlide(() => ballPark.setGravity(gravitySlider.value));
 gravitySlider.setId('gravitySlider');
 
+// slightly attractive force if 'a' key is pressed
+document.addEventListener('keydown', (e) => {if (e.key === 'a') ballPark.setGravity(-0.2);});
+document.addEventListener('keyup', (e) => {if (e.key === 'a') ballPark.setGravity(gravitySlider.value);});
+
 const operationButtons = new RadioButton([
   {name:'add', func:(on) => ballPark.addVertex(on)},
   {name:'flip', func:(on) => ballPark.flipEdges(on)},

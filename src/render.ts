@@ -41,7 +41,7 @@ export class Render {
   private amocTexture!: GPUTexture;
   private normalTexture!: GPUTexture;
 
-  async init(device:GPUDevice, canvasId:string, camera:Camera, globalParameterBuffer:GPUBuffer, objects:Array<Object>, cubemap:string, tex:string) {
+  async init(device:GPUDevice, canvasId:string, camera:Camera, objects:Array<Object>, cubemap:string, tex:string) {
 
     this.device = device;
 
@@ -161,14 +161,13 @@ export class Render {
     const bindGroupLayout = this.device.createBindGroupLayout({
       entries: [
         {binding:0, visibility:ssV, buffer:{type:'uniform'}},
-        {binding:1, visibility:ssV, buffer:{type:'uniform'}},
-        {binding:2, visibility:ssV, buffer:{type:'read-only-storage'}},
-        {binding:3, visibility:ssF, sampler:{}},
+        {binding:1, visibility:ssV, buffer:{type:'read-only-storage'}},
+        {binding:2, visibility:ssF, sampler:{}},
+        {binding:3, visibility:ssF, texture:{viewDimension:'cube'}},
         {binding:4, visibility:ssF, texture:{viewDimension:'cube'}},
-        {binding:5, visibility:ssF, texture:{viewDimension:'cube'}},
+        {binding:5, visibility:ssF, texture:{}},
         {binding:6, visibility:ssF, texture:{}},
         {binding:7, visibility:ssF, texture:{}},
-        {binding:8, visibility:ssF, texture:{}},
       ]
     });
 
@@ -193,15 +192,14 @@ export class Render {
       const bindGroup = this.device.createBindGroup({
         layout: bindGroupLayout,
         entries: [
-          { binding: 0, resource: { buffer: globalParameterBuffer }},
-          { binding: 1, resource: { buffer: this.parameterBuffer }},
-          { binding: 2, resource: { buffer: obj.buffer as GPUBuffer }},
-          { binding: 3, resource: this.cubeMapSampler },
-          { binding: 4, resource: this.cubeMapTexture.createView({dimension: 'cube'}) },
-          { binding: 5, resource: this.irradianceTexture.createView({dimension: 'cube'}) },
-          { binding: 6, resource: this.albedoTexture.createView() },
-          { binding: 7, resource: this.amocTexture.createView() },
-          { binding: 8, resource: this.normalTexture.createView() },
+          { binding: 0, resource: { buffer: this.parameterBuffer }},
+          { binding: 1, resource: { buffer: obj.buffer as GPUBuffer }},
+          { binding: 2, resource: this.cubeMapSampler },
+          { binding: 3, resource: this.cubeMapTexture.createView({dimension: 'cube'}) },
+          { binding: 4, resource: this.irradianceTexture.createView({dimension: 'cube'}) },
+          { binding: 5, resource: this.albedoTexture.createView() },
+          { binding: 6, resource: this.amocTexture.createView() },
+          { binding: 7, resource: this.normalTexture.createView() },
         ],
       });
               
