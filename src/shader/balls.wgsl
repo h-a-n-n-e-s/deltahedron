@@ -39,17 +39,19 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   velocityUpdate[3*i+1] = 0;
   velocityUpdate[3*i+2] = 0;
 
-  // prop1 is the radius of the ball
-  let repulsionFactor = 1.0 / f32(global.ballCount);
+  if global.gravity != 0.0 {
+    // prop1 is the radius of the ball
+    let repulsionFactor = 1.0 / f32(global.ballCount);
 
-  for (var j=0u; j<global.ballCount; j++) {
-    if i == j {continue;}
-    let b = balls[j];
-    let ab = a.position - b.position;
-    let d = a.prop1 + b.prop1;
-    let lenab = length(ab);
+    for (var j=0u; j<global.ballCount; j++) {
+      if i == j {continue;}
+      let b = balls[j];
+      let ab = a.position - b.position;
+      let d = a.prop1 + b.prop1;
+      let lenab = length(ab);
 
-    newBall.velocity += repulsionFactor * global.gravity * ab / (0.01 + lenab * lenab);
+      newBall.velocity += repulsionFactor * global.gravity * ab / (0.01 + lenab * lenab);
+    }
   }
 
   newBall.position += newBall.velocity * global.timeStep;

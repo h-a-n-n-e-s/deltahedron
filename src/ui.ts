@@ -218,6 +218,9 @@ export class InfoSlider {
 
   hide = () => this.element.style.visibility = 'hidden';
   show = () => this.element.style.visibility = 'visible';
+
+  addClass = (c:string) => this.element.classList.add(c);
+  removeClass = (c:string) => this.element.classList.remove(c);
 }
 
 
@@ -255,5 +258,38 @@ export class Selection {
       
     }
     document.body.appendChild(this.selectElem);
+  }
+}
+
+export class Info {
+
+  div: HTMLDivElement;
+  span: HTMLSpanElement;
+  toolTip!: HTMLDivElement;
+
+  set!: () => string;
+
+  constructor(id:string) {
+
+    this.div = document.createElement('div');
+    this.div.id = id;
+    document.body.appendChild(this.div);
+
+    this.span = document.createElement('span');
+    this.div.appendChild(this.span);
+
+  }
+
+  update = () => {
+    if (this.set !== undefined) this.span.innerHTML =  this.set();
+  }
+
+  createTooltip = (top:string, right:string, width:string, text:string) => {
+    this.toolTip = this.div.appendChild(document.createElement('div'));
+    this.toolTip.className = 'tooltip';
+    this.toolTip.style.top = top;
+    this.toolTip.style.right = right;
+    this.toolTip.style.width = width;
+    this.toolTip.innerHTML = text;
   }
 }

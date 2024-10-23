@@ -48,8 +48,13 @@ exportSTLButton.onPush(async () => await ballPark.exportSTL());
 // const bamButton = new PushButton('bam', true);
 // bamButton.onPush( async () => ballPark.bam());
 
-const gravitySlider = new InfoSlider(0, 10, 1, 1, 'inflation: ', 0, '', 200, document.body);
-gravitySlider.onSlide(() => ballPark.setGravity(gravitySlider.value));
+const gravitySlider = new InfoSlider(0, 9, 1, 1, 'inflation: ', 0, '', 140, document.body);
+gravitySlider.onSlide(() => {
+  const v = gravitySlider.value;
+  ballPark.setGravity(v);
+  if (v !== 0) gravitySlider.addClass('alert');
+  else gravitySlider.removeClass('alert');
+});
 gravitySlider.setId('gravitySlider');
 
 // slightly attractive force if 'a' key is pressed
@@ -70,7 +75,7 @@ faceButton.click();
 rodButton.click();
 ballButton.click();
 
-ballPark.setGravity(gravitySlider.value);
+gravitySlider.setSlider(gravitySlider.value);
 
 // logo
 const a = document.createElement('a');

@@ -132,7 +132,9 @@ export class Camera {
     });
 
     canvas.addEventListener('wheel', (e) => {
-      this.para.radius += 0.1 * this.para.radiusResolution * Math.sign(e.deltaY);
+      // let s = 0.1; // zoom sensitivity
+      // if (e.deltaY > 5) s = 0.01; // track pad detection patch (bad)
+      this.para.radius += 0.01 * this.para.radiusResolution * e.deltaY;
       this.para.radius = Math.max(this.para.radius, this.para.zNear);
       this.para.radius = Math.min(this.para.radius, 200);
       this.dx = 0;

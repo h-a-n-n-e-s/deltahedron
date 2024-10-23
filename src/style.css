@@ -45,7 +45,7 @@ body {
   outline: none;
 }
 
-#error, #volume, #dihedralAngle, #formula, #triangleCount, #info {
+#error, #volume, #dihedralAngle, #formula, #FEVCount, #alertInfo {
   position:absolute;
   text-align:right;
   height:22px;
@@ -77,12 +77,12 @@ body {
 sub {
   font-size: 18px;
 }
-#triangleCount {
+#FEVCount {
   bottom:10px;
   right:20px;
   width:200px;
 }
-#info {
+#alertInfo {
   bottom: 52px;
   left: calc(100vw / 2 - 200px);
   text-align: center;
@@ -209,8 +209,12 @@ svg > path {
 #gravitySlider {
   position: absolute;
   top: 42px;
+  left: 220px;
 }
-#gravitySlider {left: 220px;}
+.alert {
+  /* color: #f77; */
+  background-color: #a00;
+}
 
 #addRadioBut {left: 10px; top:42px;}
 #flipRadioBut {left: 60px; top:42px;}
@@ -229,10 +233,11 @@ svg > path {
   opacity: 0;
   transition: all 1s;
   position: absolute;
+  pointer-events: none;
   z-index: 1;
 }
 div:hover > .tooltip {
   visibility: visible;
-  opacity: 0.8;
+  opacity: 0.9;
   transition: all 1s;
 }

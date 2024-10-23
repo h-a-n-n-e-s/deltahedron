@@ -4,6 +4,7 @@ import { octahedronHalfEdges, octahedronVertexPositions, torusHalfEdges, torusVe
 import { Camera } from './camera';
 import { Structure } from './structure';
 import { readFile } from './io';
+import { Info } from './ui';
 
 export const q = 24; // scalar quantities per object in buffer
 
@@ -51,10 +52,17 @@ export class BallPark {
   collapse = false;
   subdivide = false;
 
-  updateDihedralAngleDisplay!: (a:number) => void;
-  updateFormulaDisplay!: () => void;
-  updateCountDisplay!: () => void;
-  updateInfoDisplay!: (a:string) => void;
+  error = 0;
+  volume = 0;
+  dihedralAngle = 0;
+  alertText = '';
+
+  errorInfo = new Info('error');
+  volumeInfo = new Info('volume');
+  dihedralAngleInfo = new Info('dihedralAngle');
+  alertInfo = new Info('alertInfo');
+  FEVCountInfo = new Info('FEVCount');
+  formulaInfo = new Info('formula');
 
   async initialize() {
 
@@ -91,27 +99,36 @@ export class BallPark {
 
     camera.mouseInteraction(this.render.getCanvas());
 
-    // display
+    // display ____________________________________________
 
-    const divError = document.createElement('div');
-    divError.id = 'error';
-    document.body.appendChild(divError);
+    this.alertInfo.set = () => this.alertText;
 
-    const divVolume = document.createElement('div');
-    divVolume.id = 'volume';
-    document.body.appendChild(divVolume);
+    this.errorInfo.set = () => this.error.toFixed(3) + '%';
+    this.errorInfo.createTooltip('22px', '0', '160px',
+      'maximum distance error'
+    );
 
-    const divDihedralAngle = document.createElement('div');
-    divDihedralAngle.id = 'dihedralAngle';
-    document.body.appendChild(divDihedralAngle);
-    this.updateDihedralAngleDisplay = (a:number) => divDihedralAngle.innerHTML = a.toFixed(3) + '°';
+    this.volumeInfo.set = () => this.volume.toFixed(4);
+    this.volumeInfo.createTooltip('22px', '0', '50px',
+      'volume'
+    );
 
-    const divFormula = document.createElement('div');
-    divFormula.id = 'formula';
-    document.body.appendChild(divFormula);
-    const spanFormula = document.createElement('span');
-    divFormula.appendChild(spanFormula);
-    this.updateFormulaDisplay = () => {
+    this.dihedralAngleInfo.set = () => this.dihedralAngle.toFixed(3) + '°';
+    this.dihedralAngleInfo.createTooltip('22px', '0', '110px',
+      'dihedral angle'
+    );
+
+    this.FEVCountInfo.set = () => {
+      let string = 'F&emsp14;'+triangles.count.toFixed();
+      string = string.concat('&nbsp; E&emsp14;'+rods.count.toFixed());
+      string = string.concat('&nbsp; V&emsp14;'+balls.count.toFixed());
+      return string;
+    }
+    this.FEVCountInfo.createTooltip('-42px', '0', '200px',
+      'Number of faces (F), edges (E), and vertices (V).');
+    this.FEVCountInfo.update();
+
+    this.formulaInfo.set = () => {
       const count = this.deltahedron.getCoordinationNumberCount();
       const element = ['T','P','H','S','O','N','D'];
       let bigCount = 0;
@@ -131,42 +148,11 @@ export class BallPark {
           'B'+'<sub>'+bigCount+'</sub>&emsp14;</span>'
         );
       }
-      spanFormula.innerHTML = string;
+      return string;
     }
-    const divFormulaToolTip = divFormula.appendChild(document.createElement('div'));
-    divFormulaToolTip.className = 'tooltip';
-    divFormulaToolTip.style.top = '-144px';
-    divFormulaToolTip.style.right = '-120px';
-    divFormulaToolTip.style.width = '420px';
-    divFormulaToolTip.innerHTML = 'The formula summarizing how many different vertices are present in the deltahedron. A vertex is characterized by its coordination number, which equals the number of edges connected to it. The initials of greek numerals for 4 T (Tetra), 5 P (Penta), 6 H (Hexa), and latin numerals for 7 S (Sept), 8 O (Oct), 9 N (Nonus), 10 D (Deca) are used to identify the coordination number (for numbers larger than 10 B ("Big" or "Beyond" is used). The subscripts equal the number of vertices for each vertex type.';
-
-    this.updateFormulaDisplay();
-
-    
-
-    const divTriangleCount = document.createElement('div');
-    divTriangleCount.id = 'triangleCount';
-    document.body.appendChild(divTriangleCount);
-    const span = document.createElement('span');
-    divTriangleCount.appendChild(span);
-    this.updateCountDisplay = () => {
-      let string = 'F&emsp14;'+triangles.count.toFixed();
-      string = string.concat('&nbsp; E&emsp14;'+rods.count.toFixed());
-      string = string.concat('&nbsp; V&emsp14;'+balls.count.toFixed());
-      span.innerHTML = string;
-    }
-    const divTriangleCountToolTip = divTriangleCount.appendChild(document.createElement('div'));
-    divTriangleCountToolTip.className = 'tooltip';
-    divTriangleCountToolTip.style.top = '-42px';
-    divTriangleCountToolTip.style.width = '200px;'
-    divTriangleCountToolTip.innerHTML = 'Number of faces (F), edges (E), and vertices (V).';
-
-    this.updateCountDisplay();
-
-    const divInfo = document.createElement('div');
-    divInfo.id = 'info';
-    document.body.appendChild(divInfo);
-    this.updateInfoDisplay = (info:string) => divInfo.innerHTML = info;
+    this.formulaInfo.createTooltip('-144px', '-120px', '420px',
+      'The formula summarizing how many different vertices are present in the deltahedron. A vertex is characterized by its coordination number, which equals the number of edges connected to it. The initials of greek numerals for 4 T (Tetra), 5 P (Penta), 6 H (Hexa), and latin numerals for 7 S (Sept), 8 O (Oct), 9 N (Nonus), 10 D (Deca) are used to identify the coordination number (for numbers larger than 10 B ("Big" or "Beyond" is used). The subscripts equal the number of vertices for each vertex type.');
+    this.formulaInfo.update();
 
     let i = 0
     // let time = Date.now();
@@ -190,7 +176,8 @@ export class BallPark {
           checkSelection = true;
           this.compute.selectRodScanBranch('depthTest');
           this.compute.setMouseRayAndEye(camera.getMouseRay(), camera.getEye());
-          this.updateInfoDisplay('');
+          this.alertText = '';
+          this.alertInfo.update();
         }
       }
 
@@ -228,8 +215,8 @@ export class BallPark {
           }
         }
 
-        const dihedralAngle = out[3] / 2097152;
-        this.updateDihedralAngleDisplay(dihedralAngle);
+        this.dihedralAngle = out[3] / 2097152;
+        this.dihedralAngleInfo.update();
         
         if (hoveringEdgeIndex !== -1 && camera.mouseWasPressed) { // edge selected
 
@@ -242,12 +229,13 @@ export class BallPark {
           else if (this.collapse)
             status = await this.deltahedron.collapseEdge(hoveringEdgeIndex);
           
-          if (status === 1)
-            this.updateInfoDisplay('Tetrahedral corners are not allowed.');
-          
+          if (status === 1) {
+            this.alertText = 'Tetrahedral corners are not allowed.';
+            this.alertInfo.update();
+          }
           if (this.showOnlyIsoRods) this.deltahedron.showOnlyIsoRods();
-          this.updateCountDisplay();
-          this.updateFormulaDisplay();
+          this.FEVCountInfo.update();
+          this.formulaInfo.update();
           
 
           // this.compute.setTimeAndSubStep(0.001, 1);
@@ -275,8 +263,8 @@ export class BallPark {
           if (vB < initVertexCount) flipList.push(rods.count-3);
           if (vD < initVertexCount) flipList.push(rods.count-1);
 
-          this.updateCountDisplay();
-          this.updateFormulaDisplay();
+          this.FEVCountInfo.update();
+          this.formulaInfo.update();
           s++;
         }
         if (s === initEdgeCount) {
@@ -287,7 +275,7 @@ export class BallPark {
           }
         }
         if (this.showOnlyIsoRods) this.deltahedron.showOnlyIsoRods();
-        this.updateFormulaDisplay();
+        this.formulaInfo.update();
       }
 
       // if (slowmo && endSlowmo) {
@@ -308,11 +296,12 @@ export class BallPark {
         this.compute.rodScan(rods.count);
         await this.compute.workDone();
         const out = await this.compute.getOutBuffer();
-        const error = 100 * out[2] / 2097152;
-        divError.innerHTML = error.toFixed(3) + '%';
 
-        const volume = out[7] / 2097152;
-        divVolume.innerHTML = volume.toFixed(4);
+        this.error = 100 * out[2] / 2097152;
+        this.errorInfo.update();
+
+        this.volume = out[7] / 2097152;
+        this.volumeInfo.update();
 
         this.compute.resetError();
       }
@@ -359,8 +348,8 @@ export class BallPark {
     this.compute.setCount(balls.count, rods.count, triangles.count);
 
     if (this.showOnlyIsoRods) this.deltahedron.showOnlyIsoRods();
-    this.updateCountDisplay();
-    this.updateFormulaDisplay();
+    this.FEVCountInfo.update();
+    this.formulaInfo.update();
   }
 
   loadData = async () => {

@@ -1,8 +1,7 @@
 
-inflation slider color
-tool tips hover
 fix texture scan
-tool tips, documentation
+idle optimizations
+negative volume bug -> overflow issue?
 
 specular term
 ssao
