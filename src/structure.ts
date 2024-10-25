@@ -37,6 +37,8 @@ export class Structure {
 
   ballGlossyness = 0.2;
 
+  allowTetrahedra = false;
+
   constructor(maxVertexCount:number, maxEdgeCount:number, maxFaceCount:number, ballRadius:number, cylinderRadius:number, cylinderLength:number, compute:Compute) {
 
     this.compute = compute;
@@ -159,7 +161,9 @@ export class Structure {
   }
 
   connectionsToColor(coordinationNumber:number) {
-    if (coordinationNumber < 4) throw new Error('coordination number < 4');
+    if (!this.allowTetrahedra && coordinationNumber < 4)
+      throw new Error('coordination number < 4');
+    else if (coordinationNumber == 3) return [.1, .1, .1];
     else if (coordinationNumber > 10) return colorArray[7];
     else return colorArray[coordinationNumber - 4];
   }
@@ -385,9 +389,13 @@ export class Structure {
     const vertexD = this.halfEdges[4*cd+3];
 
     // check if a tetrahedron would be formed
-    if (this.getCoordinationNumber(vertexA) < 5 ||
-        this.getCoordinationNumber(vertexC) < 5 ) return 1;
-
+    if (!this.allowTetrahedra) {
+      if (this.getCoordinationNumber(vertexA) < 5 ||
+          this.getCoordinationNumber(vertexC) < 5 ) return 1;
+    }
+    else if (this.getCoordinationNumber(vertexA) < 4 ||
+      this.getCoordinationNumber(vertexC) < 4 ) return 2;
+    
     this.halfEdges[4*ab+1] = da;
     this.halfEdges[4*ab+2] = ac;
     this.halfEdges[4*bc+1] = ca;
@@ -427,7 +435,8 @@ export class Structure {
   async collapseEdge(rodIndex:number) {
     
     // octahedron is smallest possible shape
-    if (this.triangles.count < 9) return 1;
+    if (!this.allowTetrahedra && this.triangles.count < 9) return 1;
+    if (this.triangles.count < 5) return 2;
 
     const ac = 2*rodIndex;
     const ca = ac+1;
@@ -447,8 +456,9 @@ export class Structure {
     let vertexD = this.halfEdges[4*ad+3];
     
     // check if a tetrahedron would be formed
-    if (this.getCoordinationNumber(vertexB) < 5 ||
-        this.getCoordinationNumber(vertexD) < 5 ) return 1;
+    if (!this.allowTetrahedra)
+      if (this.getCoordinationNumber(vertexB) < 5 ||
+          this.getCoordinationNumber(vertexD) < 5 ) return 1;
     
     const faceABC = this.halfEdges[4*ab];
     const faceACD = this.halfEdges[4*da];

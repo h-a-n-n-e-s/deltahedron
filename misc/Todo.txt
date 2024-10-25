@@ -1,6 +1,6 @@
 
-fix texture scan
-idle optimizations
+idle optimizations -> trigger computation for any event
+button click camera move bug
 negative volume bug -> overflow issue?
 
 specular term
@@ -23,14 +23,3 @@ cut open, change topology
 
 rewrite without objects
 half edge functions
-
-T 4 Tetra
-P 5 Penta
-H 6 Hexa
-
-S  7 Sept
-O  8 Oct
-N  9 Nonus
-D 10 Deca
-
-B >10 Big/Beyond

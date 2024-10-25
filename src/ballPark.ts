@@ -4,7 +4,7 @@ import { octahedronHalfEdges, octahedronVertexPositions, torusHalfEdges, torusVe
 import { Camera } from './camera';
 import { Structure } from './structure';
 import { readFile } from './io';
-import { Info } from './ui';
+import { ActivityIndicator, Info } from './ui';
 
 export const q = 24; // scalar quantities per object in buffer
 
@@ -64,6 +64,8 @@ export class BallPark {
   FEVCountInfo = new Info('FEVCount');
   formulaInfo = new Info('formula');
 
+  activityIndicator = new ActivityIndicator();
+
   async initialize() {
 
     const camera = new Camera({
@@ -104,17 +106,17 @@ export class BallPark {
     this.alertInfo.set = () => this.alertText;
 
     this.errorInfo.set = () => this.error.toFixed(3) + '%';
-    this.errorInfo.createTooltip('22px', '0', '160px',
+    this.errorInfo.createTooltip('0', '80px', '160px',
       'maximum distance error'
     );
 
     this.volumeInfo.set = () => this.volume.toFixed(4);
-    this.volumeInfo.createTooltip('22px', '0', '50px',
+    this.volumeInfo.createTooltip('0', '80px', '50px',
       'volume'
     );
 
     this.dihedralAngleInfo.set = () => this.dihedralAngle.toFixed(3) + '°';
-    this.dihedralAngleInfo.createTooltip('22px', '0', '110px',
+    this.dihedralAngleInfo.createTooltip('0', '80px', '110px',
       'dihedral angle'
     );
 
@@ -167,6 +169,10 @@ export class BallPark {
     let initVertexCount:number;
     let s = 0;
     const flipList:Array<number> = [];
+    
+    let lastError = 1;
+    let converged = false;
+    // document.body.addEventListener('pointerdown', () => converged = false);
 
     const loop = async () => {
 
@@ -181,15 +187,17 @@ export class BallPark {
         }
       }
 
-      //_______________________________________________________________________
-      const commandEncoder = gpuDevice.createCommandEncoder();
+      // main computation and rendering _______________________________________
+      if (this.subdivide || checkSelection || !converged) {
+        const commandEncoder = gpuDevice.createCommandEncoder();
 
-      // if (!slowmo)
-      this.compute.integration(commandEncoder, balls.count, rods.count, triangles.count);
+        // if (!slowmo)
+        this.compute.integration(commandEncoder, balls.count, rods.count, triangles.count);
 
-      this.render.render(camera, commandEncoder);
+        this.render.render(camera, commandEncoder);
 
-      gpuDevice.queue.submit([commandEncoder.finish()]);
+        gpuDevice.queue.submit([commandEncoder.finish()]);
+      }
       //_______________________________________________________________________
       
       if (this.rotate) camera.raiseAzimuth();
@@ -220,7 +228,7 @@ export class BallPark {
         
         if (hoveringEdgeIndex !== -1 && camera.mouseWasPressed) { // edge selected
 
-          let status;
+          let status = 0;
           
           if (this.add)
             this.deltahedron.addVertex(hoveringEdgeIndex);
@@ -229,8 +237,9 @@ export class BallPark {
           else if (this.collapse)
             status = await this.deltahedron.collapseEdge(hoveringEdgeIndex);
           
-          if (status === 1) {
-            this.alertText = 'Tetrahedral corners are not allowed.';
+          if (status > 0) {
+            if (status === 1) this.alertText = 'Tetrahedral corners are not allowed.';
+            if (status === 2) this.alertText = 'Loose triangles are not allowed.';
             this.alertInfo.update();
           }
           if (this.showOnlyIsoRods) this.deltahedron.showOnlyIsoRods();
@@ -300,6 +309,12 @@ export class BallPark {
         this.error = 100 * out[2] / 2097152;
         this.errorInfo.update();
 
+        const errorVariation = Math.abs(this.error / lastError - 1);
+        converged = errorVariation < 1e-6;
+        if (converged) this.activityIndicator.stop();
+        else this.activityIndicator.run();
+        lastError = this.error;
+
         this.volume = out[7] / 2097152;
         this.volumeInfo.update();
 
@@ -319,6 +334,12 @@ export class BallPark {
   showFaces(s:boolean) {this.deltahedron.showFaces(s);}
   showRods(s:boolean) {this.deltahedron.showRods(s);}
   showBalls(s:boolean) {this.deltahedron.showBalls(s);}
+
+  setAllowTetrahedra(s:boolean) {
+    this.deltahedron.allowTetrahedra = s;
+    console.log(s ? 'tetrahedra allowed' : 'tetrahedra not allowed');
+    
+  }
 
   loadOctahedron() {this.setData(octahedronHalfEdges, octahedronVertexPositions);}
 

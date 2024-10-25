@@ -293,3 +293,18 @@ export class Info {
     this.toolTip.innerHTML = text;
   }
 }
+
+export class ActivityIndicator {
+  
+  private div: HTMLDivElement;
+
+  constructor() {
+    this.div = document.createElement('div');
+    this.div.id = 'activityIndicator';
+    document.body.appendChild(this.div);
+  }
+
+  run = () => this.div.innerHTML = '.';
+  stop = () => this.div.innerHTML = '';
+
+}

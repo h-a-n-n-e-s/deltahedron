@@ -41,8 +41,9 @@ export class Camera {
     this.lookAtMatrix = shaderParameters.subarray(0, 16);
     this.viewMatrix = shaderParameters.subarray(16, 32);
     this.viewProjectionMatrix = shaderParameters.subarray(32, 48);
-    this.eye = shaderParameters.subarray(48, 51);
+    this.eye = shaderParameters.subarray(48, 51); // eye is initialized here!
     this.sphericalToCartesian();
+    this.getCameraMatrix(); // to set lookAtMatrix & viewMatrix
   }
 
   sphericalToCartesian() {
@@ -140,6 +141,7 @@ export class Camera {
       this.dx = 0;
       this.dy = 0;
       this.isNew = true;
+      this.mouseCoords.haveChanged = true;
     });
 
     canvas.addEventListener('pointerdown', () => this.mouseWasPressed = true);
@@ -153,7 +155,7 @@ export class Camera {
     
     cameraCoords[2] = -1;
     cameraCoords[3] = 0;
-
+    
     const mouseRay = mat4.multiplyVector(this.lookAtMatrix, cameraCoords);
 
     mouseRay[3] = 0;
@@ -162,9 +164,7 @@ export class Camera {
     return mouseRay.slice(0,3);
   }
 
-  getEye() {
-    return this.eye;
-  }
+  getEye = () => this.eye;
 
   raiseAzimuth() {
     this.para.azimuth = (this.para.azimuth - 0.1*this.para.angleResolution)%360;

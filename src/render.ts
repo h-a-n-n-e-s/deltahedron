@@ -88,6 +88,8 @@ export class Render {
     // map camera position and relevant matrices to parameter array
     camera.shaderParameterMapping(this.parameters);
 
+    if (camera.getEye() === undefined) throw new Error('camera eye not initialized');
+    
     // ____________________________________________________
 
     const module = this.device.createShaderModule({
@@ -252,11 +254,11 @@ export class Render {
   }
 
   updateTextureScan(scale:number) {
-    let height = Math.sqrt(3/2);
+    let height = Math.sqrt(3)/2;
     let total = this.objectGPUDataList[2].object.count; // triangleCount
     let linearTextureSteps = Math.ceil(Math.sqrt(total));
-    let dx = (1 - scale) / linearTextureSteps;
-    let dy = (1 - scale * height) / linearTextureSteps;
+    let dx = (1 - scale) / (linearTextureSteps - 1);
+    let dy = (1 - scale * height) / (linearTextureSteps - 1);
     this.parameters.set([scale, linearTextureSteps, dx, dy, height], 51);
   }
 

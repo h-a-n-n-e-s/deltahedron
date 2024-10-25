@@ -83,7 +83,8 @@ fn vs_triangle(
 
   // texture coords
   let current = vertexIndex / 3;
-  let offset = vec2f(f32(current%u32(para.lts)) * para.tdx, f32(current)/para.lts * para.tdy);
+  let ltsInt = u32(para.lts);
+  let offset = vec2f(f32(current%ltsInt) * para.tdx, f32(current/ltsInt) * para.tdy);
   if vertexIndex%3 == 0 {out.uv = vec2f(0, 0);}
   else if vertexIndex%3 == 1 {out.uv = vec2f(1, 0);}
   else {out.uv = vec2f(0.5, para.tth);}
