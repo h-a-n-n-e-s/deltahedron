@@ -1,6 +1,5 @@
 
-idle optimizations -> trigger computation for any event
-button click camera move bug
+
 negative volume bug -> overflow issue?
 
 specular term

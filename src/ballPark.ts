@@ -6,6 +6,7 @@ import { Structure } from './structure';
 import { readFile } from './io';
 import { ActivityIndicator, Info } from './ui';
 
+const QUANTIZE_FACTOR = 2097152;
 export const q = 24; // scalar quantities per object in buffer
 
 const color = {
@@ -105,7 +106,7 @@ export class BallPark {
 
     this.alertInfo.set = () => this.alertText;
 
-    this.errorInfo.set = () => this.error.toFixed(3) + '%';
+    this.errorInfo.set = () => (100 * this.error).toFixed(3) + '%';
     this.errorInfo.createTooltip('0', '80px', '160px',
       'maximum distance error'
     );
@@ -156,11 +157,15 @@ export class BallPark {
       'The formula summarizing how many different vertices are present in the deltahedron. A vertex is characterized by its coordination number, which equals the number of edges connected to it. The initials of greek numerals for 4 T (Tetra), 5 P (Penta), 6 H (Hexa), and latin numerals for 7 S (Sept), 8 O (Oct), 9 N (Nonus), 10 D (Deca) are used to identify the coordination number (for numbers larger than 10 B ("Big" or "Beyond" is used). The subscripts equal the number of vertices for each vertex type.');
     this.formulaInfo.update();
 
-    let i = 0
+    let i = 0;
     // let time = Date.now();
     const frameIntegration = 30;
     // let slowmo = false;
     // let endSlowmo = false;
+
+    let j = 0;
+    const actionFrames = 30;
+    let action = false;
 
     let checkSelection = false;
     let hoveringEdgeIndex = -1;
@@ -172,7 +177,9 @@ export class BallPark {
     
     let lastError = 1;
     let converged = false;
-    // document.body.addEventListener('pointerdown', () => converged = false);
+
+    document.body.addEventListener('pointerdown', () => action = true);
+    document.body.addEventListener('pointermove', () => action = true);
 
     const loop = async () => {
 
@@ -188,7 +195,7 @@ export class BallPark {
       }
 
       // main computation and rendering _______________________________________
-      if (this.subdivide || checkSelection || !converged) {
+      if (this.subdivide || checkSelection || !converged || action) {
         const commandEncoder = gpuDevice.createCommandEncoder();
 
         // if (!slowmo)
@@ -197,6 +204,9 @@ export class BallPark {
         this.render.render(camera, commandEncoder);
 
         gpuDevice.queue.submit([commandEncoder.finish()]);
+
+        console.log('.');
+        
       }
       //_______________________________________________________________________
       
@@ -223,7 +233,7 @@ export class BallPark {
           }
         }
 
-        this.dihedralAngle = out[3] / 2097152;
+        this.dihedralAngle = out[3] / QUANTIZE_FACTOR;
         this.dihedralAngleInfo.update();
         
         if (hoveringEdgeIndex !== -1 && camera.mouseWasPressed) { // edge selected
@@ -306,19 +316,25 @@ export class BallPark {
         await this.compute.workDone();
         const out = await this.compute.getOutBuffer();
 
-        this.error = 100 * out[2] / 2097152;
+        this.error = out[2] / QUANTIZE_FACTOR;
         this.errorInfo.update();
 
-        const errorVariation = Math.abs(this.error / lastError - 1);
+        const errorVariation = lastError != 0 ? Math.abs(this.error / lastError - 1) : 0;
         converged = errorVariation < 1e-6;
         if (converged) this.activityIndicator.stop();
         else this.activityIndicator.run();
         lastError = this.error;
 
-        this.volume = out[7] / 2097152;
+        this.volume = out[7] / QUANTIZE_FACTOR;
         this.volumeInfo.update();
 
         this.compute.resetError();
+      }
+
+      if (action) j++;
+      if (j >= actionFrames) {
+        j = 0;
+        action = false;
       }
 
       requestAnimationFrame(loop);

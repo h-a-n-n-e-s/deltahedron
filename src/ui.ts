@@ -71,7 +71,7 @@ export class Button {
     // return buttonReorder;
   }
 
-  click = () => this.button.dispatchEvent(new Event('click'));
+  click = () => this.button.dispatchEvent(new Event('pointerdown'));
 
   hide = () => this.button.style.visibility = 'hidden';
   show = () => this.button.style.visibility = 'visible';
@@ -87,9 +87,9 @@ export class SwitchButton extends Button {
 
     super(name, isOnTop);
 
-    this.button.addEventListener('click', () => {
+    this.button.addEventListener('pointerdown', () => {
       this.switch();
-    }, false);
+    });
   }
 
   switch = () => {
@@ -118,7 +118,7 @@ export class PushButton extends Button {
     this.button.classList.add('pushButton');
   }
 
-  onPush = (func:()=>void) => this.button.addEventListener('click', () => {func()}, false);
+  onPush = (func:()=>void) => this.button.addEventListener('pointerdown', () => {func()});
 }
 
 export class RadioButton {
@@ -281,7 +281,7 @@ export class Info {
   }
 
   update = () => {
-    if (this.set !== undefined) this.span.innerHTML =  this.set();
+    if (this.set !== undefined) this.span.innerHTML = this.set();
   }
 
   createTooltip = (top:string, right:string, width:string, text:string) => {
