@@ -195,7 +195,7 @@ export class BallPark {
       }
 
       // main computation and rendering _______________________________________
-      if (this.subdivide || checkSelection || !converged || action) {
+      if (this.subdivide || checkSelection || !converged || action || this.rotate) {
         const commandEncoder = gpuDevice.createCommandEncoder();
 
         // if (!slowmo)
