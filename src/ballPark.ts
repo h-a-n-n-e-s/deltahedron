@@ -72,7 +72,7 @@ export class BallPark {
     const camera = new Camera({
       arcRotateCamera: false, // if false uses simple endless rotation
       angleResolution: 3,
-      radiusResolution: 6,
+      radiusResolution: 2,
       azimuth: 0,
       inclination: 90,
       radius: 15,
@@ -164,7 +164,7 @@ export class BallPark {
     // let endSlowmo = false;
 
     let j = 0;
-    const actionFrames = 30;
+    const actionFrames = 5;
     let action = false;
 
     let checkSelection = false;
@@ -204,9 +204,6 @@ export class BallPark {
         this.render.render(camera, commandEncoder);
 
         gpuDevice.queue.submit([commandEncoder.finish()]);
-
-        console.log('.');
-        
       }
       //_______________________________________________________________________
       
@@ -335,6 +332,7 @@ export class BallPark {
       if (j >= actionFrames) {
         j = 0;
         action = false;
+        converged = false;
       }
 
       requestAnimationFrame(loop);
