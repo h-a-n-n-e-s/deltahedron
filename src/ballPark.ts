@@ -72,7 +72,7 @@ export class BallPark {
     const camera = new Camera({
       arcRotateCamera: false, // if false uses simple endless rotation
       angleResolution: 3,
-      radiusResolution: 2,
+      radiusResolution: 1,
       azimuth: 0,
       inclination: 90,
       radius: 15,
