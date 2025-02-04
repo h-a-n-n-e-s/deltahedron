@@ -1,6 +1,6 @@
 import { vec3 } from './algebra';
 
-export function saveBinary(data:ArrayBuffer, filename:string) {
+export function saveBinary(data:ArrayBuffer|Uint32Array, filename:string) {
   let blob = new Blob([data], {type: 'octet/stream'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
