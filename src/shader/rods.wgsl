@@ -14,7 +14,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
 
   let j = halfEdges[2 * i].vertex;
   let k = halfEdges[2 * i + 1].vertex;
-  
+
   let a = balls[j];
   let b = balls[k];
 
@@ -35,7 +35,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   // mouse pick test
   if global.mouseChanged > 0 && global.rodsVisible == 1 && rods[i].size > 0 {
 
-    // for factor 1000 see intersection.wgsl l.28 
+    // for factor 1000 see intersection.wgsl l.28
     let distance = 1000 * rayCylinderIntersection(global, rods[i]);
     if distance > 0 {
 

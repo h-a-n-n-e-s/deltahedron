@@ -10,10 +10,10 @@ struct GlobalParameter {
 
   mouseRay: vec3f,
   mouseChanged: f32,
-  
+
   eye: vec3f,
   gravity: f32,
-  
+
   empty: u32,
   ballsVisible: u32,
   rodsVisible: u32,
@@ -29,7 +29,7 @@ struct Object {
   size: f32,
 
   quarternion: vec4f,
-  
+
   color: vec4f,
 
   velocity: vec3f,

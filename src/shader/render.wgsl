@@ -101,7 +101,7 @@ fn fs(in: Inter) -> @location(0) vec4f {
 
   let albedo = in.color.rgb;
   let amoc = vec3f(1); // no ambient occlusion
-  
+
   return colorize(in, albedo, amoc, in.normal, true);
 }
 
@@ -139,7 +139,7 @@ fn colorize(in: Inter, albedo: vec3f, amoc: vec3f, norm: vec3f, doFres: bool) ->
     let cosTheta = dot(normal, surfaceToEye);
     let kS = fresnel(0.03, cosTheta);
     kD = 1.0 - kS;
-  } 
+  }
 
   color *= b * kD * textureSample(irradianceTexture, sam, in.skyDirection).xyz;
   color += in.glossyness * textureSample(cubeMapTexture, sam, in.skyDirection).xyz;

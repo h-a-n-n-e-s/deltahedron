@@ -10,6 +10,8 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 */
 
+import { F32Arr } from './compute'
+
 // ported from https://github.com/DerSchmale/io-rgbe/tree/main
 
 /**
@@ -24,8 +26,8 @@ export interface HDRImageData {
   exposure: number
   /** Gamma of the HDR image */
   gamma: number
-  /** {@link Float32Array} holding the HDR image data */
-  data: Float32Array
+  /** {@link F32Arr} holding the HDR image data */
+  data: F32Arr
 }
 
 /**
@@ -84,7 +86,7 @@ export class HDRLoader {
    * @returns - The {@link HDRImageData}
    */
   async loadFromUrl(url: string): Promise<HDRImageData> {
-    const buffer = await (await fetch(url)).arrayBuffer()    
+    const buffer = await (await fetch(url)).arrayBuffer()
     return this.#decodeRGBE(new DataView(buffer))
   }
 
@@ -154,7 +156,7 @@ export class HDRLoader {
     const parts = line.split(' ')
     this.#parseSize(parts[0], parseInt(parts[1]), header)
     this.#parseSize(parts[2], parseInt(parts[3]), header)
-    
+
     return header
   }
 
@@ -196,7 +198,7 @@ export class HDRLoader {
   /**
    * @ignore
    */
-  #parseData(stream: DataStream, header: Header): Float32Array {
+  #parseData(stream: DataStream, header: Header): F32Arr {
     const hash = stream.data.getUint16(stream.offset)
     let data
 
@@ -214,7 +216,7 @@ export class HDRLoader {
   /**
    * @ignore
    */
-  #parseNewRLE(stream: DataStream, header: Header): Float32Array {
+  #parseNewRLE(stream: DataStream, header: Header): F32Arr {
     const { width, height, colorCorr } = header
     const tgt = new Float32Array(width * height * 4)
     let i = 0
@@ -223,7 +225,8 @@ export class HDRLoader {
     for (let y = 0; y < height; ++y) {
       if (data.getUint16(offset) !== 0x0202) throw new Error('Incorrect scanline start hash')
 
-      if (data.getUint16(offset + 2) !== width) throw new Error('Scanline does not match picture dimension!')
+      if (data.getUint16(offset + 2) !== width)
+        throw new Error('Scanline does not match picture dimension!')
 
       offset += 4
       const numComps = width * 4
@@ -270,7 +273,7 @@ export class HDRLoader {
   /**
    * @ignore
    */
-  #swap(data: Float32Array, i1: number, i2: number) {
+  #swap(data: F32Arr, i1: number, i2: number) {
     i1 *= 4
     i2 *= 4
 
@@ -284,7 +287,7 @@ export class HDRLoader {
   /**
    * @ignore
    */
-  #flipX(data: Float32Array, header: Header) {
+  #flipX(data: F32Arr, header: Header) {
     const { width, height } = header
     const hw = width >> 1
 
@@ -303,7 +306,7 @@ export class HDRLoader {
   /**
    * @ignore
    */
-  #flipY(data: Float32Array, header: Header) {
+  #flipY(data: F32Arr, header: Header) {
     const { width, height } = header
     const hh = height >> 1
 
@@ -328,14 +331,14 @@ export class HDRLoader {
     const faceSize = Math.max(parsedHdr.width / 4, parsedHdr.height / 2)
 
     type Face = {
-      posX: Float32Array;
-      negX: Float32Array;
-      posY: Float32Array;
-      negY: Float32Array;
-      posZ: Float32Array;
-      negZ: Float32Array;
+      posX: F32Arr
+      negX: F32Arr
+      posY: F32Arr
+      negY: F32Arr
+      posZ: F32Arr
+      negZ: F32Arr
     }
-    type FaceKey = keyof Face;
+    type FaceKey = keyof Face
 
     const faces = {
       posX: new Float32Array(faceSize * faceSize * 4),
@@ -346,15 +349,20 @@ export class HDRLoader {
       negZ: new Float32Array(faceSize * faceSize * 4),
     }
 
-    function getPixel(u:number, v:number):Array<number> {
+    function getPixel(u: number, v: number): Array<number> {
       const x = Math.floor(u * parsedHdr.width)
       const y = Math.floor(v * parsedHdr.height)
 
       const index = (y * parsedHdr.width + x) * 4
-      return [parsedHdr.data[index], parsedHdr.data[index + 1], parsedHdr.data[index + 2], parsedHdr.data[index + 3]]
+      return [
+        parsedHdr.data[index],
+        parsedHdr.data[index + 1],
+        parsedHdr.data[index + 2],
+        parsedHdr.data[index + 3],
+      ]
     }
 
-    function setPixel(face:FaceKey, x:number, y:number, pixel:Array<number>) {
+    function setPixel(face: FaceKey, x: number, y: number, pixel: Array<number>) {
       const index = (y * faceSize + x) * 4
       faces[face][index] = pixel[0]
       faces[face][index + 1] = pixel[1]
@@ -362,7 +370,7 @@ export class HDRLoader {
       faces[face][index + 3] = pixel[3]
     }
 
-    function mapDirection(face:FaceKey, x:number, y:number):Array<number> {
+    function mapDirection(face: FaceKey, x: number, y: number): Array<number> {
       const a = (2 * (x + 0.5)) / faceSize - 1
       const b = (2 * (y + 0.5)) / faceSize - 1
       switch (face) {
@@ -382,7 +390,7 @@ export class HDRLoader {
       // return [0,0,0]
     }
 
-    function directionToUV(direction:Array<number>) {
+    function directionToUV(direction: Array<number>) {
       const [x, y, z] = direction
       const r = Math.sqrt(x * x + y * y)
       //const theta = mod(Math.atan2(y, x), 2 * Math.PI)

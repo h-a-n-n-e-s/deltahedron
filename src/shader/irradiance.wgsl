@@ -19,7 +19,7 @@ const PI = 3.1415926535897;
 ) {
   let faceSize: u32 = params.faceSize;
   let sampleCount: u32 = params.sampleCount;
-  
+
   let face: u32 = GlobalInvocationID.z;
   let x: u32 = GlobalInvocationID.x;
   let y: u32 = GlobalInvocationID.y;
@@ -30,22 +30,22 @@ const PI = 3.1415926535897;
 
   let texelSize: f32 = 1.0 / f32(faceSize);
   let halfTexel: f32 = texelSize * 0.5;
-  
+
   var uv: vec2f = vec2(
     (f32(x) + halfTexel) * texelSize,
     (f32(y) + halfTexel) * texelSize
   );
-  
+
   uv = uv * 2.0 - 1.0;
 
   let normal: vec3<f32> = transformDirection(face, uv);
-  
+
   var irradiance: vec3f = vec3f(0.0, 0.0, 0.0);
 
   for (var i: u32 = 0; i < sampleCount; i++) {
     // generate a quasi monte carlo point in the unit square [0.1)^2
     let xi: vec2f = hammersley2d(i, sampleCount);
-    
+
     let cosTheta: f32 = sqrt(1.0 - xi.y);
     let sinTheta: f32 = sqrt(1.0 - cosTheta * cosTheta);
     let phi: f32 = 2.0 * PI * xi.x;
@@ -56,14 +56,14 @@ const PI = 3.1415926535897;
         sinTheta * sin(phi),
         cosTheta
     );
-    
+
     let TBN: mat3x3f = generateTBN(normalize(normal));
-    
+
     var direction: vec3f = TBN * sampleVec;
-    
+
     // invert along Y axis
     direction.y *= -1.0;
-    
+
     let lod: f32 = computeLod(pdf);
 
     // Convert sampleVec to texture coordinates of the specular env map
@@ -105,7 +105,7 @@ fn generateTBN(normal: vec3f) -> mat3x3f {
 
   let NdotUp: f32 = dot(normal, vec3(0.0, 1.0, 0.0));
   let epsilon: f32 = 0.0000001;
-  
+
   if 1.0 - abs(NdotUp) <= epsilon {
     // Sampling +Y or -Y, so we need a more robust bitangent.
     if NdotUp > 0.0 {
@@ -131,7 +131,7 @@ fn computeLod(pdf: f32) -> f32 {
 fn transformDirection(face: u32, uv: vec2f) -> vec3f {
   // Transform the direction based on the cubemap face
   switch (face) {
-    case 0u {return vec3f(  1.0, uv.y, -uv.x);} // +X  
+    case 0u {return vec3f(  1.0, uv.y, -uv.x);} // +X
     case 1u {return vec3f( -1.0, uv.y,  uv.x);} // -X
     case 2u {return vec3f( uv.x, -1.0,  uv.y);} // +Y
     case 3u {return vec3f( uv.x,  1.0, -uv.y);} // -Y

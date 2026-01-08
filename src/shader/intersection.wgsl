@@ -33,7 +33,7 @@ fn rayCylinderIntersection(global:GlobalParameter, obj:Object) -> f32 {
 
   if md < 0 && md + nd < 0 {return -1;}
   if md > dd && md + nd > dd {return -1;}
-  
+
   let nn = dot(n,n);
   let mn = dot(m,n);
   let a = dd * nn - nd * nd;
@@ -44,7 +44,7 @@ fn rayCylinderIntersection(global:GlobalParameter, obj:Object) -> f32 {
 
   if abs(a) < 0.0001 {
     if c > 0 {return -1;}
-    
+
     if md < 0 {t = - mn / nn;}
     else if md > dd {t = (nd - mn) / nn;}
     else {t = 0;}
@@ -53,7 +53,7 @@ fn rayCylinderIntersection(global:GlobalParameter, obj:Object) -> f32 {
 
   let b = dd * mn - nd * md;
   let dis = b * b - a * c;
-  
+
   if dis < 0 {return -1;}
 
   t = - (b + sqrt(dis)) / a;
@@ -80,7 +80,7 @@ fn rayTriangleIntersection(global:GlobalParameter, a:vec3f, b:vec3f, c:vec3f) ->
   let m = cross(global.mouseRay, global.eye);
   let s = dot(m, c - b);
   let t = dot(m, a - c);
-  
+
   let u = dot(global.mouseRay, cross(c, b)) + s;
   if u < 0 {return -1;}
   let v = dot(global.mouseRay, cross(a, c)) + t;

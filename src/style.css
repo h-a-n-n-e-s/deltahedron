@@ -1,6 +1,6 @@
 @font-face {
-	font-family: 'Recursive';
-	src: url('/RecursiveMonoLnrSt-Light.woff2');
+  font-family: 'Recursive';
+  src: url('/RecursiveMonoLnrSt-Light.woff2');
 }
 
 :root {
@@ -45,22 +45,28 @@ body {
   outline: none;
 }
 
-#error, #volume, #dihedralAngle, #formula, #FEVCount, #alertInfo, #activityIndicator {
-  position:absolute;
-  text-align:right;
-  height:22px;
+#error,
+#volume,
+#dihedralAngle,
+#formula,
+#FEVCount,
+#alertInfo,
+#activityIndicator {
+  position: absolute;
+  text-align: right;
+  height: 22px;
   user-select: none;
   /* background-color: #077; */
 }
 #error {
   top: 11px;
-  width:80px;
-  right:20px;
+  width: 80px;
+  right: 20px;
 }
 #volume {
   top: 38px;
-  width:80px;
-  right:20px;
+  width: 80px;
+  right: 20px;
 }
 #dihedralAngle {
   top: 65px;
@@ -83,9 +89,9 @@ sub {
   font-size: 18px;
 }
 #FEVCount {
-  bottom:10px;
-  right:20px;
-  width:200px;
+  bottom: 10px;
+  right: 20px;
+  width: 200px;
 }
 #alertInfo {
   bottom: 52px;
@@ -96,8 +102,12 @@ sub {
 }
 
 #logo {
-  opacity:0.5;
-  height:32px; position:absolute; left:0; bottom:0; margin:12px;
+  opacity: 0.5;
+  height: 32px;
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  margin: 12px;
 }
 #logo:hover {
   opacity: 1;
@@ -117,7 +127,7 @@ button {
   user-select: none;
 }
 button:hover {
-  opacity:0.7
+  opacity: 0.7;
 }
 button:disabled {
   opacity: 0.1;
@@ -125,17 +135,18 @@ button:disabled {
 }
 .switchButtonOff {
   background-color: var(--bbc);
-  color: var(--bc);;
+  color: var(--bc);
 }
 .switchButtonOn {
-  background-color: var(--bc);;
+  background-color: var(--bc);
   color: var(--bbc);
 }
 .verticalButton {
   right: 10px;
   width: 22px;
 }
-button > span { /* used for vertical text */
+button > span {
+  /* used for vertical text */
   writing-mode: vertical-rl;
   vertical-align: middle;
   line-height: 12px;
@@ -148,12 +159,12 @@ button > span { /* used for vertical text */
   cursor: default;
   background: none;
 }
-select, option {
+select,
+option {
   cursor: pointer;
   background-color: var(--bbc);
   color: var(--bc);
 }
-
 
 /*------------------------------------*/
 svg > path {
@@ -173,7 +184,9 @@ svg > path {
   background: var(--sbc);
   opacity: 0.5;
 }
-.sliderContainer:hover {opacity: 0.7}
+.sliderContainer:hover {
+  opacity: 0.7;
+}
 .sliderContainer > p {
   position: absolute;
   left: 5px;
@@ -193,7 +206,7 @@ svg > path {
   outline: none;
   border: none;
   cursor: inherit;
-  margin:0;
+  margin: 0;
   border-radius: 4px;
 }
 .slider::-webkit-slider-thumb {
@@ -228,9 +241,18 @@ svg > path {
   background-color: #a00;
 }
 
-#addRadioBut {left: 10px; top:42px;}
-#flipRadioBut {left: 60px; top:42px;}
-#collapseRadioBut {left: 120px; top:42px;}
+#addRadioBut {
+  left: 10px;
+  top: 42px;
+}
+#flipRadioBut {
+  left: 60px;
+  top: 42px;
+}
+#collapseRadioBut {
+  left: 120px;
+  top: 42px;
+}
 
 /* #subdivideRadioBut {left: 200px; top:42px;} */
 
