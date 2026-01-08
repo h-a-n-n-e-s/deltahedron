@@ -278,6 +278,8 @@ export class Structure {
   }
 
   addVertex(rodIndex: number) {
+    const h = this.halfEdges
+
     let l
     const addedRodIndices = new Uint32Array(3)
     for (let o = 0; o < 3; o++) {
@@ -299,56 +301,56 @@ export class Structure {
     const nb = bn + 1
     const nc = cn + 1
     const nd = dn + 1
-    const ab = this.halfEdges[4 * ca + 2]
-    const bc = this.halfEdges[4 * ca + 1]
-    const cd = this.halfEdges[4 * ac + 2]
-    const da = this.halfEdges[4 * ac + 1]
+    const ab = h[4 * ca + 2]
+    const bc = h[4 * ca + 1]
+    const cd = h[4 * ac + 2]
+    const da = h[4 * ac + 1]
     // B
-    this.halfEdges[4 * bn] = nb
-    this.halfEdges[4 * bn + 1] = ab
-    this.halfEdges[4 * bn + 2] = ca
-    this.halfEdges[4 * bn + 3] = addedBallIndex
-    this.halfEdges[4 * nb] = bn
-    this.halfEdges[4 * nb + 1] = cn
-    this.halfEdges[4 * nb + 2] = bc
-    this.halfEdges[4 * nb + 3] = this.halfEdges[4 * ab + 3]
+    h[4 * bn] = nb
+    h[4 * bn + 1] = ab
+    h[4 * bn + 2] = ca
+    h[4 * bn + 3] = addedBallIndex
+    h[4 * nb] = bn
+    h[4 * nb + 1] = cn
+    h[4 * nb + 2] = bc
+    h[4 * nb + 3] = h[4 * ab + 3]
     // C
-    this.halfEdges[4 * cn] = nc
-    this.halfEdges[4 * cn + 1] = bc
-    this.halfEdges[4 * cn + 2] = nb
-    this.halfEdges[4 * cn + 3] = addedBallIndex
-    this.halfEdges[4 * nc] = cn
-    this.halfEdges[4 * nc + 1] = dn
-    this.halfEdges[4 * nc + 2] = cd
-    this.halfEdges[4 * nc + 3] = this.halfEdges[4 * ac + 3]
+    h[4 * cn] = nc
+    h[4 * cn + 1] = bc
+    h[4 * cn + 2] = nb
+    h[4 * cn + 3] = addedBallIndex
+    h[4 * nc] = cn
+    h[4 * nc + 1] = dn
+    h[4 * nc + 2] = cd
+    h[4 * nc + 3] = h[4 * ac + 3]
     // D
-    this.halfEdges[4 * dn] = nd
-    this.halfEdges[4 * dn + 1] = cd
-    this.halfEdges[4 * dn + 2] = nc
-    this.halfEdges[4 * dn + 3] = addedBallIndex
-    this.halfEdges[4 * nd] = dn
-    this.halfEdges[4 * nd + 1] = ac
-    this.halfEdges[4 * nd + 2] = da
-    this.halfEdges[4 * nd + 3] = this.halfEdges[4 * cd + 3]
+    h[4 * dn] = nd
+    h[4 * dn + 1] = cd
+    h[4 * dn + 2] = nc
+    h[4 * dn + 3] = addedBallIndex
+    h[4 * nd] = dn
+    h[4 * nd + 1] = ac
+    h[4 * nd + 2] = da
+    h[4 * nd + 3] = h[4 * cd + 3]
     // surrounding edges
-    this.halfEdges[4 * ab + 2] = bn
-    this.halfEdges[4 * bc + 1] = nb
-    this.halfEdges[4 * bc + 2] = cn
-    this.halfEdges[4 * cd + 1] = nc
-    this.halfEdges[4 * cd + 2] = dn
-    this.halfEdges[4 * da + 1] = nd
+    h[4 * ab + 2] = bn
+    h[4 * bc + 1] = nb
+    h[4 * bc + 2] = cn
+    h[4 * cd + 1] = nc
+    h[4 * cd + 2] = dn
+    h[4 * da + 1] = nd
     // A
-    this.halfEdges[4 * ac + 2] = nd
-    this.halfEdges[4 * ac + 3] = addedBallIndex
-    this.halfEdges[4 * ca + 1] = bn
+    h[4 * ac + 2] = nd
+    h[4 * ac + 3] = addedBallIndex
+    h[4 * ca + 1] = bn
 
     this.vertexHalfEdgeMap[addedBallIndex] = ac
 
-    l = this.halfEdges[4 * nb + 3]
+    l = h[4 * nb + 3]
     this.changeCoordinationNumberAndColor(l, 1)
     const vertexB = l
 
-    l = this.halfEdges[4 * nd + 3]
+    l = h[4 * nd + 3]
     this.changeCoordinationNumberAndColor(l, 1)
     const vertexD = l
 
@@ -359,32 +361,34 @@ export class Structure {
     this.compute.setBallsBuffer(l, this.balls.data.slice(q * l, q * l + q), false)
 
     // faces
-    this.setFace(this.halfEdges[4 * ab], ab) // old faces
-    this.setFace(this.halfEdges[4 * da], da)
+    this.setFace(h[4 * ab], ab) // old faces
+    this.setFace(h[4 * da], da)
     this.setFace(this.triangles.count, bc) // new faces
     this.triangles.count++
     this.setFace(this.triangles.count, cd)
     this.triangles.count++
 
     this.compute.setTriangleIndexBuffer(this.triangles.mesh.indices)
-    this.compute.setHalfEdgeBuffer(this.halfEdges)
+    this.compute.setHalfEdgeBuffer(h)
     this.compute.setCount(this.balls.count, this.rods.count, this.triangles.count)
 
     return [vertexB, vertexD]
   }
 
   flipEdge(rodIndex: number) {
+    const h = this.halfEdges
+
     const ac = 2 * rodIndex
     const ca = ac + 1
-    const ab = this.halfEdges[4 * ca + 2]
-    const bc = this.halfEdges[4 * ca + 1]
-    const cd = this.halfEdges[4 * ac + 2]
-    const da = this.halfEdges[4 * ac + 1]
+    const ab = h[4 * ca + 2]
+    const bc = h[4 * ca + 1]
+    const cd = h[4 * ac + 2]
+    const da = h[4 * ac + 1]
 
-    const vertexA = this.halfEdges[4 * da + 3]
-    const vertexB = this.halfEdges[4 * ab + 3]
-    const vertexC = this.halfEdges[4 * bc + 3]
-    const vertexD = this.halfEdges[4 * cd + 3]
+    const vertexA = h[4 * da + 3]
+    const vertexB = h[4 * ab + 3]
+    const vertexC = h[4 * bc + 3]
+    const vertexD = h[4 * cd + 3]
 
     // check if a tetrahedron would be formed
     if (!this.allowTetrahedra) {
@@ -393,23 +397,23 @@ export class Structure {
     } else if (this.getCoordinationNumber(vertexA) < 4 || this.getCoordinationNumber(vertexC) < 4)
       return 2
 
-    this.halfEdges[4 * ab + 1] = da
-    this.halfEdges[4 * ab + 2] = ac
-    this.halfEdges[4 * bc + 1] = ca
-    this.halfEdges[4 * bc + 2] = cd
-    this.halfEdges[4 * cd + 1] = bc
-    this.halfEdges[4 * cd + 2] = ca
-    this.halfEdges[4 * da + 1] = ac
-    this.halfEdges[4 * da + 2] = ab
+    h[4 * ab + 1] = da
+    h[4 * ab + 2] = ac
+    h[4 * bc + 1] = ca
+    h[4 * bc + 2] = cd
+    h[4 * cd + 1] = bc
+    h[4 * cd + 2] = ca
+    h[4 * da + 1] = ac
+    h[4 * da + 2] = ab
 
-    this.halfEdges[4 * ac + 1] = ab
-    this.halfEdges[4 * ac + 2] = da
-    this.halfEdges[4 * ca + 1] = cd
-    this.halfEdges[4 * ca + 2] = bc
+    h[4 * ac + 1] = ab
+    h[4 * ac + 2] = da
+    h[4 * ca + 1] = cd
+    h[4 * ca + 2] = bc
 
     // vertex pointer
-    this.halfEdges[4 * ca + 3] = vertexB
-    this.halfEdges[4 * ac + 3] = vertexD
+    h[4 * ca + 3] = vertexB
+    h[4 * ac + 3] = vertexD
     this.vertexHalfEdgeMap[vertexA] = da
     this.vertexHalfEdgeMap[vertexB] = ab
     this.vertexHalfEdgeMap[vertexC] = bc
@@ -420,58 +424,60 @@ export class Structure {
     this.changeCoordinationNumberAndColor(vertexD, 1)
 
     // faces
-    this.setFace(this.halfEdges[4 * ab], ab)
-    this.setFace(this.halfEdges[4 * cd], cd)
+    this.setFace(h[4 * ab], ab)
+    this.setFace(h[4 * cd], cd)
 
     this.compute.setTriangleIndexBuffer(this.triangles.mesh.indices)
-    this.compute.setHalfEdgeBuffer(this.halfEdges)
+    this.compute.setHalfEdgeBuffer(h)
 
     return 0
   }
 
   async collapseEdge(rodIndex: number) {
+    const h = this.halfEdges
+
     // octahedron is smallest possible shape
     if (!this.allowTetrahedra && this.triangles.count < 9) return 1
     if (this.triangles.count < 5) return 2
 
     const ac = 2 * rodIndex
     const ca = ac + 1
-    const ab = this.halfEdges[4 * ca + 2]
-    const bc = this.halfEdges[4 * ca + 1]
-    const cd = this.halfEdges[4 * ac + 2]
-    const da = this.halfEdges[4 * ac + 1]
+    const ab = h[4 * ca + 2]
+    const bc = h[4 * ca + 1]
+    const cd = h[4 * ac + 2]
+    const da = h[4 * ac + 1]
     const ba = this.getTwinHalfEdge(ab)
     const cb = this.getTwinHalfEdge(bc)
     const dc = this.getTwinHalfEdge(cd)
     const ad = this.getTwinHalfEdge(da)
 
     // vertex
-    let vertexA = this.halfEdges[4 * da + 3]
-    let vertexB = this.halfEdges[4 * ab + 3]
-    let vertexC = this.halfEdges[4 * ac + 3]
-    let vertexD = this.halfEdges[4 * ad + 3]
+    let vertexA = h[4 * da + 3]
+    let vertexB = h[4 * ab + 3]
+    let vertexC = h[4 * ac + 3]
+    let vertexD = h[4 * ad + 3]
 
     // check if a tetrahedron would be formed
     if (!this.allowTetrahedra)
       if (this.getCoordinationNumber(vertexB) < 5 || this.getCoordinationNumber(vertexD) < 5)
         return 1
 
-    const faceABC = this.halfEdges[4 * ab]
-    const faceACD = this.halfEdges[4 * da]
+    const faceABC = h[4 * ab]
+    const faceACD = h[4 * da]
 
     // edges
     let vertexACoordinationNumberDifference = -1
     let i = dc
-    this.halfEdges[4 * i + 3] = vertexA
-    let next = this.halfEdges[4 * i + 2]
+    h[4 * i + 3] = vertexA
+    let next = h[4 * i + 2]
     const coordinationNumberVertexC = this.getCoordinationNumber(vertexC)
     const cToAEdgeList = []
     for (let o = 0; o < coordinationNumberVertexC - 3; o++) {
       i = this.getTwinHalfEdge(next)
       cToAEdgeList.push(i)
-      this.halfEdges[4 * i + 3] = vertexA
+      h[4 * i + 3] = vertexA
       vertexACoordinationNumberDifference++
-      next = this.halfEdges[4 * i + 2]
+      next = h[4 * i + 2]
     }
     this.copyHalfEdge(dc, da)
     this.copyHalfEdge(cb, ab)
@@ -510,7 +516,7 @@ export class Structure {
       this.compute.setBallsBuffer(vertexC, this.balls.data.slice(q * l, q * l + q))
       if (l === vertexA) {
         vertexA = vertexC
-        this.halfEdges[4 * da + 3] = vertexA
+        h[4 * da + 3] = vertexA
       }
       if (l === vertexB) vertexB = vertexC
       if (l === vertexD) vertexD = vertexC
@@ -521,7 +527,7 @@ export class Structure {
     cToAEdgeList.push(da)
     for (let o = 0; o < coordinationNumberVertexC - 2; o++) {
       const e = cToAEdgeList.pop() as number
-      this.setFace(this.halfEdges[4 * e], e)
+      this.setFace(h[4 * e], e)
     }
 
     // faces memory relocation
@@ -534,7 +540,7 @@ export class Structure {
       this.triangles.count--
     }
 
-    this.compute.setHalfEdgeBuffer(this.halfEdges)
+    this.compute.setHalfEdgeBuffer(h)
     this.compute.setTriangleIndexBuffer(this.triangles.mesh.indices)
     this.compute.setCount(this.balls.count, this.rods.count, this.triangles.count)
 
@@ -613,33 +619,4 @@ export class Structure {
     }
     return count
   }
-
-  // removeEdge(rodIndex:number) {
-  //   const ac = 2*rodIndex;
-  //   const ca = ac+1;
-  //   const ab = this.halfEdges[4*ca+2];
-  //   const bc = this.halfEdges[4*ca+1];
-  //   const cd = this.halfEdges[4*ac+2];
-  //   const da = this.halfEdges[4*ac+1];
-
-  //   this.halfEdges[4*da+2] = ab;
-  //   this.halfEdges[4*ab+1] = da;
-  //   this.halfEdges[4*bc+2] = cd;
-  //   this.halfEdges[4*cd+1] = bc;
-
-  //   // color
-  //   this.changeCoordinationNumberAndColor(this.halfEdges[4*ac+3], -1);
-  //   this.changeCoordinationNumberAndColor(this.halfEdges[4*ca+3], -1);
-
-  //   this.compute.setHalfEdgeBuffer(this.halfEdges);
-  // }
-
-  // bam() {
-  //   const a = [4,15];
-  //   for (let i=0; i<a.length; i++) {
-  //     const j = a[i];
-  //     this.balls.data.set([0.1*(0.5-Math.random()),0.1*(0.5-Math.random()),0.1*(0.5-Math.random())], q*j);
-  //     this.compute.setBallsBuffer(j, this.balls.data.slice(q*j,q*j+q));
-  //   }
-  // }
 }
