@@ -14,6 +14,18 @@ export interface Object {
   maxCount: number
 }
 
+const twin = (i: number): number => i ^ 1
+
+const face = (h: U32Arr, i: number): number => h[4 * i]
+const next = (h: U32Arr, i: number): number => h[4 * i + 1]
+const prev = (h: U32Arr, i: number): number => h[4 * i + 2]
+const vert = (h: U32Arr, i: number): number => h[4 * i + 3]
+
+const setFace = (h: U32Arr, i: number, j: number) => (h[4 * i] = j)
+const setNext = (h: U32Arr, i: number, j: number) => (h[4 * i + 1] = j)
+const setPrev = (h: U32Arr, i: number, j: number) => (h[4 * i + 2] = j)
+const setVert = (h: U32Arr, i: number, j: number) => (h[4 * i + 3] = j)
+
 export class Structure {
   private balls: Object
   private rods: Object
@@ -206,11 +218,6 @@ export class Structure {
     return count + 1
   }
 
-  getRodIndex = (halfEdgeIndex: number) =>
-    halfEdgeIndex % 2 === 0 ? halfEdgeIndex / 2 : (halfEdgeIndex - 1) / 2
-
-  getTwinHalfEdge = (index: number) => (index % 2 === 0 ? index + 1 : index - 1)
-
   copyHalfEdge(source: number, destination: number) {
     if (source !== destination) {
       this.halfEdges.set(this.halfEdges.slice(4 * source, 4 * source + 4), 4 * destination)
@@ -242,7 +249,7 @@ export class Structure {
       // reset face vertices because of new vertex
       this.setFace(this.halfEdges[4 * i], i)
       const next = this.halfEdges[4 * i + 2]
-      i = this.getTwinHalfEdge(next)
+      i = twin(next)
     }
   }
 
@@ -301,56 +308,56 @@ export class Structure {
     const nb = bn + 1
     const nc = cn + 1
     const nd = dn + 1
-    const ab = h[4 * ca + 2]
-    const bc = h[4 * ca + 1]
-    const cd = h[4 * ac + 2]
-    const da = h[4 * ac + 1]
+    const ab = prev(h, ca)
+    const bc = next(h, ca)
+    const cd = prev(h, ac)
+    const da = next(h, ac)
     // B
-    h[4 * bn] = nb
-    h[4 * bn + 1] = ab
-    h[4 * bn + 2] = ca
-    h[4 * bn + 3] = addedBallIndex
-    h[4 * nb] = bn
-    h[4 * nb + 1] = cn
-    h[4 * nb + 2] = bc
-    h[4 * nb + 3] = h[4 * ab + 3]
+    setFace(h, bn, nb)
+    setNext(h, bn, ab)
+    setPrev(h, bn, ca)
+    setVert(h, bn, addedBallIndex)
+    setFace(h, nb, bn)
+    setNext(h, nb, cn)
+    setPrev(h, nb, bc)
+    setVert(h, nb, vert(h, ab))
     // C
-    h[4 * cn] = nc
-    h[4 * cn + 1] = bc
-    h[4 * cn + 2] = nb
-    h[4 * cn + 3] = addedBallIndex
-    h[4 * nc] = cn
-    h[4 * nc + 1] = dn
-    h[4 * nc + 2] = cd
-    h[4 * nc + 3] = h[4 * ac + 3]
+    setFace(h, cn, nc)
+    setNext(h, cn, bc)
+    setPrev(h, cn, nb)
+    setVert(h, cn, addedBallIndex)
+    setFace(h, nc, cn)
+    setNext(h, nc, dn)
+    setPrev(h, nc, cd)
+    setVert(h, nc, vert(h, ac))
     // D
-    h[4 * dn] = nd
-    h[4 * dn + 1] = cd
-    h[4 * dn + 2] = nc
-    h[4 * dn + 3] = addedBallIndex
-    h[4 * nd] = dn
-    h[4 * nd + 1] = ac
-    h[4 * nd + 2] = da
-    h[4 * nd + 3] = h[4 * cd + 3]
+    setFace(h, dn, nd)
+    setNext(h, dn, cd)
+    setPrev(h, dn, nc)
+    setVert(h, dn, addedBallIndex)
+    setFace(h, nd, dn)
+    setNext(h, nd, ac)
+    setPrev(h, nd, da)
+    setVert(h, nd, vert(h, cd))
     // surrounding edges
-    h[4 * ab + 2] = bn
-    h[4 * bc + 1] = nb
-    h[4 * bc + 2] = cn
-    h[4 * cd + 1] = nc
-    h[4 * cd + 2] = dn
-    h[4 * da + 1] = nd
+    setPrev(h, ab, bn)
+    setNext(h, bc, nb)
+    setPrev(h, bc, cn)
+    setNext(h, cd, nc)
+    setPrev(h, cd, dn)
+    setNext(h, da, nd)
     // A
-    h[4 * ac + 2] = nd
-    h[4 * ac + 3] = addedBallIndex
-    h[4 * ca + 1] = bn
+    setPrev(h, ac, nd)
+    setVert(h, ac, addedBallIndex)
+    setNext(h, ca, bn)
 
     this.vertexHalfEdgeMap[addedBallIndex] = ac
 
-    l = h[4 * nb + 3]
+    l = vert(h, nb)
     this.changeCoordinationNumberAndColor(l, 1)
     const vertexB = l
 
-    l = h[4 * nd + 3]
+    l = vert(h, nd)
     this.changeCoordinationNumberAndColor(l, 1)
     const vertexD = l
 
@@ -361,8 +368,8 @@ export class Structure {
     this.compute.setBallsBuffer(l, this.balls.data.slice(q * l, q * l + q), false)
 
     // faces
-    this.setFace(h[4 * ab], ab) // old faces
-    this.setFace(h[4 * da], da)
+    this.setFace(face(h, ab), ab) // old faces
+    this.setFace(face(h, da), da)
     this.setFace(this.triangles.count, bc) // new faces
     this.triangles.count++
     this.setFace(this.triangles.count, cd)
@@ -380,15 +387,15 @@ export class Structure {
 
     const ac = 2 * rodIndex
     const ca = ac + 1
-    const ab = h[4 * ca + 2]
-    const bc = h[4 * ca + 1]
-    const cd = h[4 * ac + 2]
-    const da = h[4 * ac + 1]
+    const ab = prev(h, ca)
+    const bc = next(h, ca)
+    const cd = prev(h, ac)
+    const da = next(h, ac)
 
-    const vertexA = h[4 * da + 3]
-    const vertexB = h[4 * ab + 3]
-    const vertexC = h[4 * bc + 3]
-    const vertexD = h[4 * cd + 3]
+    const vertexA = vert(h, da)
+    const vertexB = vert(h, ab)
+    const vertexC = vert(h, bc)
+    const vertexD = vert(h, cd)
 
     // check if a tetrahedron would be formed
     if (!this.allowTetrahedra) {
@@ -397,23 +404,23 @@ export class Structure {
     } else if (this.getCoordinationNumber(vertexA) < 4 || this.getCoordinationNumber(vertexC) < 4)
       return 2
 
-    h[4 * ab + 1] = da
-    h[4 * ab + 2] = ac
-    h[4 * bc + 1] = ca
-    h[4 * bc + 2] = cd
-    h[4 * cd + 1] = bc
-    h[4 * cd + 2] = ca
-    h[4 * da + 1] = ac
-    h[4 * da + 2] = ab
+    setNext(h, ab, da)
+    setPrev(h, ab, ac)
+    setNext(h, bc, ca)
+    setPrev(h, bc, cd)
+    setNext(h, cd, bc)
+    setPrev(h, cd, ca)
+    setNext(h, da, ac)
+    setPrev(h, da, ab)
 
-    h[4 * ac + 1] = ab
-    h[4 * ac + 2] = da
-    h[4 * ca + 1] = cd
-    h[4 * ca + 2] = bc
+    setNext(h, ac, ab)
+    setPrev(h, ac, da)
+    setNext(h, ca, cd)
+    setPrev(h, ca, bc)
 
     // vertex pointer
-    h[4 * ca + 3] = vertexB
-    h[4 * ac + 3] = vertexD
+    setVert(h, ca, vertexB)
+    setVert(h, ac, vertexD)
     this.vertexHalfEdgeMap[vertexA] = da
     this.vertexHalfEdgeMap[vertexB] = ab
     this.vertexHalfEdgeMap[vertexC] = bc
@@ -424,8 +431,8 @@ export class Structure {
     this.changeCoordinationNumberAndColor(vertexD, 1)
 
     // faces
-    this.setFace(h[4 * ab], ab)
-    this.setFace(h[4 * cd], cd)
+    this.setFace(face(h, ab), ab)
+    this.setFace(face(h, cd), cd)
 
     this.compute.setTriangleIndexBuffer(this.triangles.mesh.indices)
     this.compute.setHalfEdgeBuffer(h)
@@ -442,43 +449,50 @@ export class Structure {
 
     const ac = 2 * rodIndex
     const ca = ac + 1
-    const ab = h[4 * ca + 2]
-    const bc = h[4 * ca + 1]
-    const cd = h[4 * ac + 2]
-    const da = h[4 * ac + 1]
-    const ba = this.getTwinHalfEdge(ab)
-    const cb = this.getTwinHalfEdge(bc)
-    const dc = this.getTwinHalfEdge(cd)
-    const ad = this.getTwinHalfEdge(da)
+    const ab = prev(h, ca)
+    const bc = next(h, ca)
+    const cd = prev(h, ac)
+    const da = next(h, ac)
+    const ba = twin(ab)
+    const cb = twin(bc)
+    const dc = twin(cd)
+    const ad = twin(da)
 
     // vertex
-    let vertexA = h[4 * da + 3]
-    let vertexB = h[4 * ab + 3]
-    let vertexC = h[4 * ac + 3]
-    let vertexD = h[4 * ad + 3]
+    let vertexA = vert(h, da)
+    let vertexB = vert(h, ab)
+    let vertexC = vert(h, ac)
+    let vertexD = vert(h, ad)
 
     // check if a tetrahedron would be formed
     if (!this.allowTetrahedra)
       if (this.getCoordinationNumber(vertexB) < 5 || this.getCoordinationNumber(vertexD) < 5)
         return 1
 
-    const faceABC = h[4 * ab]
-    const faceACD = h[4 * da]
+    const faceABC = face(h, ab)
+    const faceACD = face(h, da)
+
+    // TOPOLOGY UPDATES _______________________________________________________
+    // Perform all connectivity changes first
 
     // edges
     let vertexACoordinationNumberDifference = -1
     let i = dc
-    h[4 * i + 3] = vertexA
-    let next = h[4 * i + 2]
+    setVert(h, i, vertexA)
+    let nex = prev(h, i)
     const coordinationNumberVertexC = this.getCoordinationNumber(vertexC)
     const cToAEdgeList = []
+
+    // Redirect all edges from C to A
     for (let o = 0; o < coordinationNumberVertexC - 3; o++) {
-      i = this.getTwinHalfEdge(next)
+      i = twin(nex)
       cToAEdgeList.push(i)
-      h[4 * i + 3] = vertexA
+      setVert(h, i, vertexA)
       vertexACoordinationNumberDifference++
-      next = h[4 * i + 2]
+      nex = prev(h, i)
     }
+
+    // Stitch the hole by copying outer edge data to inner edges
     this.copyHalfEdge(dc, da)
     this.copyHalfEdge(cb, ab)
 
@@ -486,48 +500,58 @@ export class Structure {
     this.vertexHalfEdgeMap[vertexB] = ab
     this.vertexHalfEdgeMap[vertexD] = ad
 
-    // edges memory relocation
-    const removableRodList = []
-    for (const halfEdge of [dc, cb, ac]) removableRodList.push(this.getRodIndex(halfEdge))
-    removableRodList.sort((a, b) => a - b)
-    for (let o = 0; o < 3; o++) {
-      const x = removableRodList.pop() as number
-      const last = this.rods.count - 1
-      // if last is in cToAEdgeList then replace it
-      for (let u = 0; u < 2; u++)
-        if (cToAEdgeList.includes(2 * last + u))
-          cToAEdgeList[cToAEdgeList.indexOf(2 * last + u)] = 2 * x + u
-      this.moveRod(last, x)
-      this.rods.count--
-    }
-
     this.changeCoordinationNumberAndColor(vertexA, vertexACoordinationNumberDifference)
     this.changeCoordinationNumberAndColor(vertexB, -1)
     this.changeCoordinationNumberAndColor(vertexD, -1)
 
-    // vertex memory relocation (remove vertexC)
+    // MEMORY RELOCATION ______________________________________________________
+    // Compact arrays by moving last elements into gaps
+
+    // 1. RODS (EDGES) RELOCATION
+    const removableRodList = []
+    for (const halfEdge of [dc, cb, ac]) removableRodList.push(halfEdge >> 1)
+    removableRodList.sort((a, b) => a - b)
+
+    for (let o = 0; o < 3; o++) {
+      const x = removableRodList.pop() as number
+      const last = this.rods.count - 1
+
+      // Update tracking list if the 'last' rod is one we are tracking for face updates
+      // (i.e. if last is in cToAEdgeList then replace it)
+      for (let u = 0; u < 2; u++)
+        if (cToAEdgeList.includes(2 * last + u))
+          cToAEdgeList[cToAEdgeList.indexOf(2 * last + u)] = 2 * x + u
+
+      this.moveRod(last, x)
+      this.rods.count--
+    }
+
+    // 2. VERTICES RELOCATION (remove vertexC)
     let l = this.balls.count - 1
     if (l !== vertexC) {
-      // the following routine needs the correct coordination number
       this.redirectVertex(l, vertexC)
+
       const p = (await this.compute.getBuffer('balls')).slice(q * l, q * l + 3)
-      this.balls.data.set(p, q * l)
+      this.balls.data.set(p, q * l) // Update CPU buffer with latest position from GPU
       this.balls.data.set(this.balls.data.slice(q * l, q * l + q), q * vertexC)
       this.compute.setBallsBuffer(vertexC, this.balls.data.slice(q * l, q * l + q))
+
+      // Update local variables if they refer to the vertex that was just moved
       if (l === vertexA) {
         vertexA = vertexC
-        h[4 * da + 3] = vertexA
+        setVert(h, da, vertexA)
       }
       if (l === vertexB) vertexB = vertexC
       if (l === vertexD) vertexD = vertexC
     }
     this.balls.count--
 
-    // faces
+    // 3. FACE UPDATES & RELOCATION
+    // Finish topology updates for faces (using final edge indices)
     cToAEdgeList.push(da)
     for (let o = 0; o < coordinationNumberVertexC - 2; o++) {
       const e = cToAEdgeList.pop() as number
-      this.setFace(h[4 * e], e)
+      this.setFace(face(h, e), e)
     }
 
     // faces memory relocation
@@ -601,8 +625,8 @@ export class Structure {
     for (let i = 0; i < this.rods.count; i++) {
       const ac = 2 * i
       const ca = ac + 1
-      const vertexA = this.halfEdges[4 * ca + 3]
-      const vertexC = this.halfEdges[4 * ac + 3]
+      const vertexA = vert(this.halfEdges, ca)
+      const vertexC = vert(this.halfEdges, ac)
       const offset = i * q
       if (this.getCoordinationNumber(vertexA) === this.getCoordinationNumber(vertexC))
         this.rods.data.set([1], offset + 3) // size
