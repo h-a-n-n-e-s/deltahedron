@@ -48,21 +48,21 @@ exportSTLButton.onPush(async () => await ballPark.exportSTL())
 // const bamButton = new PushButton('bam', true);
 // bamButton.onPush( async () => ballPark.bam());
 
-const gravitySlider = new InfoSlider(0, 9, 1, 1, 'inflation: ', 0, '', 140, document.body)
-gravitySlider.onSlide(() => {
-  const v = gravitySlider.value
-  ballPark.setGravity(v)
-  if (v !== 0) gravitySlider.addClass('alert')
-  else gravitySlider.removeClass('alert')
+const repulsionSlider = new InfoSlider(0, 9, 1, 1, 'repulsion: ', 0, '', 140, document.body)
+repulsionSlider.onSlide(() => {
+  const v = repulsionSlider.value
+  ballPark.setRepulsion(v)
+  if (v !== 0) repulsionSlider.addClass('alert')
+  else repulsionSlider.removeClass('alert')
 })
-gravitySlider.setId('gravitySlider')
+repulsionSlider.setId('repulsionSlider')
 
 // slightly attractive force if 'a' key is pressed
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'a') ballPark.setGravity(-0.2)
+  if (e.key === 'a') ballPark.setRepulsion(-0.2)
 })
 document.addEventListener('keyup', (e) => {
-  if (e.key === 'a') ballPark.setGravity(gravitySlider.value)
+  if (e.key === 'a') ballPark.setRepulsion(repulsionSlider.value)
 })
 
 const operationButtons = new RadioButton(
@@ -82,7 +82,7 @@ faceButton.click()
 rodButton.click()
 ballButton.click()
 
-gravitySlider.setSlider(gravitySlider.value)
+repulsionSlider.setSlider(repulsionSlider.value)
 
 // logo
 const a = document.createElement('a')

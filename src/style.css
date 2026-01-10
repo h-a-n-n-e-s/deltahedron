@@ -231,7 +231,7 @@ svg > path {
   opacity: 0.5;
 }
 
-#gravitySlider {
+#repulsionSlider {
   position: absolute;
   top: 42px;
   left: 220px;

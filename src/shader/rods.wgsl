@@ -25,8 +25,6 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   var nor = vec3f(0);
   if lenab > 0.0 {nor = normalize(ab);}
   let error = abs(1 - lenab / d);
-  // var f = 1.0;
-  // if error < 0.05 {f = 0.1;}
   let velocity = (d - lenab) * nor;
 
   // error check
@@ -41,10 +39,6 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
 
       rods[i].prop3 = i32(distance * QUANTIZE_FACTOR);
       atomicMin(&out[0], rods[i].prop3);
-
-      // orientation
-      // let o = balls[0].position;
-      // out.e1 = i32(100 * dot(balls[1].position-o, cross(balls[2].position-o, balls[3].position-o)));
     }
     else {
       rods[i].prop3 = -1;
@@ -54,14 +48,15 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   rods[i].position = abMean;
   rods[i].quarternion = quaternionFromDirection(ab);
 
-  atomicAdd(&velocityUpdate[3 * j    ], i32(velocity.x * QUANTIZE_FACTOR));
-  atomicAdd(&velocityUpdate[3 * j + 1], i32(velocity.y * QUANTIZE_FACTOR));
-  atomicAdd(&velocityUpdate[3 * j + 2], i32(velocity.z * QUANTIZE_FACTOR));
+  atomicAdd(&velocityUpdate[4 * j    ], i32(velocity.x * QUANTIZE_FACTOR));
+  atomicAdd(&velocityUpdate[4 * j + 1], i32(velocity.y * QUANTIZE_FACTOR));
+  atomicAdd(&velocityUpdate[4 * j + 2], i32(velocity.z * QUANTIZE_FACTOR));
+  atomicAdd(&velocityUpdate[4 * j + 3], 1); // <--- Add Valence Count for Ball J
 
-  atomicAdd(&velocityUpdate[3 * k    ], i32(-velocity.x * QUANTIZE_FACTOR));
-  atomicAdd(&velocityUpdate[3 * k + 1], i32(-velocity.y * QUANTIZE_FACTOR));
-  atomicAdd(&velocityUpdate[3 * k + 2], i32(-velocity.z * QUANTIZE_FACTOR));
-
+  atomicAdd(&velocityUpdate[4 * k    ], i32(-velocity.x * QUANTIZE_FACTOR));
+  atomicAdd(&velocityUpdate[4 * k + 1], i32(-velocity.y * QUANTIZE_FACTOR));
+  atomicAdd(&velocityUpdate[4 * k + 2], i32(-velocity.z * QUANTIZE_FACTOR));
+  atomicAdd(&velocityUpdate[4 * k + 3], 1); // <--- Add Valence Count for Ball K
 }
 
 fn quaternionFromDirection(v:vec3f) -> vec4f {

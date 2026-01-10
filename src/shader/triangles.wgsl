@@ -75,14 +75,14 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   let bc = i32(global.ballCount);
   let centroid = - vec3i(atomicLoad(&out[4]), atomicLoad(&out[5]), atomicLoad(&out[6])) / bc;
   if dot(centroid, centroid) > 0 {
-    atomicCompareExchangeWeak(&velocityUpdate[3 * j    ], 0, centroid.x);
-    atomicCompareExchangeWeak(&velocityUpdate[3 * j + 1], 0, centroid.y);
-    atomicCompareExchangeWeak(&velocityUpdate[3 * j + 2], 0, centroid.z);
-    atomicCompareExchangeWeak(&velocityUpdate[3 * k    ], 0, centroid.x);
-    atomicCompareExchangeWeak(&velocityUpdate[3 * k + 1], 0, centroid.y);
-    atomicCompareExchangeWeak(&velocityUpdate[3 * k + 2], 0, centroid.z);
-    atomicCompareExchangeWeak(&velocityUpdate[3 * l    ], 0, centroid.x);
-    atomicCompareExchangeWeak(&velocityUpdate[3 * l + 1], 0, centroid.y);
-    atomicCompareExchangeWeak(&velocityUpdate[3 * l + 2], 0, centroid.z);
+    atomicCompareExchangeWeak(&velocityUpdate[4 * j    ], 0, centroid.x);
+    atomicCompareExchangeWeak(&velocityUpdate[4 * j + 1], 0, centroid.y);
+    atomicCompareExchangeWeak(&velocityUpdate[4 * j + 2], 0, centroid.z);
+    atomicCompareExchangeWeak(&velocityUpdate[4 * k    ], 0, centroid.x);
+    atomicCompareExchangeWeak(&velocityUpdate[4 * k + 1], 0, centroid.y);
+    atomicCompareExchangeWeak(&velocityUpdate[4 * k + 2], 0, centroid.z);
+    atomicCompareExchangeWeak(&velocityUpdate[4 * l    ], 0, centroid.x);
+    atomicCompareExchangeWeak(&velocityUpdate[4 * l + 1], 0, centroid.y);
+    atomicCompareExchangeWeak(&velocityUpdate[4 * l + 2], 0, centroid.z);
   }
 }

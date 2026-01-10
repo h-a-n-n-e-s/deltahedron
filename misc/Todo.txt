@@ -1,13 +1,12 @@
 
 
-negative volume bug -> overflow issue?
+repulsion/contraction control keys (only react with mouse movements)
 
 specular term
 ssao
 textures
 one reflection ray tracing
 
-equilibrium acceleration algorithm, newton
 flat faces limit
 smoothing algo
 
@@ -22,3 +21,5 @@ cut open, change topology
 
 rewrite without objects
 half edge functions
+
+13 seconds

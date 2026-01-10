@@ -76,7 +76,7 @@ export class Compute {
     rods.buffer = this.rodsBuffer
 
     this.velocityUpdateBuffer = this.device.createBuffer({
-      size: (this.ballsBuffer.size / q) * 3, // padding unnecessary
+      size: (this.ballsBuffer.size / q) * 4, // padding unnecessary
       usage: GPUBufferUsage.STORAGE,
     })
 
@@ -331,7 +331,7 @@ export class Compute {
     )
   }
 
-  setGravity = (g: number) =>
+  setRepulsion = (g: number) =>
     this.device.queue.writeBuffer(this.globalParameterBuffer, 44, new Float32Array([g]))
 
   setCount = (ballCount: number, rodCount: number, triangleCount: number) =>

@@ -219,12 +219,13 @@ export class Structure {
   }
 
   copyHalfEdge(source: number, destination: number) {
+    const h = this.halfEdges
     if (source !== destination) {
-      this.halfEdges.set(this.halfEdges.slice(4 * source, 4 * source + 4), 4 * destination)
-      this.halfEdges[4 * this.halfEdges[4 * destination + 1] + 2] = destination
-      this.halfEdges[4 * this.halfEdges[4 * destination + 2] + 1] = destination
-      this.vertexHalfEdgeMap[this.halfEdges[4 * destination + 3]] = destination
-      this.faceHalfEdgeMap[this.halfEdges[4 * destination]] = destination
+      h.set(h.slice(4 * source, 4 * source + 4), 4 * destination)
+      setPrev(h, next(h, destination), destination)
+      setNext(h, prev(h, destination), destination)
+      this.vertexHalfEdgeMap[vert(h, destination)] = destination
+      this.faceHalfEdgeMap[face(h, destination)] = destination
     }
   }
 
@@ -241,28 +242,30 @@ export class Structure {
   }
 
   redirectVertex(source: number, destination: number) {
+    const h = this.halfEdges
     let i = this.vertexHalfEdgeMap[source]
     this.vertexHalfEdgeMap[destination] = i
     const c = this.getCoordinationNumber(source)
     for (let o = 0; o < c; o++) {
-      this.halfEdges[4 * i + 3] = destination
+      setVert(h, i, destination)
       // reset face vertices because of new vertex
-      this.setFace(this.halfEdges[4 * i], i)
-      const next = this.halfEdges[4 * i + 2]
+      this.setFace(face(h, i), i)
+      const next = prev(h, i)
       i = twin(next)
     }
   }
 
   setFace(triangleIndex: number, i: number) {
+    const h = this.halfEdges
     const l = triangleIndex
-    const j = this.halfEdges[4 * i + 2]
-    const k = this.halfEdges[4 * j + 2]
-    this.halfEdges[4 * i] = l
-    this.halfEdges[4 * j] = l
-    this.halfEdges[4 * k] = l
-    this.triangles.mesh.indices[3 * l] = this.halfEdges[4 * i + 3]
-    this.triangles.mesh.indices[3 * l + 1] = this.halfEdges[4 * j + 3]
-    this.triangles.mesh.indices[3 * l + 2] = this.halfEdges[4 * k + 3]
+    const j = prev(h, i)
+    const k = prev(h, j)
+    setFace(h, i, l)
+    setFace(h, j, l)
+    setFace(h, k, l)
+    this.triangles.mesh.indices[3 * l] = vert(h, i)
+    this.triangles.mesh.indices[3 * l + 1] = vert(h, j)
+    this.triangles.mesh.indices[3 * l + 2] = vert(h, k)
 
     this.faceHalfEdgeMap[l] = i
   }

@@ -21,8 +21,6 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
     let distance = raySphereIntersection(global, newBall);
 
     if distance > 0 {
-      // newBall.color = vec4f(0,0,0,1);
-      // newBall.prop3 = i32(distance * QUANTIZE_FACTOR);
       atomicMin(&out[0], i32(distance * QUANTIZE_FACTOR));
     }
     else {
@@ -30,18 +28,29 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
     }
   }
 
-  // newBall.velocity = vec3f(0);
   newBall.velocity *= 0.6;
 
-  let up = vec3i(velocityUpdate[3*i], velocityUpdate[3*i+1], velocityUpdate[3*i+2]);
-  newBall.velocity += vec3f(up) * DEQUANTIZE_FACTOR;
-  velocityUpdate[3*i] = 0;
-  velocityUpdate[3*i+1] = 0;
-  velocityUpdate[3*i+2] = 0;
+  let up = vec3i(velocityUpdate[4*i], velocityUpdate[4*i+1], velocityUpdate[4*i+2]);
 
-  if global.gravity != 0.0 {
+  let displacementSum = vec3f(up) * DEQUANTIZE_FACTOR;
+
+  // Diagonal Newton approximation ________________________
+  let count = velocityUpdate[4*i+3]; // <--- Read Valence
+  if count > 0 {
+
+    let correctionVelocity = displacementSum / f32(count) / global.timeStep;
+
+    newBall.velocity += correctionVelocity * 1.5; // SOR omega 1.5
+  }
+
+  velocityUpdate[4*i] = 0;
+  velocityUpdate[4*i+1] = 0;
+  velocityUpdate[4*i+2] = 0;
+  velocityUpdate[4*i+3] = 0;
+
+  if global.repulsion != 0.0 {
     // prop1 is the radius of the ball
-    let repulsionFactor = 1.0 / f32(global.ballCount);
+    let repulsionFactor = 10.0 / f32(global.ballCount);
 
     for (var j=0u; j<global.ballCount; j++) {
       if i == j {continue;}
@@ -50,7 +59,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
       let d = a.prop1 + b.prop1;
       let lenab = length(ab);
 
-      newBall.velocity += repulsionFactor * global.gravity * ab / (0.01 + lenab * lenab);
+      newBall.velocity += repulsionFactor * global.repulsion * ab / (0.01 + lenab * lenab);
     }
   }
 

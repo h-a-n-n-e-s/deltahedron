@@ -12,7 +12,7 @@ struct GlobalParameter {
   mouseChanged: f32,
 
   eye: vec3f,
-  gravity: f32,
+  repulsion: f32,
 
   empty: u32,
   ballsVisible: u32,

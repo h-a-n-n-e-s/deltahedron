@@ -379,8 +379,8 @@ export class BallPark {
     requestAnimationFrame(loop)
   }
 
-  setGravity(g: number) {
-    this.compute.setGravity(g)
+  setRepulsion(g: number) {
+    this.compute.setRepulsion(g)
   }
   setHold(h: boolean) {
     this.freeze = h
