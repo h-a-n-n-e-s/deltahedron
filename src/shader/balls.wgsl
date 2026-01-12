@@ -28,20 +28,19 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
     }
   }
 
-  newBall.velocity *= 0.6;
+  // damping
+  newBall.velocity *= 0.7;
 
   let up = vec3i(velocityUpdate[4*i], velocityUpdate[4*i+1], velocityUpdate[4*i+2]);
 
   let displacementSum = vec3f(up) * DEQUANTIZE_FACTOR;
 
   // Diagonal Newton approximation ________________________
-  let count = velocityUpdate[4*i+3]; // <--- Read Valence
-  if count > 0 {
+  let inverseEffectiveMass = 1.0 / max(1.0, f32(velocityUpdate[4*i+3])); // valence
 
-    let correctionVelocity = displacementSum / f32(count) / global.timeStep;
+  let correctionVelocity = displacementSum * inverseEffectiveMass / global.timeStep;
 
-    newBall.velocity += correctionVelocity * 1.5; // SOR omega 1.5
-  }
+  newBall.velocity += correctionVelocity * 1.5; // SOR omega 1.5
 
   velocityUpdate[4*i] = 0;
   velocityUpdate[4*i+1] = 0;
@@ -59,12 +58,16 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
       let d = a.prop1 + b.prop1;
       let lenab = length(ab);
 
-      newBall.velocity += repulsionFactor * global.repulsion * ab / (0.01 + lenab * lenab);
+      newBall.velocity += repulsionFactor * global.repulsion * ab / (0.01 + lenab * lenab) * inverseEffectiveMass;
     }
   }
 
   newBall.position += newBall.velocity * global.timeStep;
 
+  // This creates a race condition cuz balls[j] is used in the repulsion
+  // routine but we don't care if the ball position is a time step ahead
+  // since it's not noticable visually. Since the repulsion has a soft
+  // potential there is also no danger from "struct tearing" in a single frame.
   balls[i] = newBall;
 
   // centroid

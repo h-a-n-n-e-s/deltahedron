@@ -1,6 +1,9 @@
 
+button rework and menu
 
 repulsion/contraction control keys (only react with mouse movements)
+
+pull one ball with the mouse while keeping all others fixed
 
 specular term
 ssao
@@ -12,14 +15,10 @@ smoothing algo
 
 store computed textures in binaries?
 
+curvature indication color
 edge error indication color
 self intersection indicator
 
 sound
 undo
 cut open, change topology
-
-rewrite without objects
-half edge functions
-
-13 seconds

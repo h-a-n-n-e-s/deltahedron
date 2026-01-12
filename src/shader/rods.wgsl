@@ -51,12 +51,12 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   atomicAdd(&velocityUpdate[4 * j    ], i32(velocity.x * QUANTIZE_FACTOR));
   atomicAdd(&velocityUpdate[4 * j + 1], i32(velocity.y * QUANTIZE_FACTOR));
   atomicAdd(&velocityUpdate[4 * j + 2], i32(velocity.z * QUANTIZE_FACTOR));
-  atomicAdd(&velocityUpdate[4 * j + 3], 1); // <--- Add Valence Count for Ball J
+  atomicAdd(&velocityUpdate[4 * j + 3], 1); // valence count for diagonal newton
 
   atomicAdd(&velocityUpdate[4 * k    ], i32(-velocity.x * QUANTIZE_FACTOR));
   atomicAdd(&velocityUpdate[4 * k + 1], i32(-velocity.y * QUANTIZE_FACTOR));
   atomicAdd(&velocityUpdate[4 * k + 2], i32(-velocity.z * QUANTIZE_FACTOR));
-  atomicAdd(&velocityUpdate[4 * k + 3], 1); // <--- Add Valence Count for Ball K
+  atomicAdd(&velocityUpdate[4 * k + 3], 1); // valence count for diagonal newton
 }
 
 fn quaternionFromDirection(v:vec3f) -> vec4f {
