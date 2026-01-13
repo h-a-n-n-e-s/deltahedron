@@ -22,3 +22,4 @@ self intersection indicator
 sound
 undo
 cut open, change topology
+display loaded file name
