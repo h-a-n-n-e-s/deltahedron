@@ -1,6 +1,7 @@
 import './style.css'
 import { BallPark } from './ballPark'
 import { Button, InfoSlider, PushButton, RadioButton, SwitchButton } from './ui'
+import { createPanels } from './panels'
 
 Button.initialize(10, 10, 10)
 
@@ -8,12 +9,6 @@ const ballPark = new BallPark()
 
 // const holdButton = new SwitchButton('hold', true);
 // holdButton.onPush(() => ballPark.setHold(holdButton.on));
-
-const loadButton = new PushButton('load', true)
-loadButton.onPush(async () => ballPark.loadData())
-
-const saveButton = new PushButton('save', true)
-saveButton.onPush(async () => await ballPark.saveData())
 
 const rotateButton = new SwitchButton('rotate', true)
 rotateButton.onPush(() => ballPark.setRotation(rotateButton.on))
@@ -35,15 +30,6 @@ subdivideButton.onPush(() => {
   // if(confirm('Are you sure you want to subdivide?'))
   ballPark.startSubdivide(true)
 })
-
-const eraseAllButton = new PushButton('erase all', true)
-eraseAllButton.onPush(() => {
-  // if(confirm('Are you sure you want to erase this structure? If not you should save it first.'))
-  ballPark.loadOctahedron()
-})
-
-const exportSTLButton = new PushButton('export STL', true)
-exportSTLButton.onPush(async () => await ballPark.exportSTL())
 
 // const bamButton = new PushButton('bam', true);
 // bamButton.onPush( async () => ballPark.bam());
@@ -98,3 +84,7 @@ const allowTetrahedraButton = new SwitchButton(' ')
 allowTetrahedraButton.onPush(() => ballPark.setAllowTetrahedra(allowTetrahedraButton.on))
 allowTetrahedraButton.button.id = 'allowTetrahedra'
 document.body.appendChild(allowTetrahedraButton.button)
+
+// panels _________________________________________________
+
+createPanels(ballPark)

@@ -13,6 +13,8 @@
   --fmc: #333;
   --sbc: #666;
   --stc: #fff;
+  --pc: #222;
+  --pbbc: #555;
 
   --inputColor: #0ff;
   --inputAlertColor: #f00;
@@ -171,6 +173,58 @@ svg > path {
   stroke-linecap: round;
   stroke-linejoin: round;
   fill: none;
+}
+
+/* panel -----------------------------*/
+
+.panel {
+  position: absolute;
+  background-color: var(--pc);
+  opacity: 0.9;
+  font-size: 16px;
+  color: #fff;
+  right: 37px;
+  width: 400px;
+  height: calc(100vh - 200px);
+  overflow-x: hidden;
+  overflow-y: scroll;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  user-select: none;
+  visibility: hidden;
+  padding-bottom: 20px;
+  border-radius: 4px;
+}
+
+.panel::-webkit-scrollbar {
+  display: none;
+}
+
+.panel > p,
+.panel > svg,
+.panel > button,
+.panel > .sliderContainer,
+.panel > #canvasContainer,
+.panel > input {
+  position: relative;
+  display: block;
+  text-align: center;
+  margin: auto;
+  margin-top: 20px;
+  margin-bottom: 0;
+  width: 360px;
+  user-select: none;
+}
+
+.panel .switchButtonOff {
+  background-color: var(--pbbc);
+  color: var(--bc);
+}
+
+.panel .switchButtonOn,
+.panel .pushButton:active {
+  background-color: var(--bc);
+  color: var(--pbbc);
 }
 
 /* slider ------------- */
