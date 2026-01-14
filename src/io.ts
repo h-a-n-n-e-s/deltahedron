@@ -73,3 +73,14 @@ export function exportSTL(triangleVertices: F32Arr) {
     offset += 4
   }
 }
+
+export const loadFromPublic = async (path: string, call: (data: ArrayBuffer) => void) => {
+  try {
+    const response = await fetch(path)
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
+    const data = await response.arrayBuffer()
+    call(data)
+  } catch (e) {
+    console.error('Failed to load public file:', e)
+  }
+}

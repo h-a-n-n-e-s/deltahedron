@@ -147,7 +147,7 @@ export class RadioButton {
 export class InfoSlider {
   value: number
 
-  private element: HTMLDivElement // div container for text and slider
+  element: HTMLDivElement // div container for text and slider
   text: HTMLParagraphElement
   private slider: HTMLInputElement
   private prefix
@@ -288,6 +288,21 @@ export class Info {
     this.toolTip.style.width = width
     this.toolTip.innerHTML = text
   }
+}
+
+export const tooltip = (
+  element: HTMLElement,
+  top: string,
+  right: string,
+  width: string,
+  text: string
+) => {
+  const tt = element.appendChild(document.createElement('div'))
+  tt.className = 'tooltip'
+  tt.style.top = top
+  tt.style.right = right
+  tt.style.width = width
+  tt.innerHTML = text
 }
 
 export class ActivityIndicator {

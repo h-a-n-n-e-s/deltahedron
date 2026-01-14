@@ -1,11 +1,46 @@
 import { BallPark } from './ballPark'
-import { PushButton } from './ui'
+import { PushButton, SwitchButton } from './ui'
 
 export function createPanels(ballPark: BallPark) {
+  // structure ____________________________________________
+
+  const structureButton = (name: string, path: string) => {
+    const butt = new PushButton(name)
+    butt.onPush(() => ballPark.loadDataFile(path))
+    createPanel.div.appendChild(butt.button)
+  }
+
+  const createPanel = new Panel('create')
+
+  text('6 vertices', createPanel.div, '16px')
+
+  const octahedronButton = new PushButton('octahedron (T6)')
+  octahedronButton.onPush(() => ballPark.loadOctahedron())
+  createPanel.div.appendChild(octahedronButton.button)
+
+  text('12 vertices', createPanel.div, '16px')
+
+  structureButton('icosahedron (P12)', '/basic/icosahedron')
+
+  text('Lobel structures', createPanel.div, '16px')
+
+  structureButton('triangle V26 (T6H20)', '/Lobel/triangle_V26')
+  structureButton('triangle V74 (T6H68)', '/Lobel/triangle_V74')
+
+  text('tori', createPanel.div, '16px')
+
+  const torusButton = new PushButton('torus 1 (P8H36O4)')
+  torusButton.onPush(() => ballPark.loadTorus())
+  createPanel.div.appendChild(torusButton.button)
+
+  //
+  //
+  //
+  // data _________________________________________________
   const dataPanel = new Panel('data')
 
   const loadButton = new PushButton('load')
-  loadButton.onPush(async () => ballPark.loadData())
+  loadButton.onPush(async () => await ballPark.loadData())
   dataPanel.div.appendChild(loadButton.button)
 
   const saveButton = new PushButton('save')
@@ -22,13 +57,49 @@ export function createPanels(ballPark: BallPark) {
     ballPark.loadOctahedron()
   })
   dataPanel.div.appendChild(eraseAllButton.button)
+
+  //
+  //
+  //
+  // view _________________________________________________
+  const viewPanel = new Panel('view')
+
+  const faceButton = new SwitchButton('faces')
+  faceButton.onPush(() => ballPark.showFaces(faceButton.on))
+
+  const rodButton = new SwitchButton('edges')
+  rodButton.onPush(() => ballPark.showRods(rodButton.on))
+
+  const ballButton = new SwitchButton('vertices')
+  ballButton.onPush(() => ballPark.showBalls(ballButton.on))
+
+  const showOnlyIsoRodsButton = new SwitchButton('iso edges')
+  showOnlyIsoRodsButton.onPush(() => ballPark.setShowOnlyIsoRods(showOnlyIsoRodsButton.on))
+
+  const rotateButton = new SwitchButton('rotate')
+  rotateButton.onPush(() => ballPark.setRotation(rotateButton.on))
+
+  viewPanel.div.appendChild(faceButton.button)
+  viewPanel.div.appendChild(rodButton.button)
+  viewPanel.div.appendChild(ballButton.button)
+  viewPanel.div.appendChild(showOnlyIsoRodsButton.button)
+  viewPanel.div.appendChild(rotateButton.button)
+
+  // show stuff
+  faceButton.click()
+  rodButton.click()
+  ballButton.click()
 }
 
 class Panel {
   div: HTMLDivElement
   button: HTMLButtonElement
 
-  private static top = 100 // distance of initial button from top of the page in px
+  // distance of initial button and all panels from top of the page in px
+  private static readonly TOP = 100
+
+  // dynamically updated length for the top of the next button
+  private static buttonTop = this.TOP
 
   private static visiblePanel: { exist: boolean; panel: Panel }
 
@@ -41,13 +112,13 @@ class Panel {
 
     this.div = document.createElement('div')
     this.div.className = 'panel'
-    this.div.style.top = String(Panel.top) + 'px'
+    this.div.style.top = String(Panel.TOP) + 'px'
     document.body.appendChild(this.div)
 
     this.button = document.createElement('button')
     this.button.className = 'verticalButton'
     this.button.classList.add('switchButtonOff')
-    this.button.style.top = String(Panel.top) + 'px'
+    this.button.style.top = String(Panel.buttonTop) + 'px'
     this.button.style.height = String(height) + 'px'
     document.body.appendChild(this.button)
 
@@ -55,7 +126,7 @@ class Panel {
     this.buttonText.innerHTML = name
     this.button.appendChild(this.buttonText)
 
-    Panel.top += height + 10 // top position of next button
+    Panel.buttonTop += height + 10 // top position of next button
 
     this.button.addEventListener(
       'click',
@@ -86,4 +157,19 @@ class Panel {
     // for (const c of this.div.childNodes) c.remove();
     while (this.div.firstChild) this.div.removeChild(this.div.lastChild!)
   }
+}
+
+function text(
+  content: string,
+  parent: HTMLElement,
+  fontSize?: string,
+  color?: string
+): HTMLParagraphElement {
+  const text = document.createElement('p')
+  text.innerHTML = content
+  if (fontSize !== undefined) text.style.fontSize = fontSize
+  if (color !== undefined) text.style.color = color
+  text.style.paddingTop = '20px'
+  parent.appendChild(text)
+  return text
 }

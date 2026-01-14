@@ -8,7 +8,7 @@ import {
 } from './mesh'
 import { Camera } from './camera'
 import { Structure } from './structure'
-import { readFile } from './io'
+import { loadFromPublic, readFile } from './io'
 import { ActivityIndicator, Info } from './ui'
 
 const QUANTIZE_FACTOR = 2097152
@@ -38,6 +38,8 @@ export class BallPark {
 
   timeStep = 0.05 // 0.05
   subSteps = 1 // 5
+
+  action = false
 
   freeze = false
   rotate = false
@@ -96,10 +98,9 @@ export class BallPark {
     )
 
     const [balls, rods, triangles, halfEdges] = this.deltahedron.init(
-      torusHalfEdges(),
-      torusVertexPositions
+      octahedronHalfEdges,
+      octahedronVertexPositions
     )
-    // this.deltahedron.init(tetrahedronHalfEdges);
 
     const gpuDevice = await this.compute.initialize(
       [balls, rods, triangles],
@@ -210,7 +211,6 @@ export class BallPark {
 
     let j = 0
     const actionFrames = 5
-    let action = false
 
     let checkSelection = false
     let hoveringEdgeIndex = -1
@@ -223,8 +223,8 @@ export class BallPark {
     let lastError = 1
     let converged = false
 
-    document.body.addEventListener('pointerdown', () => (action = true))
-    document.body.addEventListener('pointermove', () => (action = true))
+    document.body.addEventListener('pointerdown', () => (this.action = true))
+    document.body.addEventListener('pointermove', () => (this.action = true))
 
     const loop = async () => {
       if (!this.subdivide) {
@@ -239,7 +239,7 @@ export class BallPark {
       }
 
       // main computation and rendering _______________________________________
-      if (this.subdivide || checkSelection || !converged || action || this.rotate) {
+      if (this.subdivide || checkSelection || !converged || this.action || this.rotate) {
         const commandEncoder = gpuDevice.createCommandEncoder()
 
         // if (!slowmo)
@@ -367,10 +367,10 @@ export class BallPark {
         this.compute.resetError()
       }
 
-      if (action) j++
+      if (this.action) j++
       if (j >= actionFrames) {
         j = 0
-        action = false
+        this.action = false
         converged = false
       }
 
@@ -405,7 +405,11 @@ export class BallPark {
   }
 
   loadOctahedron() {
-    this.setData(octahedronHalfEdges, octahedronVertexPositions)
+    this.setStructure(octahedronHalfEdges, octahedronVertexPositions)
+  }
+
+  loadTorus() {
+    this.setStructure(torusHalfEdges(), torusVertexPositions)
   }
 
   setShowOnlyIsoRods(show: boolean) {
@@ -434,9 +438,25 @@ export class BallPark {
     await this.deltahedron.exportSTL()
   }
 
-  // bam() {this.deltahedron.bam();}
+  loadData = async () => {
+    await readFile((data: ArrayBuffer) => {
+      const [he, pos] = this.halfEdgesAndVertPos(data)
+      this.setStructure(he, pos)
+    })
+  }
 
-  setData = (heData: U32Arr, posData?: F32Arr) => {
+  loadDataFile = async (fileName: string) => {
+    // files from public/data/...
+    const path = `/data/${fileName}`
+
+    await loadFromPublic(path, (data) => {
+      const [he, pos] = this.halfEdgesAndVertPos(data)
+      this.setStructure(he, pos)
+      console.log(`File loaded from ${fileName}`)
+    })
+  }
+
+  setStructure = (heData: U32Arr, posData?: F32Arr) => {
     const [balls, rods, triangles, halfEdges] = this.deltahedron.init(heData, posData)
 
     this.compute.setCompleteBallsAndRodsBuffer(balls.data, rods.data)
@@ -449,13 +469,11 @@ export class BallPark {
     this.formulaInfo.update()
   }
 
-  loadData = async () => {
-    await readFile((data: ArrayBuffer) => {
-      const he = new Uint32Array(data)
-      const count = he[0]
-      const pos = new Float32Array(data)
+  halfEdgesAndVertPos = (data: ArrayBuffer): [U32Arr, F32Arr] => {
+    const he = new Uint32Array(data)
+    const count = he[0]
+    const pos = new Float32Array(data)
 
-      this.setData(he.slice(1, count + 1), pos.slice(count + 1))
-    })
+    return [he.slice(1, count + 1), pos.slice(count + 1)]
   }
 }
