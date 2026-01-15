@@ -13,8 +13,8 @@
   --fmc: #333;
   --sbc: #666;
   --stc: #fff;
-  --pc: #222;
-  --pbbc: #555;
+  --pc: #070707;
+  --pbbc: #333;
 
   --inputColor: #0ff;
   --inputAlertColor: #f00;
@@ -88,7 +88,7 @@ body {
   font-size: 22px;
 }
 sub {
-  font-size: 18px;
+  font-size: 0.8em;
 }
 #FEVCount {
   bottom: 10px;
@@ -147,11 +147,17 @@ button:disabled {
   right: 10px;
   width: 22px;
 }
-button > span {
+.verticalButton > span {
   /* used for vertical text */
   writing-mode: vertical-rl;
   vertical-align: middle;
   line-height: 12px;
+}
+.structureButton {
+  height: 24px;
+  background: none;
+  opacity: 0.9;
+  border: 1px solid var(--pbbc);
 }
 
 #allowTetrahedra {

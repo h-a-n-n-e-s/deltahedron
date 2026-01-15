@@ -1,37 +1,40 @@
 import { BallPark } from './ballPark'
+import { sumFormula } from './display'
 import { PushButton, SwitchButton } from './ui'
 
 export function createPanels(ballPark: BallPark) {
   // structure ____________________________________________
 
-  const structureButton = (name: string, path: string) => {
+  const structureButton = (name: string, path: string, f?: () => void) => {
     const butt = new PushButton(name)
-    butt.onPush(() => ballPark.loadDataFile(path))
+    butt.button.className = 'structureButton'
+    butt.onPush(() => {
+      if (f == undefined) ballPark.loadDataFile(path)
+      else f()
+    })
     createPanel.div.appendChild(butt.button)
   }
 
   const createPanel = new Panel('create')
 
-  text('6 vertices', createPanel.div, '16px')
+  //
+  text('basic shapes', createPanel.div, '16px')
 
-  const octahedronButton = new PushButton('octahedron (T6)')
-  octahedronButton.onPush(() => ballPark.loadOctahedron())
-  createPanel.div.appendChild(octahedronButton.button)
+  structureButton(`octahedron (${sumFormula('T6')})`, '', () => ballPark.loadOctahedron())
 
-  text('12 vertices', createPanel.div, '16px')
+  structureButton(`icosahedron (${sumFormula('P12')})`, '/basic/icosahedron')
 
-  structureButton('icosahedron (P12)', '/basic/icosahedron')
-
+  //
   text('Lobel structures', createPanel.div, '16px')
 
-  structureButton('triangle V26 (T6H20)', '/Lobel/triangle_V26')
-  structureButton('triangle V74 (T6H68)', '/Lobel/triangle_V74')
+  structureButton(`triangle V26 (${sumFormula('T6H20')})`, '/Lobel/triangle_V26')
 
+  structureButton(`triangle V74 (${sumFormula('T6H68')})`, '/Lobel/triangle_V74')
+
+  //
   text('tori', createPanel.div, '16px')
 
-  const torusButton = new PushButton('torus 1 (P8H36O4)')
-  torusButton.onPush(() => ballPark.loadTorus())
-  createPanel.div.appendChild(torusButton.button)
+  structureButton(`torus 1 (${sumFormula('P8H36O4')})`, '', () => ballPark.loadTorus())
 
   //
   //
@@ -51,12 +54,12 @@ export function createPanels(ballPark: BallPark) {
   exportSTLButton.onPush(async () => await ballPark.exportSTL())
   dataPanel.div.appendChild(exportSTLButton.button)
 
-  const eraseAllButton = new PushButton('erase all')
-  eraseAllButton.onPush(() => {
-    // if(confirm('Are you sure you want to erase this structure? If not you should save it first.'))
-    ballPark.loadOctahedron()
-  })
-  dataPanel.div.appendChild(eraseAllButton.button)
+  // const eraseAllButton = new PushButton('erase all')
+  // eraseAllButton.onPush(() => {
+  //   // if(confirm('Are you sure you want to erase this structure? If not you should save it first.'))
+  //   ballPark.loadOctahedron()
+  // })
+  // dataPanel.div.appendChild(eraseAllButton.button)
 
   //
   //

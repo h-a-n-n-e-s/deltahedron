@@ -1,8 +1,4 @@
 
-button rework and menu
-
-repulsion/contraction control keys (only react with mouse movements)
-
 pull one ball with the mouse while keeping all others fixed
 
 specular term

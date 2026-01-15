@@ -1,6 +1,7 @@
 import './style.css'
 import { BallPark } from './ballPark'
-import { Button, InfoSlider, PushButton, RadioButton, SwitchButton, tooltip } from './ui'
+import { Button, InfoSlider, PushButton, RadioButton, SwitchButton } from './ui'
+import { tooltip } from './display'
 import { createPanels } from './panels'
 
 Button.initialize(10, 10, 10)

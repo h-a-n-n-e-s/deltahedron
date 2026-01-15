@@ -16,8 +16,13 @@ export class Button {
     this.button = document.createElement('button')
     this.button.innerHTML = name
 
+    // Create a temporary element to extract only the text content
+    const tempDiv = document.createElement('div')
+    tempDiv.innerHTML = name
+    const visibleText = tempDiv.textContent || tempDiv.innerText || ''
+
     // make width multiple of 10px
-    const width = (name.length + 1) * 10 // for 16px mono font
+    const width = (visibleText.length + 1) * 10 // for 16px mono font
     this.button.style.width = String(width) + 'px'
 
     if (isOnTop) {
@@ -258,62 +263,4 @@ export class Selection {
     }
     document.body.appendChild(this.selectElem)
   }
-}
-
-export class Info {
-  div: HTMLDivElement
-  span: HTMLSpanElement
-  toolTip!: HTMLDivElement
-
-  set!: () => string
-
-  constructor(id: string) {
-    this.div = document.createElement('div')
-    this.div.id = id
-    document.body.appendChild(this.div)
-
-    this.span = document.createElement('span')
-    this.div.appendChild(this.span)
-  }
-
-  update = () => {
-    if (this.set !== undefined) this.span.innerHTML = this.set()
-  }
-
-  createTooltip = (top: string, right: string, width: string, text: string) => {
-    this.toolTip = this.div.appendChild(document.createElement('div'))
-    this.toolTip.className = 'tooltip'
-    this.toolTip.style.top = top
-    this.toolTip.style.right = right
-    this.toolTip.style.width = width
-    this.toolTip.innerHTML = text
-  }
-}
-
-export const tooltip = (
-  element: HTMLElement,
-  top: string,
-  right: string,
-  width: string,
-  text: string
-) => {
-  const tt = element.appendChild(document.createElement('div'))
-  tt.className = 'tooltip'
-  tt.style.top = top
-  tt.style.right = right
-  tt.style.width = width
-  tt.innerHTML = text
-}
-
-export class ActivityIndicator {
-  private div: HTMLDivElement
-
-  constructor() {
-    this.div = document.createElement('div')
-    this.div.id = 'activityIndicator'
-    document.body.appendChild(this.div)
-  }
-
-  run = () => (this.div.innerHTML = '.')
-  stop = () => (this.div.innerHTML = '')
 }

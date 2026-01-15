@@ -1,5 +1,6 @@
-import { colorArray, q } from './ballPark'
+import { q } from './ballPark'
 import { Compute, F32Arr, U32Arr } from './compute'
+import { colorArray } from './display'
 import { exportSTL, saveBinary } from './io'
 import { Mesh, MeshBuffers, cylinderMesh, icoSphereMesh } from './mesh'
 

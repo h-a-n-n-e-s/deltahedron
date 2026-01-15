@@ -9,23 +9,10 @@ import {
 import { Camera } from './camera'
 import { Structure } from './structure'
 import { loadFromPublic, readFile } from './io'
-import { ActivityIndicator, Info } from './ui'
+import { ActivityIndicator, Info, vertexCountToSummationFormula } from './display'
 
 const QUANTIZE_FACTOR = 2097152
 export const q = 24 // scalar quantities per object in buffer
-
-const color = {
-  blue: [0.2, 0, 0.8],
-  cyan: [0, 0.6, 0.6],
-  white: [0.9, 0.9, 0.9],
-  red: [0.9, 0, 0],
-  yellow: [1, 0.9, 0],
-  green: [0, 0.7, 0],
-  magenta: [0.8, 0, 0.8],
-  coal: [0.3, 0.3, 0.3],
-}
-export const colorArray = Object.values(color).map((c) => c)
-const colorU8Array = Object.values(color).map((c) => c.map((v) => Math.floor(255 * v)))
 
 export class BallPark {
   cubemap = 'cubemap/oceansky2hdr'
@@ -155,46 +142,9 @@ export class BallPark {
     )
     this.FEVCountInfo.update()
 
-    this.formulaInfo.set = () => {
-      const count = this.deltahedron.getCoordinationNumberCount()
-      const element = ['T', 'P', 'H', 'S', 'O', 'N', 'D']
-      let bigCount = 0
-      let string = ''
-      for (let i = 4; i < 12; i++) {
-        const c = colorU8Array[i - 4]
-        if (i > 10 && count[i] > 0) bigCount += count[i]
-        else if (count[i] > 0) {
-          string = string.concat(
-            '<span style="color:rgb(' +
-              c[0] +
-              ',' +
-              c[1] +
-              ',' +
-              c[2] +
-              ')">' +
-              element[i - 4] +
-              '<sub>' +
-              count[i] +
-              '</sub>&emsp14;</span>'
-          )
-        }
-        if (i == 11 && bigCount > 0)
-          string = string.concat(
-            '<span style="color:rgb(' +
-              c[0] +
-              ',' +
-              c[1] +
-              ',' +
-              c[2] +
-              ')">' +
-              'B' +
-              '<sub>' +
-              bigCount +
-              '</sub>&emsp14;</span>'
-          )
-      }
-      return string
-    }
+    this.formulaInfo.set = () =>
+      vertexCountToSummationFormula(this.deltahedron.getCoordinationNumberCount())
+
     this.formulaInfo.createTooltip(
       '-144px',
       '-120px',
