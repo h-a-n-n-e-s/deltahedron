@@ -9,12 +9,10 @@
   --lc: #fff;
   --bc: #fff;
   --bbc: #333;
-  --gbc: #252525;
-  --fmc: #333;
   --sbc: #666;
   --stc: #fff;
-  --pc: #070707;
-  --pbbc: #333;
+  --pc: #222;
+  --pbbc: #000;
 
   --inputColor: #0ff;
   --inputAlertColor: #f00;
@@ -118,7 +116,7 @@ sub {
 button {
   position: absolute;
   background-color: var(--bbc);
-  opacity: 0.5;
+  opacity: 0.8;
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -129,7 +127,7 @@ button {
   user-select: none;
 }
 button:hover {
-  opacity: 0.7;
+  opacity: 1;
 }
 button:disabled {
   opacity: 0.1;
@@ -155,9 +153,13 @@ button:disabled {
 }
 .structureButton {
   height: 24px;
-  background: none;
-  opacity: 0.9;
-  border: 1px solid var(--pbbc);
+  background-color: var(--pbbc);
+  opacity: 1;
+  border: 1px solid var(--sbc);
+}
+.structureButton:hover {
+  opacity: 1;
+  border-color: #fff;
 }
 
 #allowTetrahedra {
@@ -185,8 +187,10 @@ svg > path {
 
 .panel {
   position: absolute;
-  background-color: var(--pc);
-  opacity: 0.9;
+  background-color: var(--bbc);
+  /*opacity: 0.8;*/
+  /* matches --bbc (#333) but allows other buttons to be opaque */
+  background-color: rgba(32, 32, 32, 0.9);
   font-size: 16px;
   color: #fff;
   right: 37px;
@@ -220,17 +224,6 @@ svg > path {
   margin-bottom: 0;
   width: 300px;
   user-select: none;
-}
-
-.panel .switchButtonOff {
-  background-color: var(--pbbc);
-  color: var(--bc);
-}
-
-.panel .switchButtonOn,
-.panel .pushButton:active {
-  background-color: var(--bc);
-  color: var(--pbbc);
 }
 
 /* slider ------------- */

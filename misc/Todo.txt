@@ -1,13 +1,7 @@
 
-pull one ball with the mouse while keeping all others fixed
-
-specular term
-ssao
-textures
-one reflection ray tracing
+tooltips in panels not hidden outside of panels
 
 flat faces limit
-smoothing algo
 
 store computed textures in binaries?
 
@@ -17,6 +11,15 @@ self intersection indicator
 
 sound
 undo
-cut open, change topology
+
 display loaded file name
 display smallest dihedral angle
+
+cut open
+change topology
+pull one ball with the mouse while keeping all others fixed
+
+specular term
+ssao
+textures
+one reflection ray tracing

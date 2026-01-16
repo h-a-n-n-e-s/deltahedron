@@ -1,5 +1,5 @@
 import { BallPark } from './ballPark'
-import { sumFormula } from './display'
+import { sumFormula, tooltip } from './display'
 import { PushButton, SwitchButton } from './ui'
 
 export function createPanels(ballPark: BallPark) {
@@ -76,8 +76,15 @@ export function createPanels(ballPark: BallPark) {
   const ballButton = new SwitchButton('vertices')
   ballButton.onPush(() => ballPark.showBalls(ballButton.on))
 
-  const showOnlyIsoRodsButton = new SwitchButton('iso edges')
+  const showOnlyIsoRodsButton = new SwitchButton('only iso edges')
   showOnlyIsoRodsButton.onPush(() => ballPark.setShowOnlyIsoRods(showOnlyIsoRodsButton.on))
+  tooltip(
+    showOnlyIsoRodsButton.button,
+    '0px',
+    '100px',
+    '200px',
+    'Shows only edges which are connecting vertices with the same coordination number.'
+  )
 
   const rotateButton = new SwitchButton('rotate')
   rotateButton.onPush(() => ballPark.setRotation(rotateButton.on))
@@ -100,17 +107,33 @@ class Panel {
 
   // distance of initial button and all panels from top of the page in px
   private static readonly TOP = 100
-
   // dynamically updated length for the top of the next button
   private static buttonTop = this.TOP
-
-  private static visiblePanel: { exist: boolean; panel: Panel }
-
-  private on: boolean = false // button state
-  private buttonText: HTMLSpanElement
+  // track the currently open panel
+  private static activePanel: Panel | null = null
 
   constructor(name: string) {
-    // calculate button height from string length (monospace 10px/character)
+    // Initialize Global Listener (Runs once on first instantiation)
+    if (Panel.buttonTop === Panel.TOP) {
+      window.addEventListener('pointerdown', (e) => {
+        const target = e.target as HTMLElement
+        // If no panel is active, do nothing
+        if (!Panel.activePanel) return
+
+        // If clicked inside the active panel, do nothing (allow interaction)
+        if (Panel.activePanel.div.contains(target)) return
+
+        // If clicked on ANY vertical button, do nothing here.
+        // We let the button's specific click handler manage the switch/toggle.
+        // This prevents race conditions and the "flash" effect.
+        if (target.closest('.verticalButton')) return
+
+        // Otherwise (clicked outside panel AND outside buttons), close it.
+        Panel.closeActive()
+      })
+    }
+
+    // DOM Creation
     const height = (name.length + 1) * 10
 
     this.div = document.createElement('div')
@@ -125,40 +148,36 @@ class Panel {
     this.button.style.height = String(height) + 'px'
     document.body.appendChild(this.button)
 
-    this.buttonText = document.createElement('span')
-    this.buttonText.innerHTML = name
-    this.button.appendChild(this.buttonText)
+    const buttonText = document.createElement('span')
+    buttonText.innerHTML = name
+    this.button.appendChild(buttonText)
 
-    Panel.buttonTop += height + 10 // top position of next button
+    Panel.buttonTop += height + 10
 
-    this.button.addEventListener(
-      'click',
-      () => {
-        this.on = !this.on
-
-        const visPan = Panel.visiblePanel
-        if (visPan !== undefined) {
-          if (visPan.exist) {
-            visPan.panel.div.style.visibility = 'hidden'
-            visPan.panel.button.classList.replace('switchButtonOn', 'switchButtonOff')
-            visPan.panel.on = false
-            visPan.exist = false
-          }
-        }
-
-        if (this.on) {
-          Panel.visiblePanel = { exist: true, panel: this }
-          this.div.style.visibility = 'visible'
-          this.button.classList.replace('switchButtonOff', 'switchButtonOn')
-        }
-      },
-      false
-    )
+    // Button Interaction Logic
+    this.button.addEventListener('click', () => {
+      if (Panel.activePanel === this) Panel.closeActive()
+      else {
+        Panel.closeActive()
+        this.open()
+      }
+    })
   }
 
-  clear = () => {
-    // for (const c of this.div.childNodes) c.remove();
-    while (this.div.firstChild) this.div.removeChild(this.div.lastChild!)
+  // Opens this specific instance
+  private open() {
+    Panel.activePanel = this
+    this.div.style.visibility = 'visible'
+    this.button.classList.replace('switchButtonOff', 'switchButtonOn')
+  }
+
+  // Closes whatever is currently open
+  private static closeActive() {
+    if (Panel.activePanel) {
+      Panel.activePanel.div.style.visibility = 'hidden'
+      Panel.activePanel.button.classList.replace('switchButtonOn', 'switchButtonOff')
+      Panel.activePanel = null
+    }
   }
 }
 
