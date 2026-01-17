@@ -314,7 +314,8 @@ svg > path {
   top: 10px;
 }
 
-.tooltip {
+.tooltip,
+.infoTooltip {
   visibility: hidden;
   font-size: 12px;
   background-color: #111;
@@ -323,13 +324,13 @@ svg > path {
   padding: 5px;
   border-radius: 4px;
   opacity: 0;
-  transition: all 1s;
+  transition: all 0.7s;
   position: absolute;
   pointer-events: none;
   z-index: 1;
 }
-*:hover > .tooltip {
+*:hover > .infoTooltip {
   visibility: visible;
   opacity: 1;
-  transition: all 1s;
+  transition: all 0.7s;
 }

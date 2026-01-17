@@ -22,6 +22,27 @@ const operationButtons = new RadioButton(
   ],
   true
 )
+tooltip(
+  operationButtons.button(0).button,
+  0,
+  -30,
+  200,
+  'Adds a new vertex on the selected edge and creates all new necessary edges.'
+)
+tooltip(
+  operationButtons.button(1).button,
+  0,
+  -30,
+  200,
+  'Flips the selected edge to connect the vertices which were not connected in the two triangles next to the edge.'
+)
+tooltip(
+  operationButtons.button(2).button,
+  0,
+  -30,
+  210,
+  'Collapses the selected edge and merges the corresponding vertices and edges.'
+)
 operationButtons.click(0) // activate 'add' button
 
 const forceSlider = new InfoSlider(-1, 9, 1, 1, 'force: ', 0, '', 140, document.body)
@@ -35,9 +56,9 @@ forceSlider.onSlide(() => {
 forceSlider.setId('forceSlider')
 tooltip(
   forceSlider.element,
-  '30px',
-  '-180px',
-  '310px',
+  0,
+  -30,
+  310,
   'Controls the amount of repulsive (positive) or attractive (negative) force between the vertices similar to electrostatics. Only for zero force it is possible to find configurations where all edge lengths are equal (maximum distance error vanishes). The value can also be controlled with the left/right arrow keys.'
 )
 
@@ -58,9 +79,9 @@ subdivideButton.button.id = 'subdivideBut'
 document.body.appendChild(subdivideButton.button)
 tooltip(
   subdivideButton.button,
-  '30px',
-  '-130px',
-  '220px',
+  0,
+  -30,
+  220,
   'Adds a new vertex on every edge and creates all new necessary edges, quadrupling the number of faces.'
 )
 

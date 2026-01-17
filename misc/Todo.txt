@@ -1,5 +1,5 @@
 
-tooltips in panels not hidden outside of panels
+force slider slides two for keystroke if active mouse hover
 
 flat faces limit
 

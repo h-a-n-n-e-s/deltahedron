@@ -145,6 +145,8 @@ export class RadioButton {
   }
 
   click = (index: number) => this.buttons[index].click()
+
+  button = (index: number) => this.buttons[index]
 }
 
 ///////////////////////////////////////////////////////////////////////////////

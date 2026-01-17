@@ -80,9 +80,9 @@ export function createPanels(ballPark: BallPark) {
   showOnlyIsoRodsButton.onPush(() => ballPark.setShowOnlyIsoRods(showOnlyIsoRodsButton.on))
   tooltip(
     showOnlyIsoRodsButton.button,
-    '0px',
-    '100px',
-    '200px',
+    -220,
+    0,
+    200,
     'Shows only edges which are connecting vertices with the same coordination number.'
   )
 

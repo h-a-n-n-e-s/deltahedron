@@ -34,7 +34,7 @@ export class Info {
 
   createTooltip = (top: string, right: string, width: string, text: string) => {
     this.toolTip = this.div.appendChild(document.createElement('div'))
-    this.toolTip.className = 'tooltip'
+    this.toolTip.className = 'infoTooltip'
     this.toolTip.style.top = top
     this.toolTip.style.right = right
     this.toolTip.style.width = width
@@ -44,17 +44,34 @@ export class Info {
 
 export const tooltip = (
   element: HTMLElement,
-  top: string,
-  right: string,
-  width: string,
+  y: number, // offset in y
+  x: number, // offset in x
+  width: number,
   text: string
 ) => {
-  const tt = element.appendChild(document.createElement('div'))
+  const tt = document.body.appendChild(document.createElement('div'))
   tt.className = 'tooltip'
-  tt.style.top = top
-  tt.style.right = right
-  tt.style.width = width
+  tt.style.width = `${width}px`
   tt.innerHTML = text
+
+  element.addEventListener('mouseenter', () => {
+    const rect = element.getBoundingClientRect()
+
+    // The reliable absolute calculation
+    const top = rect.top + window.scrollY
+    const left = rect.left + window.scrollX
+
+    // Position it above the button and centered
+    tt.style.top = `${top - x}px`
+    tt.style.left = `${left + y}px`
+    tt.style.visibility = 'visible'
+    tt.style.opacity = '1'
+  })
+
+  element.addEventListener('mouseleave', () => {
+    tt.style.visibility = 'hidden'
+    tt.style.opacity = '0'
+  })
 }
 
 export class ActivityIndicator {
