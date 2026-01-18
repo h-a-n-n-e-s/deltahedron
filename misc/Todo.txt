@@ -1,5 +1,9 @@
 
 force slider slides two for keystroke if active mouse hover
+variable panel height
+color flat edges differently
+
+choose two vertices to get distance
 
 flat faces limit
 

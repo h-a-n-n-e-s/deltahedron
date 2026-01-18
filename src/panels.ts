@@ -18,23 +18,26 @@ export function createPanels(ballPark: BallPark) {
   const createPanel = new Panel('create')
 
   //
-  text('basic shapes', createPanel.div, '16px')
+  text('Platonic solids', createPanel.div, '16px')
 
   structureButton(`octahedron (${sumFormula('T6')})`, '', () => ballPark.loadOctahedron())
-
   structureButton(`icosahedron (${sumFormula('P12')})`, '/basic/icosahedron')
 
   //
   text('Lobel structures', createPanel.div, '16px')
 
   structureButton(`triangle V26 (${sumFormula('T6H20')})`, '/Lobel/triangle_V26')
-
   structureButton(`triangle V74 (${sumFormula('T6H68')})`, '/Lobel/triangle_V74')
 
   //
-  text('tori', createPanel.div, '16px')
+  text('toroids', createPanel.div, '16px')
 
-  structureButton(`torus 1 (${sumFormula('P8H36O4')})`, '', () => ballPark.loadTorus())
+  structureButton(`Conway's (${sumFormula('T3P9O3N3')})`, '/toroids/conways')
+  structureButton(`trigonal (${sumFormula('T3H18O3')})`, '/toroids/trigonal')
+  structureButton(`tetragonal (${sumFormula('T4H24O4')})`, '/toroids/tetragonal')
+  structureButton(`pentagonal (${sumFormula('T5H30O5')})`, '/toroids/pentagonal')
+  structureButton(`hexagonal* (${sumFormula('T6H36O6')})`, '/toroids/hexagonal_flat')
+  structureButton(`octagonal (${sumFormula('P8H36O4')})`, '', () => ballPark.loadTorus())
 
   //
   //
@@ -82,7 +85,7 @@ export function createPanels(ballPark: BallPark) {
     showOnlyIsoRodsButton.button,
     -220,
     0,
-    200,
+    210,
     'Shows only edges which are connecting vertices with the same coordination number.'
   )
 
