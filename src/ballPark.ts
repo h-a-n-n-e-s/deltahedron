@@ -52,7 +52,7 @@ export class BallPark {
   alertText = ''
 
   errorInfo = new Info('error')
-  volumeInfo = new Info('volume')
+  // volumeInfo = new Info('volume')
   dihedralAngleInfo = new Info('dihedralAngle')
   alertInfo = new Info('alertInfo')
   FEVCountInfo = new Info('FEVCount')
@@ -120,13 +120,13 @@ export class BallPark {
     this.alertInfo.set = () => this.alertText
 
     this.errorInfo.set = () => (100 * this.error).toFixed(3) + '%'
-    this.errorInfo.createTooltip('0', '80px', '160px', 'maximum distance error')
-
-    this.volumeInfo.set = () => this.volume.toFixed(4)
-    this.volumeInfo.createTooltip('0', '80px', '50px', 'volume')
+    this.errorInfo.createTooltip('30px', '-80px', '160px', 'maximum distance error')
 
     this.dihedralAngleInfo.set = () => this.dihedralAngle.toFixed(3) + '°'
-    this.dihedralAngleInfo.createTooltip('0', '80px', '110px', 'dihedral angle')
+    this.dihedralAngleInfo.createTooltip('30px', '-30px', '110px', 'dihedral angle')
+
+    // this.volumeInfo.set = () => this.volume.toFixed(4)
+    // this.volumeInfo.createTooltip('30px', '-30px', '50px', 'volume')
 
     this.FEVCountInfo.set = () => {
       let string = 'F&emsp14;' + triangles.count.toFixed()
@@ -312,7 +312,7 @@ export class BallPark {
         lastError = this.error
 
         this.volume = out[7] / QUANTIZE_FACTOR
-        this.volumeInfo.update()
+        // this.volumeInfo.update()
 
         this.compute.resetError()
       }

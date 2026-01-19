@@ -12,27 +12,28 @@ export function createPanels(ballPark: BallPark) {
       if (f == undefined) ballPark.loadDataFile(path)
       else f()
     })
-    createPanel.div.appendChild(butt.button)
+    Panel.latest.div.appendChild(butt.button)
   }
 
-  const createPanel = new Panel('create')
+  new Panel('create')
 
   //
-  text('Platonic solids', createPanel.div, '16px')
+  title('Platonic solids')
 
   structureButton(`octahedron (${sumFormula('T6')})`, '', () => ballPark.loadOctahedron())
   structureButton(`icosahedron (${sumFormula('P12')})`, '/basic/icosahedron')
 
   //
-  text('Lobel structures', createPanel.div, '16px')
+  title('Lobel structures')
 
   structureButton(`triangle V26 (${sumFormula('T6H20')})`, '/Lobel/triangle_V26')
   structureButton(`triangle V74 (${sumFormula('T6H68')})`, '/Lobel/triangle_V74')
 
   //
-  text('toroids', createPanel.div, '16px')
+  title('toroids')
 
   structureButton(`Conway's (${sumFormula('T3P9O3N3')})`, '/toroids/conways')
+  structureButton(`Stewart (${sumFormula('T6H12O6')})`, '/toroids/stewart')
   structureButton(`trigonal (${sumFormula('T3H18O3')})`, '/toroids/trigonal')
   structureButton(`tetragonal (${sumFormula('T4H24O4')})`, '/toroids/tetragonal')
   structureButton(`pentagonal (${sumFormula('T5H30O5')})`, '/toroids/pentagonal')
@@ -43,7 +44,7 @@ export function createPanels(ballPark: BallPark) {
   //
   //
   // data _________________________________________________
-  const dataPanel = new Panel('data')
+  const dataPanel = new Panel('data', 280)
 
   const loadButton = new PushButton('load')
   loadButton.onPush(async () => await ballPark.loadData())
@@ -68,7 +69,7 @@ export function createPanels(ballPark: BallPark) {
   //
   //
   // view _________________________________________________
-  const viewPanel = new Panel('view')
+  const viewPanel = new Panel('view', 280)
 
   const faceButton = new SwitchButton('faces')
   faceButton.onPush(() => ballPark.showFaces(faceButton.on))
@@ -83,7 +84,7 @@ export function createPanels(ballPark: BallPark) {
   showOnlyIsoRodsButton.onPush(() => ballPark.setShowOnlyIsoRods(showOnlyIsoRodsButton.on))
   tooltip(
     showOnlyIsoRodsButton.button,
-    -220,
+    -230,
     0,
     210,
     'Shows only edges which are connecting vertices with the same coordination number.'
@@ -102,20 +103,41 @@ export function createPanels(ballPark: BallPark) {
   faceButton.click()
   rodButton.click()
   ballButton.click()
+
+  //
+  //
+  //
+  // view _________________________________________________
+  new Panel('game')
+
+  title('simple game')
+  text(
+    'Create an icosahedron from the octahedron below while only using the add and flip operation. You may use the flip operation only once.'
+  )
+  structureButton(`octahedron (${sumFormula('T6')})`, '', () => ballPark.loadOctahedron())
+
+  title('advanced game')
+  text(
+    'Create the augmented dodecahedron called "goal" from the "messy" structure below. You may only use the flip operation.'
+  )
+  structureButton(`goal (${sumFormula('P12H20')})`, '/V22/dodeca')
+  structureButton(`messy (${sumFormula('P12H20')})`, '/V22/dodeca_puzzle')
 }
 
 class Panel {
   div: HTMLDivElement
   button: HTMLButtonElement
 
+  static latest: Panel
+
   // distance of initial button and all panels from top of the page in px
-  private static readonly TOP = 100
+  private static readonly TOP = 42
   // dynamically updated length for the top of the next button
   private static buttonTop = this.TOP
   // track the currently open panel
   private static activePanel: Panel | null = null
 
-  constructor(name: string) {
+  constructor(name: string, panelHeight?: number) {
     // Initialize Global Listener (Runs once on first instantiation)
     if (Panel.buttonTop === Panel.TOP) {
       window.addEventListener('pointerdown', (e) => {
@@ -142,7 +164,9 @@ class Panel {
     this.div = document.createElement('div')
     this.div.className = 'panel'
     this.div.style.top = String(Panel.TOP) + 'px'
+    if (panelHeight) this.div.style.height = `${panelHeight}px`
     document.body.appendChild(this.div)
+    Panel.latest = this
 
     this.button = document.createElement('button')
     this.button.className = 'verticalButton'
@@ -184,17 +208,21 @@ class Panel {
   }
 }
 
-function text(
-  content: string,
-  parent: HTMLElement,
-  fontSize?: string,
-  color?: string
-): HTMLParagraphElement {
+function text(content: string, color?: string): HTMLParagraphElement {
   const text = document.createElement('p')
   text.innerHTML = content
-  if (fontSize !== undefined) text.style.fontSize = fontSize
   if (color !== undefined) text.style.color = color
+  text.className = 'panelText'
   text.style.paddingTop = '20px'
-  parent.appendChild(text)
+  Panel.latest.div.appendChild(text)
   return text
+}
+
+function title(content: string): HTMLParagraphElement {
+  const title = document.createElement('p')
+  title.innerHTML = content
+  title.className = 'panelTitle'
+  title.style.paddingTop = '20px'
+  Panel.latest.div.appendChild(title)
+  return title
 }

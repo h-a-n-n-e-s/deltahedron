@@ -44,8 +44,8 @@ export class Info {
 
 export const tooltip = (
   element: HTMLElement,
-  y: number, // offset in y
   x: number, // offset in x
+  y: number, // offset in y
   width: number,
   text: string
 ) => {
@@ -62,8 +62,8 @@ export const tooltip = (
     const left = rect.left + window.scrollX
 
     // Position it above the button and centered
-    tt.style.top = `${top - x}px`
-    tt.style.left = `${left + y}px`
+    tt.style.top = `${top - y}px`
+    tt.style.left = `${left + x}px`
     tt.style.visibility = 'visible'
     tt.style.opacity = '1'
   })
