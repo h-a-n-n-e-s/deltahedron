@@ -61,13 +61,19 @@ tooltip(
   310,
   'Controls the amount of repulsive (positive) or attractive (negative) force between the vertices similar to electrostatics. Only for zero force it is possible to find configurations where all edge lengths are equal (maximum distance error vanishes). The value can also be controlled with the left/right arrow keys.'
 )
-
 // slightly attractive force if 'a' key is pressed
 document.addEventListener('keydown', (e) => {
   const v = forceSlider.value
   if (e.key === 'ArrowLeft') forceSlider.setSlider(v > -1 ? v - 1 : -1)
   if (e.key === 'ArrowRight') forceSlider.setSlider(v < 9 ? v + 1 : 9)
   ballPark.action = true
+})
+// focused listener to prevent "double stepping"
+const sliderInput = forceSlider.element.querySelector('input')
+sliderInput?.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+    e.stopPropagation() // prevents document listener from seeing this event
+  }
 })
 
 const subdivideButton = new PushButton('subdivide')

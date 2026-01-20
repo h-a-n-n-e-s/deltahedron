@@ -1,13 +1,10 @@
 
-force slider slides two for keystroke if active mouse hover
-variable panel height
 color flat edges differently
-
+flat edges indicator
+display smallest dihedral angle
+compound indicator
+get current length of edge
 choose two vertices to get distance
-
-flat faces limit
-
-store computed textures in binaries?
 
 curvature indication color
 edge error indication color
@@ -17,7 +14,6 @@ sound
 undo
 
 display loaded file name
-display smallest dihedral angle
 
 cut open
 change topology
@@ -27,3 +23,15 @@ specular term
 ssao
 textures
 one reflection ray tracing
+
+store computed textures in binaries?
+
+flat faces limit
+
+any precision Newton post processor
+
+
+
+white 3
+outer cyan 6
+inner cyan 3

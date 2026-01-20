@@ -19,6 +19,10 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   // 4,5,6 centroid x,y,z
   // 7 volume
 
+  // if abs(dihedralAngle(i)) < 0.9 {
+  //   rods[i].color = vec4f(0.1,0.1,.1,1.0);
+  // }
+
   if global.rodScanBranch == 1 {
 
     // check if this rod was hit first

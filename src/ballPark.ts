@@ -120,10 +120,15 @@ export class BallPark {
     this.alertInfo.set = () => this.alertText
 
     this.errorInfo.set = () => (100 * this.error).toFixed(3) + '%'
-    this.errorInfo.createTooltip('30px', '-80px', '160px', 'maximum distance error')
+    this.errorInfo.createTooltip('30px', '-50px', '160px', 'maximum distance error')
 
     this.dihedralAngleInfo.set = () => this.dihedralAngle.toFixed(3) + '°'
-    this.dihedralAngleInfo.createTooltip('30px', '-30px', '110px', 'dihedral angle')
+    this.dihedralAngleInfo.createTooltip(
+      '30px',
+      '-50px',
+      '140px',
+      'dihedral angle of last selected edge'
+    )
 
     // this.volumeInfo.set = () => this.volume.toFixed(4)
     // this.volumeInfo.createTooltip('30px', '-30px', '50px', 'volume')
