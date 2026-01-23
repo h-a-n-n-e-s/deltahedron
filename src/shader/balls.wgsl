@@ -24,7 +24,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
       atomicMin(&out[0], i32(distance * QUANTIZE_FACTOR));
     }
     else {
-      newBall.prop3 = -1;
+      newBall.distanceToMouse = -1;
     }
   }
 
@@ -48,14 +48,14 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   velocityUpdate[4*i+3] = 0;
 
   if global.repulsion != 0.0 {
-    // prop1 is the radius of the ball
+    // radius is the radius of the ball
     let repulsionFactor = 10.0 / f32(global.ballCount);
 
     for (var j=0u; j<global.ballCount; j++) {
       if i == j {continue;}
       let b = balls[j];
       let ab = a.position - b.position;
-      let d = a.prop1 + b.prop1;
+      let d = a.radius + b.radius;
       let lenab = length(ab);
 
       newBall.velocity += repulsionFactor * global.repulsion * ab / (0.01 + lenab * lenab) * inverseEffectiveMass;

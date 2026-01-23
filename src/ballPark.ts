@@ -147,8 +147,7 @@ export class BallPark {
     )
     this.FEVCountInfo.update()
 
-    this.formulaInfo.set = () =>
-      vertexCountToSummationFormula(this.deltahedron.getCoordinationNumberCount())
+    this.formulaInfo.set = () => vertexCountToSummationFormula(this.deltahedron.getValenceArray())
 
     this.formulaInfo.createTooltip(
       '-144px',

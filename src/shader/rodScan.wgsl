@@ -13,7 +13,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
 
   // content of out buffer:
   // 0 minimal distance to camera
-  // 1 index of closest rod
+  // 1 index of closest rod or ball
   // 2 maximum error
   // 3 dihedral angle
   // 4,5,6 centroid x,y,z
@@ -26,7 +26,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   if global.rodScanBranch == 1 {
 
     // check if this rod was hit first
-    if rods[i].prop3 == atomicLoad(&out[0]) {
+    if rods[i].distanceToMouse == atomicLoad(&out[0]) {
 
       // rods[i].color = vec4f(1,0,1,1);
 
@@ -50,7 +50,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   else if global.rodScanBranch == 3 {
 
     // find max error
-    atomicMax(&out[2], rods[i].prop4);
+    atomicMax(&out[2], rods[i].maxError);
   }
 }
 

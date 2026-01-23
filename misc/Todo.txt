@@ -27,7 +27,6 @@ one reflection ray tracing
 store computed textures in binaries?
 
 flat faces limit
-
 any precision Newton post processor
 
 

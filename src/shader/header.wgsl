@@ -35,13 +35,14 @@ struct Object {
   velocity: vec3f,
   mass: f32,
 
-  prop1: f32,
-  prop2: f32,
-  prop3: i32,
-  prop4: i32,
+  radius: f32,
+  length: f32,
+  distanceToMouse: i32,
+  maxError: i32, // only used for rods
 
   glossyness: f32,
   triangleCount: u32,
+  valence: u32, // only used for balls
 }
 
 struct HalfEdge {

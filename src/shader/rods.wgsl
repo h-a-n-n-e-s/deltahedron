@@ -28,7 +28,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   let velocity = (d - lenab) * nor;
 
   // error check
-  rods[i].prop4 = i32(error * QUANTIZE_FACTOR);
+  rods[i].maxError = i32(error * QUANTIZE_FACTOR);
 
   // mouse pick test
   if global.mouseChanged > 0 && global.rodsVisible == 1 && rods[i].size > 0 {
@@ -37,11 +37,11 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
     let distance = 1000 * rayCylinderIntersection(global, rods[i]);
     if distance > 0 {
 
-      rods[i].prop3 = i32(distance * QUANTIZE_FACTOR);
-      atomicMin(&out[0], rods[i].prop3);
+      rods[i].distanceToMouse = i32(distance * QUANTIZE_FACTOR);
+      atomicMin(&out[0], rods[i].distanceToMouse);
     }
     else {
-      rods[i].prop3 = -1;
+      rods[i].distanceToMouse = -1;
     }
   }
 

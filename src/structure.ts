@@ -121,9 +121,9 @@ export class Structure {
 
     for (let i = 0; i < this.balls.count; i++) {
       this.createBall(i, p.slice(3 * i, 3 * i + 3))
-      const coordinationNumber = this.vertexCoordinationCount(halfEdgesInit, i)
-      this.setCoordinationNumber(i, coordinationNumber)
-      this.setBallColor(i, this.connectionsToColor(coordinationNumber))
+      const valence = this.vertexCoordinationCount(halfEdgesInit, i)
+      this.setValence(i, valence)
+      this.setBallColor(i, this.connectionsToColor(valence))
     }
 
     for (let i = 0; i < this.rods.count; i++) this.createRod(i)
@@ -148,7 +148,7 @@ export class Structure {
 
     if (position !== undefined) this.balls.data.set(position, offset)
     this.balls.data.set([1], offset + 3) // size
-    this.balls.data.set([this.ballRadius], offset + 16) // prop1
+    this.balls.data.set([this.ballRadius], offset + 16) // radius
     this.setBallGlossyness(index, this.ballGlossyness)
   }
 
@@ -158,8 +158,8 @@ export class Structure {
     this.rods.data.set([1], offset + 3) // size
     this.rods.data.set(this.rodBaseColor, offset + 8) // color
     this.rods.data.set([1], offset + 11) // alpha
-    this.rods.data.set([this.cylinderRadius], offset + 16) // prop1
-    this.rods.data.set([this.cylinderLength], offset + 17) // prop2
+    this.rods.data.set([this.cylinderRadius], offset + 16) // radius
+    this.rods.data.set([this.cylinderLength], offset + 17) // length
   }
 
   setBallColor(index: number, color: Array<number>) {
@@ -171,19 +171,19 @@ export class Structure {
     this.balls.data.set([glossyness], index * q + 20)
   }
 
-  setCoordinationNumber(index: number, coordinationNumber: number) {
-    this.balls.data.set([coordinationNumber], index * q + 19) // prop4
+  setValence(index: number, valence: number) {
+    this.balls.data.set([valence], index * q + 22) // valence
   }
 
-  getCoordinationNumber(index: number) {
-    return this.balls.data[index * q + 19] // prop4
+  getValence(index: number) {
+    return this.balls.data[index * q + 22] // valence
   }
 
-  connectionsToColor(coordinationNumber: number) {
-    if (!this.allowTetrahedra && coordinationNumber < 4) throw new Error('coordination number < 4')
-    else if (coordinationNumber == 3) return [0.1, 0.1, 0.1]
-    else if (coordinationNumber > 10) return colorArray[7]
-    else return colorArray[coordinationNumber - 4]
+  connectionsToColor(valence: number) {
+    if (!this.allowTetrahedra && valence < 4) throw new Error('coordination number < 4')
+    else if (valence == 3) return [0.1, 0.1, 0.1]
+    else if (valence > 10) return colorArray[7]
+    else return colorArray[valence - 4]
   }
 
   vertexCoordinationCount(halfEdges: U32Arr, vertexIndex: number) {
@@ -198,10 +198,10 @@ export class Structure {
     return count
   }
 
-  changeCoordinationNumberAndColor(index: number, diff: number) {
-    let prevCoordinationNumber = this.getCoordinationNumber(index)
-    this.setCoordinationNumber(index, prevCoordinationNumber + diff)
-    this.setBallColor(index, this.connectionsToColor(prevCoordinationNumber + diff))
+  changeValenceAndColor(index: number, diff: number) {
+    let prevValence = this.getValence(index)
+    this.setValence(index, prevValence + diff)
+    this.setBallColor(index, this.connectionsToColor(prevValence + diff))
     this.compute.setBallsBuffer(index, this.balls.data.slice(q * index, q * index + q), false)
   }
 
@@ -246,7 +246,7 @@ export class Structure {
     const h = this.halfEdges
     let i = this.vertexHalfEdgeMap[source]
     this.vertexHalfEdgeMap[destination] = i
-    const c = this.getCoordinationNumber(source)
+    const c = this.getValence(source)
     for (let o = 0; o < c; o++) {
       setVert(h, i, destination)
       // reset face vertices because of new vertex
@@ -358,16 +358,16 @@ export class Structure {
     this.vertexHalfEdgeMap[addedBallIndex] = ac
 
     l = vert(h, nb)
-    this.changeCoordinationNumberAndColor(l, 1)
+    this.changeValenceAndColor(l, 1)
     const vertexB = l
 
     l = vert(h, nd)
-    this.changeCoordinationNumberAndColor(l, 1)
+    this.changeValenceAndColor(l, 1)
     const vertexD = l
 
     l = addedBallIndex
     this.createBall(l)
-    this.setCoordinationNumber(l, 4)
+    this.setValence(l, 4)
     this.setBallColor(l, this.connectionsToColor(4))
     this.compute.setBallsBuffer(l, this.balls.data.slice(q * l, q * l + q), false)
 
@@ -403,10 +403,8 @@ export class Structure {
 
     // check if a tetrahedron would be formed
     if (!this.allowTetrahedra) {
-      if (this.getCoordinationNumber(vertexA) < 5 || this.getCoordinationNumber(vertexC) < 5)
-        return 1
-    } else if (this.getCoordinationNumber(vertexA) < 4 || this.getCoordinationNumber(vertexC) < 4)
-      return 2
+      if (this.getValence(vertexA) < 5 || this.getValence(vertexC) < 5) return 1
+    } else if (this.getValence(vertexA) < 4 || this.getValence(vertexC) < 4) return 2
 
     setNext(h, ab, da)
     setPrev(h, ab, ac)
@@ -429,10 +427,10 @@ export class Structure {
     this.vertexHalfEdgeMap[vertexB] = ab
     this.vertexHalfEdgeMap[vertexC] = bc
     this.vertexHalfEdgeMap[vertexD] = cd
-    this.changeCoordinationNumberAndColor(vertexA, -1)
-    this.changeCoordinationNumberAndColor(vertexB, 1)
-    this.changeCoordinationNumberAndColor(vertexC, -1)
-    this.changeCoordinationNumberAndColor(vertexD, 1)
+    this.changeValenceAndColor(vertexA, -1)
+    this.changeValenceAndColor(vertexB, 1)
+    this.changeValenceAndColor(vertexC, -1)
+    this.changeValenceAndColor(vertexD, 1)
 
     // faces
     this.setFace(face(h, ab), ab)
@@ -470,8 +468,7 @@ export class Structure {
 
     // check if a tetrahedron would be formed
     if (!this.allowTetrahedra)
-      if (this.getCoordinationNumber(vertexB) < 5 || this.getCoordinationNumber(vertexD) < 5)
-        return 1
+      if (this.getValence(vertexB) < 5 || this.getValence(vertexD) < 5) return 1
 
     const faceABC = face(h, ab)
     const faceACD = face(h, da)
@@ -480,19 +477,19 @@ export class Structure {
     // Perform all connectivity changes first
 
     // edges
-    let vertexACoordinationNumberDifference = -1
+    let vertexAValenceDifference = -1
     let i = dc
     setVert(h, i, vertexA)
     let nex = prev(h, i)
-    const coordinationNumberVertexC = this.getCoordinationNumber(vertexC)
+    const valenceVertexC = this.getValence(vertexC)
     const cToAEdgeList = []
 
     // Redirect all edges from C to A
-    for (let o = 0; o < coordinationNumberVertexC - 3; o++) {
+    for (let o = 0; o < valenceVertexC - 3; o++) {
       i = twin(nex)
       cToAEdgeList.push(i)
       setVert(h, i, vertexA)
-      vertexACoordinationNumberDifference++
+      vertexAValenceDifference++
       nex = prev(h, i)
     }
 
@@ -504,9 +501,9 @@ export class Structure {
     this.vertexHalfEdgeMap[vertexB] = ab
     this.vertexHalfEdgeMap[vertexD] = ad
 
-    this.changeCoordinationNumberAndColor(vertexA, vertexACoordinationNumberDifference)
-    this.changeCoordinationNumberAndColor(vertexB, -1)
-    this.changeCoordinationNumberAndColor(vertexD, -1)
+    this.changeValenceAndColor(vertexA, vertexAValenceDifference)
+    this.changeValenceAndColor(vertexB, -1)
+    this.changeValenceAndColor(vertexD, -1)
 
     // MEMORY RELOCATION ______________________________________________________
     // Compact arrays by moving last elements into gaps
@@ -553,7 +550,7 @@ export class Structure {
     // 3. FACE UPDATES & RELOCATION
     // Finish topology updates for faces (using final edge indices)
     cToAEdgeList.push(da)
-    for (let o = 0; o < coordinationNumberVertexC - 2; o++) {
+    for (let o = 0; o < valenceVertexC - 2; o++) {
       const e = cToAEdgeList.pop() as number
       this.setFace(face(h, e), e)
     }
@@ -632,17 +629,17 @@ export class Structure {
       const vertexA = vert(this.halfEdges, ca)
       const vertexC = vert(this.halfEdges, ac)
       const offset = i * q
-      if (this.getCoordinationNumber(vertexA) === this.getCoordinationNumber(vertexC))
+      if (this.getValence(vertexA) === this.getValence(vertexC))
         this.rods.data.set([1], offset + 3) // size
       else this.rods.data.set([0], offset + 3) // size
       this.compute.setRodsBuffer(i, this.rods.data.slice(q * i, q * i + q))
     }
   }
 
-  getCoordinationNumberCount = () => {
+  getValenceArray = () => {
     const count = new Uint32Array(16)
     for (let i = 0; i < this.balls.count; i++) {
-      const c = this.getCoordinationNumber(i)
+      const c = this.getValence(i)
       count[c] += 1
     }
     return count
