@@ -1,12 +1,13 @@
 
+prevent any other interaction while subdividing
+
 color flat edges differently
 flat edges indicator
 display smallest dihedral angle
-compound indicator
-
 curvature indication color
 edge error indication color
 self intersection indicator
+compound indicator
 
 sound
 undo

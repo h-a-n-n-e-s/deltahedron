@@ -298,6 +298,7 @@ export class BallPark {
             this.distance = vec3.length(vec3.subtract(p, prevVertexPos))
             this.distanceInfo.update()
             prevVertexPos.set(p)
+            // console.log([...p])
           } else prevVertexPos = new Float32Array(p)
         }
 

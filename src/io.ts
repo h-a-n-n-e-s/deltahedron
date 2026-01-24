@@ -84,3 +84,23 @@ export const loadFromPublic = async (path: string, call: (data: ArrayBuffer) => 
     console.error('Failed to load public file:', e)
   }
 }
+
+// test for 3 edges lying in a plane for "the v16"
+// unfortunately not
+// export function v16_test() {
+//   const a = new Float32Array([-0.5011662244796753, 0.2588253319263458, 1.071208119392395])
+//   const b = new Float32Array([-0.6148324012756348, 0.40579164028167725, 0.08861913532018661])
+//   const c = new Float32Array([-0.10275381803512573, 0.12693250179290771, -0.7237932085990906])
+//   const d = new Float32Array([0.7195006012916565, -0.42091307044029236, -0.8779478073120117])
+
+//   const ab = vec3.length(vec3.subtract(a, b))
+//   const bc = vec3.length(vec3.subtract(b, c))
+//   const cd = vec3.length(vec3.subtract(c, d))
+
+//   console.log(ab - 1, bc - 1, cd - 1) // 1..4e-7
+
+//   const croco = vec3.cross(vec3.subtract(b, c), vec3.subtract(d, c))
+//   vec3.normalize(croco)
+
+//   console.log(vec3.dot(croco, vec3.subtract(a, b))) // 0.0132646985  :(
+// }
