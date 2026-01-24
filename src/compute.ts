@@ -5,11 +5,25 @@ import ballsShader from './shader/balls.wgsl?raw'
 import rodsShader from './shader/rods.wgsl?raw'
 import trianglesShader from './shader/triangles.wgsl?raw'
 import rodScan from './shader/rodScan.wgsl?raw'
+import ballScan from './shader/ballScan.wgsl?raw'
 import { Object } from './structure'
 
 // explicitly define types to prevent TS <ArrayBufferLike> confusion
 export type F32Arr = Float32Array<ArrayBuffer>
 export type U32Arr = Uint32Array<ArrayBuffer>
+
+// mirror layout of sruct Out in shader/header.wgsl
+export const OUT = {
+  minDistanceToCamera: 0,
+  closestRodIndex: 1,
+  closestBallIndex: 2,
+  maxError: 3,
+  dihedralAngle: 4,
+  centroidX: 5,
+  centroidY: 6,
+  centroidZ: 7,
+  volume: 8,
+}
 
 export class Compute {
   private device!: GPUDevice
@@ -20,6 +34,7 @@ export class Compute {
   private rodsPipeline!: GPUComputePipeline
   private trianglesPipeline!: GPUComputePipeline
   private rodScanPipeline!: GPUComputePipeline
+  private ballScanPipeline!: GPUComputePipeline
 
   private subSteps!: number
 
@@ -85,8 +100,9 @@ export class Compute {
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
     })
 
+    // see shader/header.wgsl for layout of struct Out
     this.outBuffer = this.device.createBuffer({
-      size: 32,
+      size: 4 * 9,
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST,
     })
 
@@ -95,7 +111,7 @@ export class Compute {
       usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
     })
 
-    this.resetOutBuffer()
+    this.resetOutBufferMinDistanceAndIndices()
 
     // triangle buffers
 
@@ -189,6 +205,7 @@ export class Compute {
       header + intersection + trianglesShader
     )
     this.rodScanPipeline = this.createCompPipe(pipelineLayout, header + rodScan)
+    this.ballScanPipeline = this.createCompPipe(pipelineLayout, header + ballScan)
 
     this.bindGroup = this.device.createBindGroup({
       layout: bindGroupLayout,
@@ -235,10 +252,11 @@ export class Compute {
     this.computePass(encoder, this.trianglesPipeline, this.triangleBindGroup, triangleCount)
   }
 
-  rodScan = (rodCount: number) => {
+  rodAndBallScan = (rodCount: number, ballCount: number) => {
     const encoder = this.device.createCommandEncoder()
 
     this.computePass(encoder, this.rodScanPipeline, this.bindGroup, rodCount)
+    this.computePass(encoder, this.ballScanPipeline, this.bindGroup, ballCount)
 
     encoder.copyBufferToBuffer(this.outBuffer, 0, this.stagingOutBuffer, 0, this.outBuffer.size)
 
@@ -263,19 +281,19 @@ export class Compute {
     return new Int32Array(this.stagingOutBuffer.getMappedRange())
   }
 
-  resetOutBuffer = () => {
-    this.stagingOutBuffer.unmap()
-    this.device.queue.writeBuffer(this.outBuffer, 0, new Int32Array([2147483647, -1]))
+  resetOutBufferMinDistanceAndIndices = () => {
+    this.unmapStagingOut()
+    this.device.queue.writeBuffer(this.outBuffer, 0, new Int32Array([2147483647, -1, -1]))
   }
 
   resetCentroidAndVolume = () => {
-    this.stagingOutBuffer.unmap()
-    this.device.queue.writeBuffer(this.outBuffer, 16, new Int32Array([0, 0, 0, 0]))
+    this.unmapStagingOut()
+    this.device.queue.writeBuffer(this.outBuffer, 4 * OUT.centroidX, new Int32Array([0, 0, 0, 0]))
   }
 
   resetError = () => {
-    this.stagingOutBuffer.unmap()
-    this.device.queue.writeBuffer(this.outBuffer, 8, new Int32Array([0]))
+    this.unmapStagingOut()
+    this.device.queue.writeBuffer(this.outBuffer, 4 * OUT.maxError, new Int32Array([0]))
   }
 
   getBuffer = async (bufferName: string) => {
@@ -284,7 +302,7 @@ export class Compute {
     else if (bufferName === 'triangles') buffer = this.triangleVertexBuffer
     else throw new Error('no buffer')
 
-    this.stagingBuffer.unmap()
+    if (this.stagingBuffer.mapState === 'mapped') this.stagingBuffer.unmap()
 
     const encoder = this.device.createCommandEncoder()
     encoder.copyBufferToBuffer(buffer, 0, this.stagingBuffer, 0, buffer.size)
@@ -398,6 +416,10 @@ export class Compute {
 
   makeMouseCoordsOldNews = () => {
     this.device.queue.writeBuffer(this.globalParameterBuffer, 28, new Float32Array([-1]))
-    this.resetOutBuffer()
+    this.resetOutBufferMinDistanceAndIndices()
+  }
+
+  private unmapStagingOut() {
+    if (this.stagingOutBuffer.mapState === 'mapped') this.stagingOutBuffer.unmap()
   }
 }

@@ -3,7 +3,7 @@
 @group(0) @binding(2) var<storage, read_write> velocityUpdate: array< atomic<i32> >;
 @group(0) @binding(3) var<storage, read_write> balls: array<Object>;
 @group(0) @binding(4) var<storage, read_write> rods: array<Object>;
-@group(0) @binding(5) var<storage, read_write> out: array< atomic<i32> >;
+@group(0) @binding(5) var<storage, read_write> out: Out;
 
 @compute @workgroup_size(64)
 
@@ -37,11 +37,11 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
     let distance = 1000 * rayCylinderIntersection(global, rods[i]);
     if distance > 0 {
 
-      rods[i].distanceToMouse = i32(distance * QUANTIZE_FACTOR);
-      atomicMin(&out[0], rods[i].distanceToMouse);
+      rods[i].distanceToCamera = i32(distance * QUANTIZE_FACTOR);
+      atomicMin(&out.minDistanceToCamera, rods[i].distanceToCamera);
     }
     else {
-      rods[i].distanceToMouse = -1;
+      rods[i].distanceToCamera = -1;
     }
   }
 

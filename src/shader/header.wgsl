@@ -37,12 +37,25 @@ struct Object {
 
   radius: f32,
   length: f32,
-  distanceToMouse: i32,
+  distanceToCamera: i32,
   maxError: i32, // only used for rods
 
   glossyness: f32,
   triangleCount: u32,
   valence: u32, // only used for balls
+}
+
+// array to get dynamic data out of the shader
+struct Out {
+  minDistanceToCamera: atomic<i32>,
+  closestRodIndex: atomic<i32>,
+  closestBallIndex: atomic<i32>,
+  maxError: atomic<i32>,
+  dihedralAngle: atomic<i32>,
+  centroidX: atomic<i32>,
+  centroidY: atomic<i32>,
+  centroidZ: atomic<i32>,
+  volume: atomic<i32>,
 }
 
 struct HalfEdge {

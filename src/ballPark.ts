@@ -1,4 +1,4 @@
-import { Compute, F32Arr, U32Arr } from './compute'
+import { Compute, F32Arr, OUT, U32Arr } from './compute'
 import { Render } from './render'
 import {
   octahedronHalfEdges,
@@ -209,9 +209,11 @@ export class BallPark {
 
       if (checkSelection) {
         await this.compute.workDone() // wait for min distance
-        this.compute.rodScan(rods.count)
+        this.compute.rodAndBallScan(rods.count, balls.count)
         const out = await this.compute.getOutBuffer() // get edge index
-        const newHoveringEdgeIndex = out[1]
+        const newHoveringEdgeIndex = out[OUT.closestRodIndex]
+
+        // TODO: distinguish rods from balls
 
         if (newHoveringEdgeIndex !== hoveringEdgeIndex) {
           if (hoveringEdgeIndex !== -1)
@@ -226,7 +228,7 @@ export class BallPark {
           }
         }
 
-        this.dihedralAngle = out[3] / QUANTIZE_FACTOR
+        this.dihedralAngle = out[OUT.dihedralAngle] / QUANTIZE_FACTOR
         this.dihedralAngleInfo.update()
 
         if (hoveringEdgeIndex !== -1 && camera.mouseWasPressed) {
@@ -264,7 +266,7 @@ export class BallPark {
         }
         if (s < initEdgeCount) {
           this.compute.setNewBallRodIndex(s)
-          this.compute.rodScan(rods.count)
+          this.compute.rodAndBallScan(rods.count, balls.count)
           const [vB, vD] = this.deltahedron.addVertex(s)
 
           // check if opposing vertices are old ones
@@ -302,11 +304,11 @@ export class BallPark {
         // divFps.innerHTML = fps.toFixed() + ' fps';
 
         this.compute.selectRodScanBranch('maxError')
-        this.compute.rodScan(rods.count)
+        this.compute.rodAndBallScan(rods.count, balls.count)
         await this.compute.workDone()
         const out = await this.compute.getOutBuffer()
 
-        this.error = out[2] / QUANTIZE_FACTOR
+        this.error = out[OUT.maxError] / QUANTIZE_FACTOR
         this.errorInfo.update()
 
         const errorVariation = lastError != 0 ? Math.abs(this.error / lastError - 1) : 0
@@ -315,7 +317,7 @@ export class BallPark {
         else this.activityIndicator.run()
         lastError = this.error
 
-        this.volume = out[7] / QUANTIZE_FACTOR
+        this.volume = out[OUT.volume] / QUANTIZE_FACTOR
         // this.volumeInfo.update()
 
         this.compute.resetError()

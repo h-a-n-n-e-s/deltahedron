@@ -2,7 +2,7 @@
 @group(0) @binding(1) var<storage, read> halfEdges: array<HalfEdge>;
 @group(0) @binding(3) var<storage, read_write> balls: array<Object>;
 @group(0) @binding(4) var<storage, read_write> rods: array<Object>;
-@group(0) @binding(5) var<storage, read_write> out: array< atomic<i32> >;
+@group(0) @binding(5) var<storage, read_write> out: Out;
 
 @compute @workgroup_size(64)
 
@@ -11,14 +11,6 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   let i = global_id.x;
   if i >= global.rodCount {return;}
 
-  // content of out buffer:
-  // 0 minimal distance to camera
-  // 1 index of closest rod or ball
-  // 2 maximum error
-  // 3 dihedral angle
-  // 4,5,6 centroid x,y,z
-  // 7 volume
-
   // if abs(dihedralAngle(i)) < 0.9 {
   //   rods[i].color = vec4f(0.1,0.1,.1,1.0);
   // }
@@ -26,14 +18,13 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   if global.rodScanBranch == 1 {
 
     // check if this rod was hit first
-    if rods[i].distanceToMouse == atomicLoad(&out[0]) {
+    if rods[i].distanceToCamera == atomicLoad(&out.minDistanceToCamera) {
 
       // rods[i].color = vec4f(1,0,1,1);
 
-      // out[1] = i32(i);
-      atomicStore(&out[1], i32(i));
+      atomicStore(&out.closestRodIndex, i32(i));
 
-      atomicStore(&out[3], i32(dihedralAngle(i) * QUANTIZE_FACTOR));
+      atomicStore(&out.dihedralAngle, i32(dihedralAngle(i) * QUANTIZE_FACTOR));
 
       // possible new ball
       balls[global.ballCount].position = rods[i].position;
@@ -50,7 +41,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   else if global.rodScanBranch == 3 {
 
     // find max error
-    atomicMax(&out[2], rods[i].maxError);
+    atomicMax(&out.maxError, rods[i].maxError);
   }
 }
 

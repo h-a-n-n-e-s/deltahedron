@@ -130,7 +130,7 @@ export const vertexCountToSummationFormula = (count: U32Arr) => {
 }
 
 export const sumFormula = (s: string) => {
-  const out = new Uint32Array(12)
+  const formula = new Uint32Array(12)
 
   const mapping: Record<string, number> = {
     T: 4,
@@ -147,9 +147,9 @@ export const sumFormula = (s: string) => {
 
   for (const [_, letter, value] of matches) {
     if (mapping[letter] !== undefined) {
-      out[mapping[letter]] = parseInt(value, 10)
+      formula[mapping[letter]] = parseInt(value, 10)
     }
   }
 
-  return vertexCountToSummationFormula(out)
+  return vertexCountToSummationFormula(formula)
 }
