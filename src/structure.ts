@@ -180,7 +180,7 @@ export class Structure {
   }
 
   connectionsToColor(valence: number) {
-    if (!this.allowTetrahedra && valence < 4) throw new Error('coordination number < 4')
+    if (!this.allowTetrahedra && valence < 4) throw new Error('valence < 4')
     else if (valence == 3) return [0.1, 0.1, 0.1]
     else if (valence > 10) return colorArray[7]
     else return colorArray[valence - 4]
@@ -203,6 +203,11 @@ export class Structure {
     this.setValence(index, prevValence + diff)
     this.setBallColor(index, this.connectionsToColor(prevValence + diff))
     this.compute.setBallsBuffer(index, this.balls.data.slice(q * index, q * index + q), false)
+  }
+
+  changeBallColor(index: number, color: Array<number>) {
+    this.balls.data.set(color, index * q + 8)
+    this.compute.setBallsBufferColor(index, this.balls.data.slice(q * index, q * index + q))
   }
 
   changeRodColor(index: number, color: Array<number>) {

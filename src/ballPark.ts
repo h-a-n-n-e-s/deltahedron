@@ -10,6 +10,7 @@ import { Camera } from './camera'
 import { Structure } from './structure'
 import { loadFromPublic, readFile } from './io'
 import { ActivityIndicator, Info, vertexCountToSummationFormula } from './display'
+import { vec3 } from './algebra'
 
 const QUANTIZE_FACTOR = 2097152
 export const q = 24 // scalar quantities per object in buffer
@@ -47,12 +48,14 @@ export class BallPark {
   subdivide = false
 
   error = 0
-  volume = 0
+  // volume = 0
+  distance = 0
   dihedralAngle = 0
   alertText = ''
 
   errorInfo = new Info('error')
   // volumeInfo = new Info('volume')
+  distanceInfo = new Info('distance')
   dihedralAngleInfo = new Info('dihedralAngle')
   alertInfo = new Info('alertInfo')
   FEVCountInfo = new Info('FEVCount')
@@ -129,6 +132,16 @@ export class BallPark {
       '140px',
       'dihedral angle of last selected edge'
     )
+    this.dihedralAngleInfo.update()
+
+    this.distanceInfo.set = () => this.distance.toFixed(4)
+    this.distanceInfo.createTooltip(
+      '30px',
+      '-50px',
+      '140px',
+      'distance between the last two clicked vertices'
+    )
+    this.distanceInfo.update()
 
     // this.volumeInfo.set = () => this.volume.toFixed(4)
     // this.volumeInfo.createTooltip('30px', '-30px', '50px', 'volume')
@@ -153,7 +166,7 @@ export class BallPark {
       '-144px',
       '-120px',
       '420px',
-      'The formula summarizing how many different vertices are present in the deltahedron. A vertex is characterized by its coordination number, which equals the number of edges connected to it. The initials of greek numerals for 4 T (Tetra), 5 P (Penta), 6 H (Hexa), and latin numerals for 7 S (Sept), 8 O (Oct), 9 N (Nonus), 10 D (Deca) are used to identify the coordination number (for numbers larger than 10 B ("Big" or "Beyond" is used). The subscripts equal the number of vertices for each vertex type.'
+      'The formula summarizing how many different vertices are present in the deltahedron. A vertex is characterized by its valence, which equals the number of edges connected to it. The initials of greek numerals for 4 T (Tetra), 5 P (Penta), 6 H (Hexa), and latin numerals for 7 S (Sept), 8 O (Oct), 9 N (Nonus), 10 D (Deca) are used to identify the valence (for numbers larger than 10 B ("Big" or "Beyond" is used). The subscripts equal the number of vertices for each vertex type.'
     )
     this.formulaInfo.update()
 
@@ -167,7 +180,10 @@ export class BallPark {
     const actionFrames = 5
 
     let checkSelection = false
-    let hoveringEdgeIndex = -1
+    let hoveringRod = -1 // index of rod mouse is currently hovering
+    let hoveringBall = -1 // index of ball mouse is currently hovering
+    let hoveringBallColor = [0, 0, 0]
+    let prevVertexPos: F32Arr
 
     let initEdgeCount: number
     let initVertexCount: number
@@ -211,19 +227,36 @@ export class BallPark {
         await this.compute.workDone() // wait for min distance
         this.compute.rodAndBallScan(rods.count, balls.count)
         const out = await this.compute.getOutBuffer() // get edge index
-        const newHoveringEdgeIndex = out[OUT.closestRodIndex]
+        const newhoveringRod = out[OUT.closestRodIndex]
+        const newHoveringBall = out[OUT.closestBallIndex]
 
-        // TODO: distinguish rods from balls
+        // rod highlighting
+        if (newhoveringRod !== hoveringRod) {
+          if (hoveringRod !== -1)
+            this.deltahedron.changeRodColor(hoveringRod, this.deltahedron.rodBaseColor)
 
-        if (newHoveringEdgeIndex !== hoveringEdgeIndex) {
-          if (hoveringEdgeIndex !== -1)
-            this.deltahedron.changeRodColor(hoveringEdgeIndex, this.deltahedron.rodBaseColor)
+          hoveringRod = newhoveringRod
 
-          hoveringEdgeIndex = newHoveringEdgeIndex
-
-          if (hoveringEdgeIndex === -1) document.body.style.cursor = 'default'
+          if (hoveringRod === -1) document.body.style.cursor = 'default'
           else {
-            this.deltahedron.changeRodColor(hoveringEdgeIndex, this.deltahedron.rodHighlightColor)
+            this.deltahedron.changeRodColor(hoveringRod, this.deltahedron.rodHighlightColor)
+            document.body.style.cursor = 'pointer'
+          }
+        }
+
+        // ball highlighting
+        if (newHoveringBall !== hoveringBall) {
+          if (hoveringBall !== -1) {
+            this.deltahedron.changeBallColor(hoveringBall, hoveringBallColor)
+          }
+
+          hoveringBall = newHoveringBall
+
+          if (hoveringBall === -1) document.body.style.cursor = 'default'
+          else {
+            hoveringBallColor = [...balls.data.slice(hoveringBall * q + 8, hoveringBall * q + 11)]
+            const highlight = hoveringBallColor.map((v) => v + 0.1)
+            this.deltahedron.changeBallColor(hoveringBall, highlight)
             document.body.style.cursor = 'pointer'
           }
         }
@@ -231,14 +264,15 @@ export class BallPark {
         this.dihedralAngle = out[OUT.dihedralAngle] / QUANTIZE_FACTOR
         this.dihedralAngleInfo.update()
 
-        if (hoveringEdgeIndex !== -1 && camera.mouseWasPressed) {
+        // basic edge operations
+        if (hoveringRod !== -1 && camera.mouseWasPressed) {
           // edge selected
 
           let status = 0
 
-          if (this.add) this.deltahedron.addVertex(hoveringEdgeIndex)
-          else if (this.flip) status = this.deltahedron.flipEdge(hoveringEdgeIndex)
-          else if (this.collapse) status = await this.deltahedron.collapseEdge(hoveringEdgeIndex)
+          if (this.add) this.deltahedron.addVertex(hoveringRod)
+          else if (this.flip) status = this.deltahedron.flipEdge(hoveringRod)
+          else if (this.collapse) status = await this.deltahedron.collapseEdge(hoveringRod)
 
           if (status > 0) {
             if (status === 1) this.alertText = 'Tetrahedral corners are not allowed.'
@@ -253,6 +287,20 @@ export class BallPark {
           // slowmo = true;
           // setTimeout(() => {endSlowmo = true;}, 1000);
         }
+
+        // plot coords
+        if (hoveringBall !== -1 && camera.mouseWasPressed) {
+          const b = await this.compute.getBuffer('balls')
+          const p = new Float32Array(3)
+          p.set(b.slice(q * hoveringBall, q * hoveringBall + 3))
+
+          if (prevVertexPos !== undefined) {
+            this.distance = vec3.length(vec3.subtract(p, prevVertexPos))
+            this.distanceInfo.update()
+            prevVertexPos.set(p)
+          } else prevVertexPos = new Float32Array(p)
+        }
+
         checkSelection = false
         camera.mouseWasPressed = false
         this.compute.makeMouseCoordsOldNews()
@@ -317,7 +365,7 @@ export class BallPark {
         else this.activityIndicator.run()
         lastError = this.error
 
-        this.volume = out[OUT.volume] / QUANTIZE_FACTOR
+        // this.volume = out[OUT.volume] / QUANTIZE_FACTOR
         // this.volumeInfo.update()
 
         this.compute.resetError()

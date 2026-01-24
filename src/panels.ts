@@ -87,7 +87,7 @@ export function createPanels(ballPark: BallPark) {
     -230,
     0,
     210,
-    'Shows only edges which are connecting vertices with the same coordination number.'
+    'Shows only edges which are connecting vertices with the same valence.'
   )
 
   const rotateButton = new SwitchButton('rotate')

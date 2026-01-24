@@ -47,6 +47,7 @@ body {
 #error,
 #volume,
 #dihedralAngle,
+#distance,
 #formula,
 #FEVCount,
 #alertInfo,
@@ -65,6 +66,11 @@ body {
 #dihedralAngle {
   top: 11px;
   left: 600px;
+  width: 90px;
+}
+#distance {
+  top: 11px;
+  left: 700px;
   width: 90px;
 }
 #volume {

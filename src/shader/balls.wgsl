@@ -21,7 +21,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
     let distance = raySphereIntersection(global, newBall);
 
     if distance > 0 {
-      atomicMin(&out.minDistanceToCamera, i32(distance * QUANTIZE_FACTOR));
+      newBall.distanceToCamera = i32(distance * QUANTIZE_FACTOR);
+      atomicMin(&out.minDistanceToCamera, newBall.distanceToCamera);
     }
     else {
       newBall.distanceToCamera = -1;

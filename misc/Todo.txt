@@ -3,8 +3,6 @@ color flat edges differently
 flat edges indicator
 display smallest dihedral angle
 compound indicator
-get current length of edge
-choose two vertices to get distance
 
 curvature indication color
 edge error indication color
@@ -28,9 +26,3 @@ store computed textures in binaries?
 
 flat faces limit
 any precision Newton post processor
-
-
-
-white 3
-outer cyan 6
-inner cyan 3

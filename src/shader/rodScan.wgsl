@@ -20,10 +20,9 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
     // check if this rod was hit first
     if rods[i].distanceToCamera == atomicLoad(&out.minDistanceToCamera) {
 
-      // rods[i].color = vec4f(1,0,1,1);
-
       atomicStore(&out.closestRodIndex, i32(i));
 
+      // show dihedral angle of this rod
       atomicStore(&out.dihedralAngle, i32(dihedralAngle(i) * QUANTIZE_FACTOR));
 
       // possible new ball

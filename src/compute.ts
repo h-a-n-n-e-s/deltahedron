@@ -371,6 +371,9 @@ export class Compute {
     }
   }
 
+  setBallsBufferColor = (index: number, ball: F32Arr) =>
+    this.device.queue.writeBuffer(this.ballsBuffer, (index * q + 8) * 4, ball.slice(8, 12))
+
   setRodsBuffer = (index: number, rod: F32Arr) =>
     this.device.queue.writeBuffer(this.rodsBuffer, index * q * 4, rod)
 
