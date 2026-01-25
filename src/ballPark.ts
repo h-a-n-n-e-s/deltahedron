@@ -63,7 +63,11 @@ export class BallPark {
 
   activityIndicator = new ActivityIndicator()
 
-  async initialize() {
+  globalOverlay!: HTMLDivElement
+
+  async initialize(globalOverlay: HTMLDivElement) {
+    this.globalOverlay = globalOverlay
+
     const camera = new Camera({
       arcRotateCamera: false, // if false uses simple endless rotation
       angleResolution: 3,
@@ -331,6 +335,7 @@ export class BallPark {
           this.deltahedron.flipEdge(flipList.pop() as number)
           if (flipList.length === 0) {
             this.subdivide = false
+            this.globalOverlay.style.display = 'none'
             s = 0
           }
         }
@@ -434,6 +439,7 @@ export class BallPark {
   }
   startSubdivide(sub: boolean) {
     this.subdivide = sub
+    this.globalOverlay.style.display = 'block'
   }
 
   async saveData() {

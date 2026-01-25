@@ -79,6 +79,8 @@ sliderInput?.addEventListener('keydown', (e) => {
 const subdivideButton = new PushButton('subdivide')
 subdivideButton.onPush(() => {
   // if(confirm('Are you sure you want to subdivide?'))
+  // make sure there is some repulsion before subdividing
+  if (forceSlider.value <= 0) forceSlider.setSlider(1)
   ballPark.startSubdivide(true)
 })
 subdivideButton.button.id = 'subdivideBut'
@@ -93,7 +95,16 @@ tooltip(
 
 // init____________________________________________________
 
-await ballPark.initialize()
+// global overlay for preventing user input
+const globalOverlay = document.createElement('div')
+globalOverlay.id = 'globalOverlay'
+document.body.appendChild(globalOverlay)
+const subdividingInfo = document.createElement('p')
+subdividingInfo.innerHTML = 'subdividing...'
+globalOverlay.appendChild(subdividingInfo)
+
+// main routine
+await ballPark.initialize(globalOverlay)
 
 forceSlider.setSlider(forceSlider.value)
 

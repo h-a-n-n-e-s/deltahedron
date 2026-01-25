@@ -1,5 +1,4 @@
 
-prevent any other interaction while subdividing
 
 color flat edges differently
 flat edges indicator
