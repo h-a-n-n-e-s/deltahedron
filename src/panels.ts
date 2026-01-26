@@ -1,5 +1,5 @@
 import { BallPark } from './ballPark'
-import { sumFormula, tooltip } from './display'
+import { enableTooltips, sumFormula, tooltip } from './display'
 import { PushButton, SwitchButton } from './ui'
 
 export function createPanels(ballPark: BallPark) {
@@ -15,6 +15,9 @@ export function createPanels(ballPark: BallPark) {
     Panel.latest.div.appendChild(butt.button)
   }
 
+  //
+  //
+  //
   new Panel('create')
 
   //
@@ -30,7 +33,8 @@ export function createPanels(ballPark: BallPark) {
   structureButton(`triangle V74 (${sumFormula('T6H68')})`, '/Lobel/triangle_V74')
 
   //
-  title('toroids')
+  const toroids = title('toroids')
+  tooltip(toroids, -10, -22, 100, 'structures with one hole')
 
   structureButton(`Conway's (${sumFormula('T3P9O3N3')})`, '/toroids/conways')
   structureButton(`Stewart (${sumFormula('T6H12O6')})`, '/toroids/stewart')
@@ -43,33 +47,33 @@ export function createPanels(ballPark: BallPark) {
   //
   //
   //
-  // data _________________________________________________
-  const dataPanel = new Panel('data', 280)
+  const dataPanel = new Panel('data', 320)
 
   const loadButton = new PushButton('load')
   loadButton.onPush(async () => await ballPark.loadData())
   dataPanel.div.appendChild(loadButton.button)
+  tooltip(loadButton.button, -150, 0, 130, 'Load a structure previously saved.')
 
   const saveButton = new PushButton('save')
   saveButton.onPush(async () => await ballPark.saveData())
   dataPanel.div.appendChild(saveButton.button)
+  tooltip(saveButton.button, -190, 0, 170, 'Save current structure in Downloads.')
 
   const exportSTLButton = new PushButton('export STL')
   exportSTLButton.onPush(async () => await ballPark.exportSTL())
   dataPanel.div.appendChild(exportSTLButton.button)
+  tooltip(
+    exportSTLButton.button,
+    -190,
+    0,
+    170,
+    'Save an .stl file of the current structure in Downloads.'
+  )
 
-  // const eraseAllButton = new PushButton('erase all')
-  // eraseAllButton.onPush(() => {
-  //   // if(confirm('Are you sure you want to erase this structure? If not you should save it first.'))
-  //   ballPark.loadOctahedron()
-  // })
-  // dataPanel.div.appendChild(eraseAllButton.button)
-
   //
   //
   //
-  // view _________________________________________________
-  const viewPanel = new Panel('view', 280)
+  const viewPanel = new Panel('view', 320)
 
   const faceButton = new SwitchButton('faces')
   faceButton.onPush(() => ballPark.showFaces(faceButton.on))
@@ -92,12 +96,24 @@ export function createPanels(ballPark: BallPark) {
 
   const rotateButton = new SwitchButton('rotate')
   rotateButton.onPush(() => ballPark.setRotation(rotateButton.on))
+  tooltip(
+    rotateButton.button,
+    -230,
+    0,
+    210,
+    'The structure will continue rotating in the direction you rotate it with the mouse. The rotation speed depends on the speed of the mouse action.'
+  )
+
+  const showTooltipsButton = new SwitchButton('show tooltips')
+  showTooltipsButton.onPush(() => enableTooltips(showTooltipsButton.on))
+  showTooltipsButton.click()
 
   viewPanel.div.appendChild(faceButton.button)
   viewPanel.div.appendChild(rodButton.button)
   viewPanel.div.appendChild(ballButton.button)
   viewPanel.div.appendChild(showOnlyIsoRodsButton.button)
   viewPanel.div.appendChild(rotateButton.button)
+  viewPanel.div.appendChild(showTooltipsButton.button)
 
   // show stuff
   faceButton.click()
@@ -107,7 +123,6 @@ export function createPanels(ballPark: BallPark) {
   //
   //
   //
-  // view _________________________________________________
   new Panel('game')
 
   title('simple game')
@@ -122,6 +137,19 @@ export function createPanels(ballPark: BallPark) {
   )
   structureButton(`goal (${sumFormula('P12H20')})`, '/V22/dodeca')
   structureButton(`messy (${sumFormula('P12H20')})`, '/V22/dodeca_puzzle')
+
+  //
+  //
+  //
+  new Panel('info')
+
+  title('about')
+  text(
+    'With this interactive application you can explore the world of deltahedra, polyhedra made only of equilateral triangles. In the upper left corner you will find the three basic operations which will be performed if you click on an edge with the mouse. Almost all interactive elements and info panels show information tooltips if you hover over them with the mouse.'
+  )
+  text(
+    'If a certain structure can truly converge to a deltahedron (maximum distance error = 0) depends on... finding other equil... the force...'
+  )
 }
 
 class Panel {

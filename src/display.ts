@@ -1,4 +1,5 @@
 import { U32Arr } from './compute'
+import { PushButton } from './ui'
 
 const color = {
   blue: [0.2, 0, 0.8],
@@ -12,10 +13,14 @@ const color = {
 }
 export const colorArray = Object.values(color).map((c) => c)
 
+let tooltipsEnabled = true
+export const enableTooltips = (state: boolean) => {
+  tooltipsEnabled = state
+}
+
 export class Info {
   div: HTMLDivElement
   span: HTMLSpanElement
-  toolTip!: HTMLDivElement
 
   set!: () => string
 
@@ -31,15 +36,6 @@ export class Info {
   update = () => {
     if (this.set !== undefined) if (this.set.length == 0) this.span.innerHTML = this.set()
   }
-
-  createTooltip = (top: string, right: string, width: string, text: string) => {
-    this.toolTip = this.div.appendChild(document.createElement('div'))
-    this.toolTip.className = 'infoTooltip'
-    this.toolTip.style.top = top
-    this.toolTip.style.right = right
-    this.toolTip.style.width = width
-    this.toolTip.innerHTML = text
-  }
 }
 
 export const tooltip = (
@@ -54,14 +50,15 @@ export const tooltip = (
   tt.style.width = `${width}px`
   tt.innerHTML = text
 
+  // we use explicit event listeners instead of simple css
+  // to avoid problems with tt clipping in the panel etc.
   element.addEventListener('mouseenter', () => {
-    const rect = element.getBoundingClientRect()
+    if (!tooltipsEnabled) return
 
-    // The reliable absolute calculation
+    const rect = element.getBoundingClientRect()
     const top = rect.top + window.scrollY
     const left = rect.left + window.scrollX
 
-    // Position it above the button and centered
     tt.style.top = `${top - y}px`
     tt.style.left = `${left + x}px`
     tt.style.visibility = 'visible'
@@ -152,4 +149,55 @@ export const sumFormula = (s: string) => {
   }
 
   return vertexCountToSummationFormula(formula)
+}
+
+export const createOverlay = () => {
+  // global overlay for preventing user input
+  const globalOverlay = document.createElement('div')
+  globalOverlay.id = 'globalOverlay'
+  document.body.appendChild(globalOverlay)
+  const subdividingInfo = document.createElement('p')
+  subdividingInfo.innerHTML = 'subdividing...'
+  globalOverlay.appendChild(subdividingInfo)
+
+  return globalOverlay
+}
+
+export const checkBrowserSupport = () => {
+  const ua = navigator.userAgent.toLowerCase()
+
+  // Detection Logic
+  const isFirefox = ua.includes('firefox')
+  const isSafari = ua.includes('safari') && !ua.includes('chrome') && !ua.includes('android')
+
+  // Check for WebGPU specifically (even if the browser claims support, the object might be missing)
+  const hasWebGPU = 'gpu' in navigator
+
+  if (isFirefox || isSafari || !hasWebGPU) {
+    let message = 'This application uses WebGPU for high-performance 3D.'
+
+    if (isFirefox) {
+      message =
+        "Firefox's WebGPU implementation is currently unstable. Please use Chrome, Edge, or Opera."
+    } else if (isSafari) {
+      message = "Safari's WebGPU support is currently unstable. Please use Chrome, Edge, or Opera."
+    } else if (!hasWebGPU) {
+      message =
+        'Your browser does not support WebGPU. This app requires a Chromium-based browser (Chrome, Edge, Opera).'
+    }
+
+    const overlay = createOverlay()
+    overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.7)'
+    overlay.style.display = 'flex'
+    showWarningBanner(overlay, message)
+  }
+}
+
+const showWarningBanner = (overlay: HTMLDivElement, msg: string) => {
+  overlay.querySelector('p')!.innerHTML = msg
+  const dismissButton = new PushButton('dismiss', false)
+  dismissButton.onPush(() => {
+    overlay.style.display = 'none'
+  })
+  overlay.appendChild(dismissButton.button)
 }

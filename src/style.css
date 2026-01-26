@@ -75,8 +75,8 @@ body {
 }
 #volume {
   top: 11px;
-  left: 700px;
-  width: 80px;
+  left: 800px;
+  width: 90px;
 }
 #activityIndicator {
   top: -9px;
@@ -234,6 +234,8 @@ svg > path {
   padding: 2em;
   padding-bottom: 0;
   font-size: 12px;
+  user-select: text;
+  cursor: text;
 }
 
 /* slider ------------- */
@@ -311,8 +313,7 @@ svg > path {
   top: 10px;
 }
 
-.tooltip,
-.infoTooltip {
+.tooltip {
   visibility: hidden;
   font-size: 12px;
   background-color: #111;
@@ -326,11 +327,6 @@ svg > path {
   pointer-events: none;
   z-index: 1;
 }
-*:hover > .infoTooltip {
-  visibility: visible;
-  opacity: 1;
-  transition: all 0.7s;
-}
 
 #globalOverlay {
   position: fixed;
@@ -341,12 +337,23 @@ svg > path {
   background-color: rgba(0, 0, 0, 0.2);
   z-index: 999;
   display: none;
-}
-#globalOverlay > p {
-  display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  gap: 20px;
+}
+
+#globalOverlay > p {
+  position: relative;
+  max-width: 500px;
+  margin: 20px; /* Add some spacing around text */
   font-size: 24px;
+  text-align: center;
   user-select: none;
+  display: block;
+}
+
+#globalOverlay > button {
+  position: relative;
+  scale: 1.5;
 }

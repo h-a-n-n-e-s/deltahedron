@@ -9,7 +9,7 @@ import {
 import { Camera } from './camera'
 import { Structure } from './structure'
 import { loadFromPublic, readFile } from './io'
-import { ActivityIndicator, Info, vertexCountToSummationFormula } from './display'
+import { ActivityIndicator, Info, tooltip, vertexCountToSummationFormula } from './display'
 import { vec3 } from './algebra'
 
 const QUANTIZE_FACTOR = 2097152
@@ -48,13 +48,13 @@ export class BallPark {
   subdivide = false
 
   error = 0
-  // volume = 0
+  volume = 0
   distance = 0
   dihedralAngle = 0
   alertText = ''
 
   errorInfo = new Info('error')
-  // volumeInfo = new Info('volume')
+  volumeInfo = new Info('volume')
   distanceInfo = new Info('distance')
   dihedralAngleInfo = new Info('dihedralAngle')
   alertInfo = new Info('alertInfo')
@@ -127,28 +127,18 @@ export class BallPark {
     this.alertInfo.set = () => this.alertText
 
     this.errorInfo.set = () => (100 * this.error).toFixed(3) + '%'
-    this.errorInfo.createTooltip('30px', '-50px', '160px', 'maximum distance error')
+    tooltip(this.errorInfo.div, -20, -30, 170, 'maximum distance error')
 
     this.dihedralAngleInfo.set = () => this.dihedralAngle.toFixed(3) + '°'
-    this.dihedralAngleInfo.createTooltip(
-      '30px',
-      '-50px',
-      '140px',
-      'dihedral angle of last selected edge'
-    )
+    tooltip(this.dihedralAngleInfo.div, -10, -30, 130, 'dihedral angle of last edge hovered')
     this.dihedralAngleInfo.update()
 
     this.distanceInfo.set = () => this.distance.toFixed(4)
-    this.distanceInfo.createTooltip(
-      '30px',
-      '-50px',
-      '140px',
-      'distance between the last two clicked vertices'
-    )
+    tooltip(this.distanceInfo.div, 0, -30, 120, 'distance between the last two clicked vertices')
     this.distanceInfo.update()
 
-    // this.volumeInfo.set = () => this.volume.toFixed(4)
-    // this.volumeInfo.createTooltip('30px', '-30px', '50px', 'volume')
+    this.volumeInfo.set = () => this.volume.toFixed(4)
+    tooltip(this.volumeInfo.div, 30, -30, 50, 'volume')
 
     this.FEVCountInfo.set = () => {
       let string = 'F&emsp14;' + triangles.count.toFixed()
@@ -156,21 +146,23 @@ export class BallPark {
       string = string.concat('&nbsp; V&emsp14;' + balls.count.toFixed())
       return string
     }
-    this.FEVCountInfo.createTooltip(
-      '-42px',
-      '0',
-      '200px',
+    tooltip(
+      this.FEVCountInfo.div,
+      -40,
+      50,
+      230,
       'Number of faces (F), edges (E), and vertices (V).'
     )
     this.FEVCountInfo.update()
 
     this.formulaInfo.set = () => vertexCountToSummationFormula(this.deltahedron.getValenceArray())
 
-    this.formulaInfo.createTooltip(
-      '-144px',
-      '-120px',
-      '420px',
-      'The formula summarizing how many different vertices are present in the deltahedron. A vertex is characterized by its valence, which equals the number of edges connected to it. The initials of greek numerals for 4 T (Tetra), 5 P (Penta), 6 H (Hexa), and latin numerals for 7 S (Sept), 8 O (Oct), 9 N (Nonus), 10 D (Deca) are used to identify the valence (for numbers larger than 10 B ("Big" or "Beyond" is used). The subscripts equal the number of vertices for each vertex type.'
+    tooltip(
+      this.formulaInfo.div,
+      -110,
+      170,
+      420,
+      'The formula summarizing how many different vertices are present in the deltahedron. A vertex is characterized by its valence, which equals the number of edges connected to it. The initials of greek numerals for 4 T (Tetra), 5 P (Penta), 6 H (Hexa), and latin numerals for 7 S (Sept), 8 O (Oct), 9 N (Nonus), 10 D (Deca) are used to identify the valence (for numbers larger than 10 B ("Big" or "Beyond" is used). The subscripts equal the number of vertices for each vertex type. The colors correspond to the colors of the spheres representing the vertices.'
     )
     this.formulaInfo.update()
 
@@ -371,8 +363,8 @@ export class BallPark {
         else this.activityIndicator.run()
         lastError = this.error
 
-        // this.volume = out[OUT.volume] / QUANTIZE_FACTOR
-        // this.volumeInfo.update()
+        this.volume = out[OUT.volume] / QUANTIZE_FACTOR
+        this.volumeInfo.update()
 
         this.compute.resetError()
       }
@@ -439,7 +431,7 @@ export class BallPark {
   }
   startSubdivide(sub: boolean) {
     this.subdivide = sub
-    this.globalOverlay.style.display = 'block'
+    this.globalOverlay.style.display = 'flex'
   }
 
   async saveData() {

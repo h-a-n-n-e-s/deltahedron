@@ -47,7 +47,8 @@ export class Structure {
   triangleColor = [0.8, 0.7, 0.5]
   // triangleColor = [.7, .7, .7];
 
-  ballGlossyness = 0.2
+  ballGlossyness = 0.25
+  rodGlossyness = 0.1
 
   allowTetrahedra = false
 
@@ -148,8 +149,8 @@ export class Structure {
 
     if (position !== undefined) this.balls.data.set(position, offset)
     this.balls.data.set([1], offset + 3) // size
-    this.balls.data.set([this.ballRadius], offset + 16) // radius
-    this.setBallGlossyness(index, this.ballGlossyness)
+    this.balls.data.set([this.ballRadius], offset + 16)
+    this.balls.data.set([this.ballGlossyness], offset + 20)
   }
 
   createRod(index: number) {
@@ -158,17 +159,14 @@ export class Structure {
     this.rods.data.set([1], offset + 3) // size
     this.rods.data.set(this.rodBaseColor, offset + 8) // color
     this.rods.data.set([1], offset + 11) // alpha
-    this.rods.data.set([this.cylinderRadius], offset + 16) // radius
-    this.rods.data.set([this.cylinderLength], offset + 17) // length
+    this.rods.data.set([this.cylinderRadius], offset + 16)
+    this.rods.data.set([this.cylinderLength], offset + 17)
+    this.rods.data.set([this.rodGlossyness], offset + 20)
   }
 
   setBallColor(index: number, color: Array<number>) {
     this.balls.data.set(color, index * q + 8)
     this.balls.data.set([1], index * q + 11) // alpha
-  }
-
-  setBallGlossyness(index: number, glossyness: number) {
-    this.balls.data.set([glossyness], index * q + 20)
   }
 
   setValence(index: number, valence: number) {

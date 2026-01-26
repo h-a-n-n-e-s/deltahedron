@@ -1,8 +1,12 @@
 import './style.css'
 import { BallPark } from './ballPark'
 import { Button, InfoSlider, PushButton, RadioButton, SwitchButton } from './ui'
-import { tooltip } from './display'
+import { checkBrowserSupport, createOverlay, tooltip } from './display'
 import { createPanels } from './panels'
+
+const globalOverlay = createOverlay()
+
+checkBrowserSupport()
 
 Button.initialize(10, 10, 10)
 
@@ -94,14 +98,6 @@ tooltip(
 )
 
 // init____________________________________________________
-
-// global overlay for preventing user input
-const globalOverlay = document.createElement('div')
-globalOverlay.id = 'globalOverlay'
-document.body.appendChild(globalOverlay)
-const subdividingInfo = document.createElement('p')
-subdividingInfo.innerHTML = 'subdividing...'
-globalOverlay.appendChild(subdividingInfo)
 
 // main routine
 await ballPark.initialize(globalOverlay)

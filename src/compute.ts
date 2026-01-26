@@ -53,7 +53,7 @@ export class Compute {
   private stagingBuffer!: GPUBuffer
 
   initialize = async (objects: Array<Object>, timeStep: number, subSteps: number) => {
-    if (navigator.gpu === undefined) alert('WebGPU is not supported')
+    // if (navigator.gpu === undefined) alert('WebGPU is not supported')
 
     const adapter = await navigator.gpu!.requestAdapter()
     // ({powerPreference: 'high-performance'});

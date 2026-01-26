@@ -142,16 +142,28 @@ fn colorize(in: Inter, albedo: vec3f, amoc: vec3f, norm: vec3f, doFres: bool) ->
   }
 
   color *= b * kD * textureSample(irradianceTexture, sam, in.skyDirection).xyz;
-  color += in.glossyness * textureSample(cubeMapTexture, sam, in.skyDirection).xyz;
+
+  // glossy specular
+  // instead of sharp reflections always, we use mipmaps based on roughness.
+  let roughness = 1.0 - in.glossyness;
+  let maxMip = f32(textureNumLevels(cubeMapTexture));
+  let lod = roughness * (maxMip - 1.0);
+
+  // Sample environment map with Level of Detail (LOD)
+  let specular = textureSampleLevel(cubeMapTexture, sam, in.skyDirection, lod).xyz;
+  color += in.glossyness * specular;
+
+  // rim glow
+  // adds a subtle highlight at grazing angles (edges of the object)
+  let NdotV = max(dot(normal, surfaceToEye), 0.0);
+  let rimPower = 3.0;
+  let rimIntensity = pow(1.0 - NdotV, rimPower);
+  let rimColor = vec3f(1.0); // White rim
+  color += rimColor * rimIntensity * 0.2;
 
   color *= amoc;
 
   return vec4f(color, 1);
-
-  // var mapped = color / (color + vec3f(1));
-  // var mapped = vec3f(1.0) - exp(-color * 3);
-  // // mapped = pow(mapped, vec3f(1.0 / 2.2));
-  // return vec4f(mapped, 1);
 }
 
 fn sky_direction(surfaceToEye: vec3f, normal: vec3f) -> vec3f {
