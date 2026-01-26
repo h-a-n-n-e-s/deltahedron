@@ -4,8 +4,6 @@ import { Button, InfoSlider, PushButton, RadioButton, SwitchButton } from './ui'
 import { checkBrowserSupport, createOverlay, tooltip } from './display'
 import { createPanels } from './panels'
 
-const globalOverlay = createOverlay()
-
 checkBrowserSupport()
 
 Button.initialize(10, 10, 10)
@@ -98,6 +96,10 @@ tooltip(
 )
 
 // init____________________________________________________
+
+// global overlay for preventing user input,
+// for example, during subdivide
+const globalOverlay = createOverlay()
 
 // main routine
 await ballPark.initialize(globalOverlay)

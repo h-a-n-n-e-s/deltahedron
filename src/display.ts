@@ -152,7 +152,6 @@ export const sumFormula = (s: string) => {
 }
 
 export const createOverlay = () => {
-  // global overlay for preventing user input
   const globalOverlay = document.createElement('div')
   globalOverlay.id = 'globalOverlay'
   document.body.appendChild(globalOverlay)
