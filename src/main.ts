@@ -61,7 +61,7 @@ tooltip(
   0,
   -30,
   310,
-  'Controls the amount of repulsive (positive) or attractive (negative) force between the vertices similar to electrostatics. Only for zero force it is possible to find configurations where all edge lengths are equal (maximum distance error vanishes). The value can also be controlled with the left/right arrow keys.'
+  'Controls the amount of repulsive (positive) or attractive (negative) force between the vertices similar to electrostatics. Only for zero force it is possible to find configurations where all edge lengths are equal (maximum distance error vanishes). The force value can also be controlled with the left/right arrow keys.'
 )
 // slightly attractive force if 'a' key is pressed
 document.addEventListener('keydown', (e) => {
