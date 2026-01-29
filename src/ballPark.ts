@@ -13,6 +13,7 @@ import { ActivityIndicator, Info, tooltip, vertexCountToSummationFormula } from 
 import { vec3 } from './algebra'
 
 const QUANTIZE_FACTOR = 2097152
+const VOLUME_QUANTIZE_FACTOR = 65536 // smaller to allow larger volumes
 export const q = 24 // scalar quantities per object in buffer
 
 export class BallPark {
@@ -363,7 +364,7 @@ export class BallPark {
         else this.activityIndicator.run()
         lastError = this.error
 
-        this.volume = out[OUT.volume] / QUANTIZE_FACTOR
+        this.volume = out[OUT.volume] / VOLUME_QUANTIZE_FACTOR
         this.volumeInfo.update()
 
         this.compute.resetError()

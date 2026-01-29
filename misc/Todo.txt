@@ -1,5 +1,5 @@
 
-create extended stewart and icosahedral toroids
+create icosahedral toroids
 
 color flat edges differently
 flat edges indicator

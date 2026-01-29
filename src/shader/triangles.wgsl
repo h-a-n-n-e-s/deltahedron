@@ -46,7 +46,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
 
   let orth = cross(b - a, c - a);
   let volume = dot(a, orth) / 6;
-  atomicAdd(&out.volume, i32(volume * QUANTIZE_FACTOR));
+  atomicAdd(&out.volume, i32(volume * VOLUME_QUANTIZE_FACTOR));
 
   let n = normalize(orth);
   triNorm[9 * i    ] = n.x;

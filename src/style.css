@@ -38,6 +38,14 @@ body {
   height: 100vh;
   overflow: hidden;
 }
+a {
+  color: #0ff;
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
 #canvas {
   width: 100%;
   height: 100%;
@@ -158,6 +166,7 @@ button:disabled {
 }
 .structureButton {
   height: 24px;
+  font-size: 13px;
   background-color: var(--pbbc);
   opacity: 1;
   border: 1px solid var(--sbc);
@@ -226,6 +235,9 @@ svg > path {
   width: 300px;
   user-select: none;
 }
+.panel > .structureButton {
+  margin-top: 15px;
+}
 .panelTitle {
   font-size: 20px;
 }
@@ -233,7 +245,7 @@ svg > path {
   margin-top: 0;
   padding: 2em;
   padding-bottom: 0;
-  font-size: 12px;
+  font-size: 11px;
   user-select: text;
   cursor: text;
 }

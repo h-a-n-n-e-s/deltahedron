@@ -8,17 +8,19 @@ export function createPanels(ballPark: BallPark) {
   const structureButton = (name: string, path: string, f?: () => void) => {
     const butt = new PushButton(name)
     butt.button.className = 'structureButton'
+    butt.button.style.width = '250px'
     butt.onPush(() => {
       if (f == undefined) ballPark.loadDataFile(path)
       else f()
     })
     Panel.latest.div.appendChild(butt.button)
+    return butt.button
   }
 
   //
   //
   //
-  new Panel('create')
+  new Panel('library')
 
   //
   title('Platonic solids')
@@ -33,16 +35,37 @@ export function createPanels(ballPark: BallPark) {
   structureButton(`triangle V74 (${sumFormula('T6H68')})`, '/Lobel/triangle_V74')
 
   //
+  title('beauties')
+  const bistableButt = structureButton(`bistable (${sumFormula('T8S4')})`, '/V12/T8S4')
+  tooltip(
+    bistableButt,
+    -270,
+    0,
+    250,
+    'This structure has two distinct non-intersecting solutions. Try to find the second one by carefully applying the attractive force.'
+  )
+
+  //
   const toroids = title('toroids')
-  tooltip(toroids, -10, -22, 100, 'structures with one hole')
+  tooltip(toroids, -10, -12, 100, 'structures with one hole')
 
   structureButton(`Conway's (${sumFormula('T3P9O3N3')})`, '/toroids/conways')
   structureButton(`Stewart (${sumFormula('T6H12O6')})`, '/toroids/stewart')
+  structureButton(`Stewart extended (${sumFormula('T6H24O6')})`, '/toroids/stewart_extended')
   structureButton(`trigonal (${sumFormula('T3H18O3')})`, '/toroids/trigonal')
   structureButton(`tetragonal (${sumFormula('T4H24O4')})`, '/toroids/tetragonal')
   structureButton(`pentagonal (${sumFormula('T5H30O5')})`, '/toroids/pentagonal')
   structureButton(`hexagonal* (${sumFormula('T6H36O6')})`, '/toroids/hexagonal_flat')
   structureButton(`octagonal (${sumFormula('P8H36O4')})`, '', () => ballPark.loadTorus())
+
+  //
+  title('curiosities')
+
+  const v11Butt = structureButton(
+    `V11 not converging (${sumFormula('T4P5H1S1')})`,
+    '/V11/T4P5H1S1_not_converging'
+  )
+  tooltip(v11Butt, -250, 0, 230, 'This structure seems to have no solution even though E=3V-6.')
 
   //
   //
@@ -133,10 +156,10 @@ export function createPanels(ballPark: BallPark) {
 
   title('advanced game')
   text(
-    'Create the augmented dodecahedron called "goal" from the "messy" structure below. You may only use the flip operation.'
+    'Create the augmented dodecahedron called "goal" from the "start" structure below. You may only use the flip operation.'
   )
   structureButton(`goal (${sumFormula('P12H20')})`, '/V22/dodeca')
-  structureButton(`messy (${sumFormula('P12H20')})`, '/V22/dodeca_puzzle')
+  structureButton(`start (${sumFormula('P12H20')})`, '/V22/dodeca_puzzle')
 
   //
   //
@@ -145,10 +168,16 @@ export function createPanels(ballPark: BallPark) {
 
   title('about')
   text(
-    'With this interactive application you can explore the world of deltahedra, polyhedra made only of equilateral triangles. In the upper left corner you will find the three basic operations which will be performed if you click on an edge with the mouse. Almost all interactive elements and info panels show information tooltips if you hover over them with the mouse.'
+    'With this interactive application you can explore the world of deltahedra, which are polyhedra made only from equilateral triangles. In the upper left corner you can find the three basic operations which will be performed if you click on an edge with the mouse. Almost all interactive elements and info panels show information tooltips if you hover over them with the mouse.'
   )
   text(
-    'If a certain structure can truly converge to a deltahedron (maximum distance error = 0) depends on... finding other equil... the force...'
+    'If a certain structure can truly converge to a deltahedron (maximum distance error = 0, also called a "solution") depends on several things. First of all, the force slider needs to be at zero which means that there is no repulsive or attractive force between the vertices. Second, there might be more edge constraints than can be satisfied at the same time. This happens when E>3V-6, where E and V are the number of edges and vertices, respectively. This condition is always met for toroidal deltahedra (wich have one hole, also called genus 1 surfaces). That is why most toroids do not converge but in the library you can find a number of toroids which still do because of their symmetries. But even for deltahedra without a hole (genus 0 surfaces) there might be no solution for a certain connectivity (one example you can find in the library under "curiosities").'
+  )
+  text(
+    'Using the force slider to create an attractive force only for a moment and then setting it to zero again, you can find other solutions for the same connectivity.'
+  )
+  text(
+    'If you have questions or comments feel free to <a href="https://formaldesign.net/contact" target="_blank">get in touch</a>.'
   )
 }
 
