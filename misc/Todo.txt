@@ -1,4 +1,6 @@
 
+compress textures and store computed textures in binaries?
+check normals
 create icosahedral toroids
 
 color flat edges differently
@@ -22,8 +24,6 @@ specular term
 ssao
 textures
 one reflection ray tracing
-
-store computed textures in binaries?
 
 flat faces limit
 any precision Newton post processor

@@ -44,6 +44,17 @@ export function createPanels(ballPark: BallPark) {
     250,
     'This structure has two distinct non-intersecting solutions. Try to find the second one by carefully applying the attractive force.'
   )
+  const fivefoldButt = structureButton(
+    `fivefold inward (${sumFormula('P12H10')})`,
+    '/V22/P12H10_fivefold_in'
+  )
+  tooltip(
+    fivefoldButt,
+    -200,
+    0,
+    180,
+    'Set force to zero before loading it to see the inward facing solution.'
+  )
 
   //
   const toroids = title('toroids')
@@ -59,13 +70,13 @@ export function createPanels(ballPark: BallPark) {
   structureButton(`octagonal (${sumFormula('P8H36O4')})`, '', () => ballPark.loadTorus())
 
   //
-  title('curiosities')
+  // title('curiosities')
 
-  const v11Butt = structureButton(
-    `V11 not converging (${sumFormula('T4P5H1S1')})`,
-    '/V11/T4P5H1S1_not_converging'
-  )
-  tooltip(v11Butt, -250, 0, 230, 'This structure seems to have no solution even though E=3V-6.')
+  // const v11Butt = structureButton(
+  //   `V11 not converging (${sumFormula('T4P5H1S1')})`,
+  //   '/V11/T4P5H1S1_not_converging'
+  // )
+  // tooltip(v11Butt, -250, 0, 230, 'This structure seems to have no solution even though E=3V-6.')
 
   //
   //
@@ -171,8 +182,9 @@ export function createPanels(ballPark: BallPark) {
     'With this interactive application you can explore the world of deltahedra, which are polyhedra made only from equilateral triangles. In the upper left corner you can find the three basic operations which will be performed if you click on an edge with the mouse. Almost all interactive elements and info panels show information tooltips if you hover over them with the mouse.'
   )
   text(
-    'If a certain structure can truly converge to a deltahedron (maximum distance error = 0, also called a "solution") depends on several things. First of all, the force slider needs to be at zero which means that there is no repulsive or attractive force between the vertices. Second, there might be more edge constraints than can be satisfied at the same time. This happens when E>3V-6, where E and V are the number of edges and vertices, respectively. This condition is always met for toroidal deltahedra (wich have one hole, also called genus 1 surfaces). That is why most toroids do not converge but in the library you can find a number of toroids which still do because of their symmetries. But even for deltahedra without a hole (genus 0 surfaces) there might be no solution for a certain connectivity (one example you can find in the library under "curiosities").'
+    'If a certain structure can truly converge to a deltahedron (maximum distance error = 0, also called a "solution") depends on several things. First of all, the force slider needs to be at zero which means that there is no repulsive or attractive force between the vertices. Second, there might be more edge constraints than can be satisfied at the same time. This happens when E>3V-6, where E and V are the number of edges and vertices, respectively. This condition is always met for toroidal deltahedra (wich have one hole, also called genus 1 surfaces). That is why most toroids do not converge but in the library you can find some which still do because of their symmetries.'
   )
+  // But even for deltahedra without a hole (genus 0 surfaces) there might be no solution for a certain connectivity (one example you can find in the library under "curiosities").
   text(
     'Using the force slider to create an attractive force only for a moment and then setting it to zero again, you can find other solutions for the same connectivity.'
   )
