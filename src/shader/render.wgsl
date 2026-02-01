@@ -15,9 +15,10 @@ struct Inter {
   @location(0) color: vec4f,
   @location(1) normal: vec3f,
   @location(2) surfaceToEye: vec3f,
-  @location(3) skyDirection: vec3f,
-  @location(4) glossyness: f32,
-  @location(5) uv: vec2f,
+  // Removed skyDirection (calculated per-pixel now)
+  @location(3) glossyness: f32,
+  @location(4) uv: vec2f,
+  @location(5) tangent: vec3f, // Added tangent
 }
 
 @group(0) @binding(0) var<uniform> para: Para;
@@ -25,9 +26,9 @@ struct Inter {
 @group(0) @binding(2) var sam: sampler;
 @group(0) @binding(3) var cubeMapTexture: texture_cube<f32>;
 @group(0) @binding(4) var irradianceTexture: texture_cube<f32>;
-@group(0) @binding(5) var albedoTexture: texture_2d<f32>;
-@group(0) @binding(6) var amocTexture: texture_2d<f32>;
-@group(0) @binding(7) var normalTexture: texture_2d<f32>;
+// @group(0) @binding(5) var albedoTexture: texture_2d<f32>;
+@group(0) @binding(5) var amocTexture: texture_2d<f32>;
+@group(0) @binding(6) var normalTexture: texture_2d<f32>;
 
 //_____________________________________________________________________________
 
@@ -50,10 +51,10 @@ fn vs_instance(
   out.glossyness = obj.glossyness;
 
   out.normal = rotate_by_quarternion(normal, obj.quarternion);
-
   out.surfaceToEye = para.eye - worldPosition.xyz;
 
-  out.skyDirection = sky_direction(out.surfaceToEye, out.normal);
+  // Instance meshes don't have tangents in this setup, pass 0
+  out.tangent = vec3f(0.0);
 
   return out;
 }
@@ -69,19 +70,12 @@ fn vs_triangle(
   var out: Inter;
 
   out.clipSpacePosition = para.viewProjectionMatrix * vec4f(position, 1);
-
-  out.surfaceToEye = para.eye - position;
-
-  out.skyDirection = sky_direction(out.surfaceToEye, normal);
-
+  out.surfaceToEye = para.eye - position; // Keep in World Space
+  out.normal = normal;
+  out.tangent = tangent; // Pass World Space Tangent to FS
   out.color = object[0].color;
 
-  let bino = cross(tangent, normal);
-  let tbn = mat3x3f(tangent, bino, normal);
-
-  out.surfaceToEye = transpose(tbn) * out.surfaceToEye;
-
-  // texture coords
+  // Texture coords generation
   let current = vertexIndex / 3;
   let ltsInt = u32(para.lts);
   let offset = vec2f(f32(current%ltsInt) * para.tdx, f32(current/ltsInt) * para.tdy);
@@ -98,27 +92,38 @@ fn vs_triangle(
 
 @fragment
 fn fs(in: Inter) -> @location(0) vec4f {
-
   let albedo = in.color.rgb;
-  let amoc = vec3f(1); // no ambient occlusion
-
+  let amoc = vec3f(1);
   return colorize(in, albedo, amoc, in.normal, true);
 }
 
 @fragment
 fn fs_texture(in: Inter) -> @location(0) vec4f {
 
-  let albedo = in.color.rgb;
+  // this would be the actual color of the texture (reddish)
   // let albedo = textureSample(albedoTexture, sam, in.uv).rgb;
+  // but we use our custom color
+  let albedo = in.color.rgb;
 
-  // let amoc = vec3f(1);
+  // ambient occlusion color
   let amoc = textureSample(amocTexture, sam, in.uv).rgb;
 
-  // let norm = vec3f(0, 0, 1);
-  var norm = textureSample(normalTexture, sam, in.uv).xyz;
-  norm = 2 * norm - 1;
+  // 1. Sample Normal Map (Tangent Space)
+  let rawNormal = textureSample(normalTexture, sam, in.uv).xyz;
+  let mapNormal = rawNormal * 2.0 - 1.0;
 
-  return colorize(in, albedo, amoc, norm, true);
+  // 2. Reconstruct TBN Matrix (Tangent -> World)
+  let t = normalize(in.tangent);
+  let n = normalize(in.normal);
+  // Gram-Schmidt orthogonalization to ensure T and N are perpendicular
+  let t_ortho = normalize(t - dot(t, n) * n);
+  let b = cross(t_ortho, n);
+  let tbn = mat3x3f(t_ortho, b, n);
+
+  // 3. Transform Tangent Normal to World Normal
+  let worldNormal = normalize(tbn * mapNormal);
+
+  return colorize(in, albedo, amoc, worldNormal, true);
 }
 
 //_____________________________________________________________________________
@@ -128,6 +133,9 @@ fn colorize(in: Inter, albedo: vec3f, amoc: vec3f, norm: vec3f, doFres: bool) ->
   // normalize interpolated values
   let normal = normalize(norm);
   let surfaceToEye = normalize(in.surfaceToEye);
+
+  // Calculate reflection vector per-pixel using the Detailed Normal
+  let skyDirection = sky_direction(surfaceToEye, normal);
 
   var color = albedo;
 
@@ -141,7 +149,8 @@ fn colorize(in: Inter, albedo: vec3f, amoc: vec3f, norm: vec3f, doFres: bool) ->
     kD = 1.0 - kS;
   }
 
-  color *= b * kD * textureSample(irradianceTexture, sam, in.skyDirection).xyz;
+  // Use calculated skyDirection
+  color *= b * kD * textureSample(irradianceTexture, sam, skyDirection).xyz;
 
   // glossy specular
   // instead of sharp reflections always, we use mipmaps based on roughness.
@@ -150,7 +159,7 @@ fn colorize(in: Inter, albedo: vec3f, amoc: vec3f, norm: vec3f, doFres: bool) ->
   let lod = roughness * (maxMip - 1.0);
 
   // Sample environment map with Level of Detail (LOD)
-  let specular = textureSampleLevel(cubeMapTexture, sam, in.skyDirection, lod).xyz;
+  let specular = textureSampleLevel(cubeMapTexture, sam, skyDirection, lod).xyz;
   color += in.glossyness * specular;
 
   // rim glow

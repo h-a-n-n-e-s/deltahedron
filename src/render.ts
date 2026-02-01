@@ -8,6 +8,7 @@ import {
   createHDRCubeMapTexture,
   createHDRCubeMapSampler,
   createTextureFromImage,
+  // downloadTextureAsBinary,
 } from './textures'
 import { F32Arr } from './compute'
 
@@ -41,7 +42,7 @@ export class Render {
   private cubeMapSampler!: GPUSampler
   private irradianceTexture!: GPUTexture
 
-  private albedoTexture!: GPUTexture
+  // private albedoTexture!: GPUTexture // we use custom color
   private amocTexture!: GPUTexture
   private normalTexture!: GPUTexture
 
@@ -73,14 +74,21 @@ export class Render {
 
     // cube map ___________________________________________
 
-    this.cubeMapTexture = await createHDRCubeMapTexture(device, cubemap)
     this.cubeMapSampler = createHDRCubeMapSampler(device)
 
-    this.irradianceTexture = duplicateTexture(device, this.cubeMapTexture)
+    // this is slow, only do once and download
+    this.cubeMapTexture = await createHDRCubeMapTexture(device, cubemap)
 
+    // this is very expensive, only do once and download
+    this.irradianceTexture = duplicateTexture(device, this.cubeMapTexture)
     await irradianceMap(device, this.cubeMapTexture, this.irradianceTexture)
 
-    this.albedoTexture = await createTextureFromImage(device, tex + '/alb.jpg')
+    // do below once
+    // download cubeMapTexture and irradianceTexture as binaries
+    // downloadTextureAsBinary(this.device, this.cubeMapTexture, 'env_cubemap.bin')
+    // downloadTextureAsBinary(this.device, this.irradianceTexture, 'irradiance.bin')
+
+    // this.albedoTexture = await createTextureFromImage(device, tex + '/alb.jpg')
     this.amocTexture = await createTextureFromImage(device, tex + '/ao.jpg')
     this.normalTexture = await createTextureFromImage(device, tex + '/norm.jpg')
 
@@ -174,14 +182,14 @@ export class Render {
 
     const bindGroupLayout = this.device.createBindGroupLayout({
       entries: [
-        { binding: 0, visibility: ssV, buffer: { type: 'uniform' } },
+        { binding: 0, visibility: ssV | ssF, buffer: { type: 'uniform' } },
         { binding: 1, visibility: ssV, buffer: { type: 'read-only-storage' } },
         { binding: 2, visibility: ssF, sampler: {} },
         { binding: 3, visibility: ssF, texture: { viewDimension: 'cube' } },
         { binding: 4, visibility: ssF, texture: { viewDimension: 'cube' } },
+        // { binding: 5, visibility: ssF, texture: {} },
         { binding: 5, visibility: ssF, texture: {} },
         { binding: 6, visibility: ssF, texture: {} },
-        { binding: 7, visibility: ssF, texture: {} },
       ],
     })
 
@@ -209,9 +217,9 @@ export class Render {
           { binding: 2, resource: this.cubeMapSampler },
           { binding: 3, resource: this.cubeMapTexture.createView({ dimension: 'cube' }) },
           { binding: 4, resource: this.irradianceTexture.createView({ dimension: 'cube' }) },
-          { binding: 5, resource: this.albedoTexture.createView() },
-          { binding: 6, resource: this.amocTexture.createView() },
-          { binding: 7, resource: this.normalTexture.createView() },
+          // { binding: 5, resource: this.albedoTexture.createView() },
+          { binding: 5, resource: this.amocTexture.createView() },
+          { binding: 6, resource: this.normalTexture.createView() },
         ],
       })
 
