@@ -17,7 +17,7 @@ export async function irradianceMap(
   const diffuseStorageTexture = device.createTexture({
     format: 'rgba32float',
     mipLevelCount: 1,
-    size: [texture.width, texture.height, 6],
+    size: [irradianceTexture.width, irradianceTexture.height, 6],
     usage: GPUTextureUsage.COPY_SRC | GPUTextureUsage.STORAGE_BINDING,
   })
 
@@ -44,7 +44,7 @@ export async function irradianceMap(
   device.queue.writeBuffer(
     paramsBuffer,
     0,
-    new Uint32Array([texture.width, texture.mipLevelCount, 2048, 0])
+    new Uint32Array([irradianceTexture.width, texture.mipLevelCount, 512, 0])
   )
 
   const bindGroup = device.createBindGroup({
@@ -62,13 +62,17 @@ export async function irradianceMap(
   const passEncoder = commandEncoder.beginComputePass()
   passEncoder.setPipeline(pipeline)
   passEncoder.setBindGroup(0, bindGroup)
-  passEncoder.dispatchWorkgroups(Math.ceil(texture.width / 8), Math.ceil(texture.height / 8), 6)
+  passEncoder.dispatchWorkgroups(
+    Math.ceil(irradianceTexture.width / 8),
+    Math.ceil(irradianceTexture.height / 8),
+    6
+  )
   passEncoder.end()
 
   commandEncoder.copyTextureToTexture(
     { texture: diffuseStorageTexture },
     { texture: irradianceTexture },
-    [texture.width, texture.height, 6]
+    [irradianceTexture.width, irradianceTexture.height, 6]
   )
 
   device.queue.submit([commandEncoder.finish()])

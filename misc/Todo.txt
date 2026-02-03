@@ -1,6 +1,5 @@
 
-precompute cube maps and store textures in binaries?
-
+add beauties
 create icosahedral toroids
 
 color flat edges differently

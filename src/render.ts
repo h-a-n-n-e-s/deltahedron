@@ -3,7 +3,7 @@ import { Camera } from './camera'
 import header from './shader/header.wgsl?raw'
 import shader from './shader/render.wgsl?raw'
 import { Object } from './structure'
-import { duplicateTexture, irradianceMap } from './irradiance'
+import { irradianceMap } from './irradiance'
 import {
   createHDRCubeMapTexture,
   createHDRCubeMapSampler,
@@ -75,26 +75,22 @@ export class Render {
     // cube map ___________________________________________
 
     this.cubeMapSampler = createHDRCubeMapSampler(device)
-
-    // this is slow, only do once and download
     this.cubeMapTexture = await createHDRCubeMapTexture(device, cubemap)
 
-    // this is very expensive, only do once and download
-    this.irradianceTexture = duplicateTexture(device, this.cubeMapTexture)
+    // this is very expensive
+    // this.irradianceTexture = duplicateTexture(device, this.cubeMapTexture)
+    // hardcode the size to 64 (1024 is unnecessary for diffuse light)
+    this.irradianceTexture = device.createTexture({
+      size: [64, 64, 6],
+      format: 'rgba32float',
+      usage:
+        GPUTextureUsage.TEXTURE_BINDING |
+        GPUTextureUsage.STORAGE_BINDING |
+        GPUTextureUsage.COPY_DST,
+    })
     await irradianceMap(device, this.cubeMapTexture, this.irradianceTexture)
 
-    // // --- GENERATION BLOCK ----------------------
-    // await saveCubemapAsF16(this.device, this.irradianceTexture, 'irradiance.bin', 64)
-    // await saveCubemapAsF16(this.device, this.cubeMapTexture, 'environment.bin', 512)
-    // // -------------------------------------------
-
-    // // load Cubemaps
-    // const [envTex, irrTex] = await Promise.all([
-    //   loadCubemap(device, cubemap + '/environment.bin', 512, true),
-    //   loadCubemap(device, cubemap + '/irradiance.bin', 64, false),
-    // ])
-    // this.cubeMapTexture = envTex
-    // this.irradianceTexture = irrTex
+    // material textures __________________________________
 
     this.albedoTexture = await createTextureFromImage(device, tex + '/alb.jpg')
     this.amocTexture = await createTextureFromImage(device, tex + '/ao.jpg')
