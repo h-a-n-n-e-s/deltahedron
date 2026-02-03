@@ -1,6 +1,6 @@
 
-compress textures and store computed textures in binaries?
-check normals
+precompute cube maps and store textures in binaries?
+
 create icosahedral toroids
 
 color flat edges differently

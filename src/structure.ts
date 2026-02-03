@@ -44,11 +44,12 @@ export class Structure {
   rodBaseColor = [0.5, 0.5, 0.5]
   rodHighlightColor = [1, 0.7, 1]
 
-  triangleColor = [0.8, 0.7, 0.5]
-  // triangleColor = [.7, .7, .7];
+  // triangleColor = [0.8, 0.7, 0.5]
+  triangleColor = [1, 0, 0] // check for not being used
 
-  ballGlossyness = 0.25
+  ballGlossyness = 0.3
   rodGlossyness = 0.1
+  triangleGlossyness = 0.2
 
   allowTetrahedra = false
 
@@ -133,7 +134,7 @@ export class Structure {
 
     this.triangles.data.set([1], 3) // size
     this.triangles.data.set(this.triangleColor, 8) // color
-    // this.triangles.data.set([1], 11); // mass
+    this.triangles.data.set([this.triangleGlossyness], 20)
     // this.triangles.data.set([this.triangles.count], 21); // triangleCount
 
     return [this.balls, this.rods, this.triangles, this.halfEdges] as [

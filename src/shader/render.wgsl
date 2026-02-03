@@ -26,9 +26,10 @@ struct Inter {
 @group(0) @binding(2) var sam: sampler;
 @group(0) @binding(3) var cubeMapTexture: texture_cube<f32>;
 @group(0) @binding(4) var irradianceTexture: texture_cube<f32>;
-// @group(0) @binding(5) var albedoTexture: texture_2d<f32>;
-@group(0) @binding(5) var amocTexture: texture_2d<f32>;
-@group(0) @binding(6) var normalTexture: texture_2d<f32>;
+@group(0) @binding(5) var albedoTexture: texture_2d<f32>;
+@group(0) @binding(6) var amocTexture: texture_2d<f32>;
+@group(0) @binding(7) var normalTexture: texture_2d<f32>;
+@group(0) @binding(8) var roughTexture: texture_2d<f32>;
 
 //_____________________________________________________________________________
 
@@ -74,6 +75,7 @@ fn vs_triangle(
   out.normal = normal;
   out.tangent = tangent; // Pass World Space Tangent to FS
   out.color = object[0].color;
+  out.glossyness = object[0].glossyness;
 
   // Texture coords generation
   let current = vertexIndex / 3;
@@ -97,17 +99,25 @@ fn fs(in: Inter) -> @location(0) vec4f {
   return colorize(in, albedo, amoc, in.normal, true);
 }
 
+// used for triangles
 @fragment
 fn fs_texture(in: Inter) -> @location(0) vec4f {
 
   // this would be the actual color of the texture (reddish)
-  // let albedo = textureSample(albedoTexture, sam, in.uv).rgb;
-  // but we use our custom color
-  let albedo = in.color.rgb;
+  let albedo = textureSample(albedoTexture, sam, in.uv).rgb;
+  // or use our custom color
+  // let albedo = in.color.rgb;
 
   // ambient occlusion color
   let amoc = textureSample(amocTexture, sam, in.uv).rgb;
 
+  // roughness map_______________________________
+  // We only need one channel (.r) since it is a grayscale image.
+  let roughness = textureSample(roughTexture, sam, in.uv).r;
+  var out = in;
+  out.glossyness = (1.0 - roughness) * in.glossyness;
+
+  // normal______________________________________
   // 1. Sample Normal Map (Tangent Space)
   let rawNormal = textureSample(normalTexture, sam, in.uv).xyz;
   let mapNormal = rawNormal * 2.0 - 1.0;
@@ -123,7 +133,7 @@ fn fs_texture(in: Inter) -> @location(0) vec4f {
   // 3. Transform Tangent Normal to World Normal
   let worldNormal = normalize(tbn * mapNormal);
 
-  return colorize(in, albedo, amoc, worldNormal, true);
+  return colorize(out, albedo, amoc, worldNormal, true);
 }
 
 //_____________________________________________________________________________
