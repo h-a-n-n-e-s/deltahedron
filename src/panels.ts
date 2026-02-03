@@ -35,7 +35,7 @@ export function createPanels(ballPark: BallPark) {
   structureButton(`triangle V74 (${sumFormula('T6H68')})`, '/Lobel/triangle_V74')
 
   //
-  title('beauties')
+  title('notable')
   const bistableButt = structureButton(`bistable (${sumFormula('T8S4')})`, '/V12/T8S4')
   tooltip(
     bistableButt,
@@ -55,6 +55,7 @@ export function createPanels(ballPark: BallPark) {
     180,
     'Set force to zero before loading it to see the inward facing solution.'
   )
+  structureButton(`propeller (${sumFormula('T9S6')})`, '/V15/T9S6_propeller')
 
   //
   const toroids = title('toroids')

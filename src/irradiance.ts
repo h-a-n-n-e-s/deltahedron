@@ -44,7 +44,7 @@ export async function irradianceMap(
   device.queue.writeBuffer(
     paramsBuffer,
     0,
-    new Uint32Array([irradianceTexture.width, texture.mipLevelCount, 512, 0])
+    new Uint32Array([irradianceTexture.width, texture.mipLevelCount, 1024, 0])
   )
 
   const bindGroup = device.createBindGroup({

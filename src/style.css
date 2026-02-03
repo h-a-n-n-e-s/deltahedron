@@ -340,7 +340,7 @@ svg > path {
   z-index: 1;
 }
 
-#globalOverlay {
+.globalOverlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -355,7 +355,7 @@ svg > path {
   gap: 20px;
 }
 
-#globalOverlay > p {
+.globalOverlay > p {
   position: relative;
   max-width: 500px;
   margin: 20px; /* Add some spacing around text */
@@ -365,7 +365,11 @@ svg > path {
   display: block;
 }
 
-#globalOverlay > button {
+.globalOverlay > button {
   position: relative;
   scale: 1.5;
+}
+
+#loadTexOverlay {
+  background-color: rgba(0, 0, 0, 0.5);
 }

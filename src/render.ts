@@ -79,9 +79,9 @@ export class Render {
 
     // this is very expensive
     // this.irradianceTexture = duplicateTexture(device, this.cubeMapTexture)
-    // hardcode the size to 64 (1024 is unnecessary for diffuse light)
+    // hardcode the size to 128 (1024 is unnecessary for diffuse light)
     this.irradianceTexture = device.createTexture({
-      size: [64, 64, 6],
+      size: [128, 128, 6],
       format: 'rgba32float',
       usage:
         GPUTextureUsage.TEXTURE_BINDING |

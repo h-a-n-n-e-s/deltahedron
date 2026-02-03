@@ -1,6 +1,6 @@
 
-add beauties
 create icosahedral toroids
+tetrahedron comment
 
 color flat edges differently
 flat edges indicator

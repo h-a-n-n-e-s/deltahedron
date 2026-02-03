@@ -4,7 +4,12 @@ import { Button, InfoSlider, PushButton, RadioButton, SwitchButton } from './ui'
 import { checkBrowserSupport, createOverlay, tooltip } from './display'
 import { createPanels } from './panels'
 
-checkBrowserSupport()
+const validBrowser = checkBrowserSupport()
+
+const loadingTexturesOverlay = validBrowser
+  ? createOverlay('loading textures...', 'loadTexOverlay')
+  : undefined
+if (loadingTexturesOverlay) loadingTexturesOverlay.style.display = 'flex'
 
 Button.initialize(10, 10, 10)
 
@@ -99,12 +104,14 @@ tooltip(
 
 // global overlay for preventing user input,
 // for example, during subdivide
-const globalOverlay = createOverlay()
+const subdivideOverlay = createOverlay('subdividing...')
 
 // main routine
-await ballPark.initialize(globalOverlay)
+await ballPark.initialize(subdivideOverlay)
 
 forceSlider.setSlider(forceSlider.value)
+
+if (loadingTexturesOverlay) loadingTexturesOverlay.remove()
 
 // logo
 const a = document.createElement('a')

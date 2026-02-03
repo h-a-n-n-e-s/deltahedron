@@ -151,18 +151,19 @@ export const sumFormula = (s: string) => {
   return vertexCountToSummationFormula(formula)
 }
 
-export const createOverlay = () => {
+export const createOverlay = (message: string, id?: string) => {
   const globalOverlay = document.createElement('div')
-  globalOverlay.id = 'globalOverlay'
+  globalOverlay.className = 'globalOverlay'
+  if (id) globalOverlay.id = id
   document.body.appendChild(globalOverlay)
   const subdividingInfo = document.createElement('p')
-  subdividingInfo.innerHTML = 'subdividing...'
+  subdividingInfo.innerHTML = message
   globalOverlay.appendChild(subdividingInfo)
 
   return globalOverlay
 }
 
-export const checkBrowserSupport = () => {
+export const checkBrowserSupport = (): boolean => {
   const ua = navigator.userAgent.toLowerCase()
 
   // Detection Logic
@@ -185,15 +186,18 @@ export const checkBrowserSupport = () => {
         'Your browser does not support WebGPU. This app requires a Chromium-based browser (Chrome, Edge, Opera).'
     }
 
-    const overlay = createOverlay()
+    const overlay = createOverlay(message)
     overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.7)'
     overlay.style.display = 'flex'
-    showWarningBanner(overlay, message)
+    showWarningBanner(overlay)
+
+    return false
   }
+
+  return true
 }
 
-const showWarningBanner = (overlay: HTMLDivElement, msg: string) => {
-  overlay.querySelector('p')!.innerHTML = msg
+const showWarningBanner = (overlay: HTMLDivElement) => {
   const dismissButton = new PushButton('dismiss', false)
   dismissButton.onPush(() => {
     overlay.style.display = 'none'
