@@ -1,6 +1,6 @@
 import './style.css'
 import { BallPark } from './ballPark'
-import { Button, InfoSlider, PushButton, RadioButton, SwitchButton } from './ui'
+import { Button, InfoSlider, PushButton, RadioButton } from './ui'
 import { checkBrowserSupport, createOverlay, tooltip } from './display'
 import { createPanels } from './panels'
 
