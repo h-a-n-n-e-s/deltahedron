@@ -30,8 +30,10 @@ export class Camera {
   private projection = new Float32Array(16)
   private inverseProjection = new Float32Array(16)
 
+  private canvas!: HTMLCanvasElement
+
   mouseCoords: { x: number; y: number; haveChanged: boolean } = { x: 0, y: 0, haveChanged: false }
-  mouseWasPressed = false
+  mouseSignal = false
 
   private isNew = true
 
@@ -113,6 +115,8 @@ export class Camera {
     this.isNew = true
   }
 
+  emitMouseSignal = () => (this.mouseSignal = true)
+
   mouseInteraction(canvas: HTMLCanvasElement) {
     canvas.addEventListener('pointermove', (e) => {
       this.mouseCoords.x = -1 + (2 * e.clientX) / canvas.clientWidth
@@ -145,7 +149,9 @@ export class Camera {
       this.mouseCoords.haveChanged = true
     })
 
-    canvas.addEventListener('pointerdown', () => (this.mouseWasPressed = true))
+    canvas.addEventListener('pointerdown', this.emitMouseSignal)
+
+    this.canvas = canvas
   }
 
   getMouseRay() {
@@ -194,4 +200,18 @@ export class Camera {
       this.isNew = true
     })
   }
+
+  setMouseSignalOnRelease = (onRelease: boolean) => {
+    const s = this.emitMouseSignal
+
+    if (onRelease) {
+      this.canvas.removeEventListener('pointerdown', s)
+      this.canvas.addEventListener('pointerup', s)
+    } else {
+      this.canvas.removeEventListener('pointerup', s)
+      this.canvas.addEventListener('pointerdown', s)
+    }
+  }
+
+  getSetMouseSignalOnRelease = () => this.setMouseSignalOnRelease
 }

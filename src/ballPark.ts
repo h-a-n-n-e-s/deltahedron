@@ -66,6 +66,8 @@ export class BallPark {
 
   subdivideOverlay!: HTMLDivElement
 
+  setMouseSignalOnRelease!: (onRelease: boolean) => void
+
   async initialize(subdivideOverlay: HTMLDivElement) {
     this.subdivideOverlay = subdivideOverlay
 
@@ -122,6 +124,7 @@ export class BallPark {
     // interaction
 
     camera.mouseInteraction(this.render.getCanvas())
+    this.setMouseSignalOnRelease = camera.getSetMouseSignalOnRelease()
 
     // display ____________________________________________
 
@@ -195,7 +198,7 @@ export class BallPark {
 
     const loop = async () => {
       if (!this.subdivide) {
-        if (camera.mouseCoords.haveChanged || camera.mouseWasPressed) {
+        if (camera.mouseCoords.haveChanged || camera.mouseSignal) {
           camera.mouseCoords.haveChanged = false
           checkSelection = true
           this.compute.selectRodScanBranch('depthTest')
@@ -262,7 +265,7 @@ export class BallPark {
         this.dihedralAngleInfo.update()
 
         // basic edge operations
-        if (hoveringRod !== -1 && camera.mouseWasPressed) {
+        if (hoveringRod !== -1 && camera.mouseSignal) {
           // edge selected
 
           let status = 0
@@ -272,7 +275,8 @@ export class BallPark {
           else if (this.collapse) status = await this.deltahedron.collapseEdge(hoveringRod)
 
           if (status > 0) {
-            if (status === 1) this.alertText = 'Tetrahedral corners are not allowed.'
+            if (status === 1)
+              this.alertText = 'Tetrahedral corners are not allowed<br>(see settings).'
             if (status === 2) this.alertText = 'Loose triangles are not allowed.'
             this.alertInfo.update()
           }
@@ -286,7 +290,7 @@ export class BallPark {
         }
 
         // plot coords
-        if (hoveringBall !== -1 && camera.mouseWasPressed) {
+        if (hoveringBall !== -1 && camera.mouseSignal) {
           const b = await this.compute.getBuffer('balls')
           const p = new Float32Array(3)
           p.set(b.slice(q * hoveringBall, q * hoveringBall + 3))
@@ -295,12 +299,11 @@ export class BallPark {
             this.distance = vec3.length(vec3.subtract(p, prevVertexPos))
             this.distanceInfo.update()
             prevVertexPos.set(p)
-            // console.log([...p])
           } else prevVertexPos = new Float32Array(p)
         }
 
         checkSelection = false
-        camera.mouseWasPressed = false
+        camera.mouseSignal = false
         this.compute.makeMouseCoordsOldNews()
       }
 
@@ -404,7 +407,6 @@ export class BallPark {
 
   setAllowTetrahedra(s: boolean) {
     this.deltahedron.allowTetrahedra = s
-    console.log(s ? 'tetrahedra allowed' : 'tetrahedra not allowed')
   }
 
   loadOctahedron() {

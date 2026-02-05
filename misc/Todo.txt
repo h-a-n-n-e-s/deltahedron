@@ -1,6 +1,6 @@
 
 create icosahedral toroids
-tetrahedron comment
+tetrahedron initial collapse bug
 
 color flat edges differently
 flat edges indicator

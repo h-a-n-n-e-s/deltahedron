@@ -107,7 +107,7 @@ sub {
   width: 200px;
 }
 #alertInfo {
-  bottom: 52px;
+  bottom: 70px;
   left: calc(100vw / 2 - 200px);
   text-align: center;
   width: 400px;
@@ -176,13 +176,13 @@ button:disabled {
   border-color: #fff;
 }
 
-#allowTetrahedra {
+/*#allowTetrahedra {
   position: absolute;
   left: 18px;
   bottom: 50px;
   cursor: default;
   background: none;
-}
+}*/
 select,
 option {
   cursor: pointer;

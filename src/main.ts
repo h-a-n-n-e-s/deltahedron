@@ -123,11 +123,6 @@ img.id = 'logo'
 img.src = '/FD_anime2.svg'
 a.appendChild(img)
 
-const allowTetrahedraButton = new SwitchButton(' ')
-allowTetrahedraButton.onPush(() => ballPark.setAllowTetrahedra(allowTetrahedraButton.on))
-allowTetrahedraButton.button.id = 'allowTetrahedra'
-document.body.appendChild(allowTetrahedraButton.button)
-
 // panels _________________________________________________
 
 createPanels(ballPark)

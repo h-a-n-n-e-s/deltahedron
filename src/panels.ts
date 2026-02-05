@@ -3,6 +3,8 @@ import { enableTooltips, sumFormula, tooltip } from './display'
 import { PushButton, SwitchButton } from './ui'
 
 export function createPanels(ballPark: BallPark) {
+  const SHORT_WINDOW_HEIGHT = 400
+
   // structure ____________________________________________
 
   const structureButton = (name: string, path: string, f?: () => void) => {
@@ -82,7 +84,7 @@ export function createPanels(ballPark: BallPark) {
   //
   //
   //
-  const dataPanel = new Panel('data', 320)
+  const dataPanel = new Panel('data', SHORT_WINDOW_HEIGHT)
 
   const loadButton = new PushButton('load')
   loadButton.onPush(async () => await ballPark.loadData())
@@ -108,7 +110,7 @@ export function createPanels(ballPark: BallPark) {
   //
   //
   //
-  const viewPanel = new Panel('view', 320)
+  const viewPanel = new Panel('view', SHORT_WINDOW_HEIGHT)
 
   const faceButton = new SwitchButton('faces')
   faceButton.onPush(() => ballPark.showFaces(faceButton.on))
@@ -158,6 +160,36 @@ export function createPanels(ballPark: BallPark) {
   //
   //
   //
+  const settingsPanel = new Panel('settings', SHORT_WINDOW_HEIGHT)
+
+  const allowTetrahedraButton = new SwitchButton('allow tetrahedra')
+  allowTetrahedraButton.onPush(() => ballPark.setAllowTetrahedra(allowTetrahedraButton.on))
+  tooltip(
+    allowTetrahedraButton.button,
+    -270,
+    0,
+    250,
+    'Tetrahedra are inconsequential for a deltahedron since they are only sitting on top of a triangular face without influencing the rest of the structure. This is why they are turned off by default.'
+  )
+
+  const mouseSignalOnReleaseButton = new SwitchButton('trigger on mouse release')
+  mouseSignalOnReleaseButton.onPush(() =>
+    ballPark.setMouseSignalOnRelease(mouseSignalOnReleaseButton.on)
+  )
+  tooltip(
+    mouseSignalOnReleaseButton.button,
+    -200,
+    0,
+    180,
+    'Edge operations will only be triggered once the mouse button is released (and not on push).'
+  )
+
+  settingsPanel.div.appendChild(allowTetrahedraButton.button)
+  settingsPanel.div.appendChild(mouseSignalOnReleaseButton.button)
+
+  //
+  //
+  //
   new Panel('game')
 
   title('simple game')
@@ -188,6 +220,9 @@ export function createPanels(ballPark: BallPark) {
   // But even for deltahedra without a hole (genus 0 surfaces) there might be no solution for a certain connectivity (one example you can find in the library under "curiosities").
   text(
     'Using the force slider to create an attractive force only for a moment and then setting it to zero again, you can find other solutions for the same connectivity.'
+  )
+  text(
+    'Tetrahedra are not allowed by default but you can change this in the settings. Tetrahedra are inconsequential for a deltahedron since they are only sitting on top of a triangular face without influencing the rest of the structure.'
   )
   text(
     'If you have questions or comments feel free to <a href="https://formaldesign.net/contact" target="_blank">get in touch</a>.'
