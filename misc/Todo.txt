@@ -1,6 +1,6 @@
 
+centroid off for tetrahedron
 create icosahedral toroids
-tetrahedron initial collapse bug
 
 color flat edges differently
 flat edges indicator

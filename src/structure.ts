@@ -180,9 +180,8 @@ export class Structure {
 
   connectionsToColor(valence: number) {
     if (!this.allowTetrahedra && valence < 4) throw new Error('valence < 4')
-    else if (valence == 3) return [0.1, 0.1, 0.1]
     else if (valence > 10) return colorArray[7]
-    else return colorArray[valence - 4]
+    else return colorArray[valence - 3]
   }
 
   vertexCoordinationCount(halfEdges: U32Arr, vertexIndex: number) {

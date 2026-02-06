@@ -46,7 +46,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   }
 
   rods[i].position = abMean;
-  rods[i].quarternion = quaternionFromDirection(ab);
+  rods[i].quarternion = quaternionFromDirection(nor);
 
   atomicAdd(&velocityUpdate[4 * j    ], i32(velocity.x * QUANTIZE_FACTOR));
   atomicAdd(&velocityUpdate[4 * j + 1], i32(velocity.y * QUANTIZE_FACTOR));
@@ -59,8 +59,11 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   atomicAdd(&velocityUpdate[4 * k + 3], 1); // valence count for diagonal newton
 }
 
-fn quaternionFromDirection(v:vec3f) -> vec4f {
-  let l = length(v);
-  let f = 1 / sqrt(2 * l * (l + v.y));
-  return vec4f(v.z * f, 0, - v.x * f, (l + v.y) * f);
+fn quaternionFromDirection(nor:vec3f) -> vec4f {
+  // handle singularity: if pointing straight down (v.y == -1)
+  if (nor.y < -0.9999) {
+    return vec4f(1.0, 0.0, 0.0, 0.0); // 180 degree rotation around X axis
+  }
+  let f = 1 / sqrt(2 * (1 + nor.y));
+  return vec4f(nor.z * f, 0, - nor.x * f, (1 + nor.y) * f);
 }

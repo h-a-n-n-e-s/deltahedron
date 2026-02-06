@@ -2,7 +2,8 @@ import { U32Arr } from './compute'
 import { PushButton } from './ui'
 
 const color = {
-  blue: [0.2, 0, 0.8],
+  pink: [1, 0.6, 0.6],
+  blue: [0.3, 0, 0.9],
   cyan: [0, 0.6, 0.6],
   white: [0.9, 0.9, 0.9],
   red: [0.9, 0, 0],
@@ -87,11 +88,11 @@ export class ActivityIndicator {
 const colorU8Array = Object.values(color).map((c) => c.map((v) => Math.floor(255 * v)))
 
 export const vertexCountToSummationFormula = (count: U32Arr) => {
-  const element = ['T', 'P', 'H', 'S', 'O', 'N', 'D']
+  const element = ['Y', 'T', 'P', 'H', 'S', 'O', 'N', 'D']
   let bigCount = 0
   let string = ''
-  for (let i = 4; i < 12; i++) {
-    const c = colorU8Array[i - 4]
+  for (let i = 3; i < 12; i++) {
+    const c = colorU8Array[i - 3]
     if (i > 10 && count[i] > 0) bigCount += count[i]
     else if (count[i] > 0) {
       string = string.concat(
@@ -102,7 +103,7 @@ export const vertexCountToSummationFormula = (count: U32Arr) => {
           ',' +
           c[2] +
           ')">' +
-          element[i - 4] +
+          element[i - 3] +
           '<sub>' +
           count[i] +
           '</sub>&emsp14;</span>'
@@ -130,6 +131,7 @@ export const sumFormula = (s: string) => {
   const formula = new Uint32Array(12)
 
   const mapping: Record<string, number> = {
+    Y: 3,
     T: 4,
     P: 5,
     H: 6,

@@ -166,11 +166,12 @@ export function createPanels(ballPark: BallPark) {
   allowTetrahedraButton.onPush(() => ballPark.setAllowTetrahedra(allowTetrahedraButton.on))
   tooltip(
     allowTetrahedraButton.button,
-    -270,
+    -320,
     0,
-    250,
-    'Tetrahedra are inconsequential for a deltahedron since they are only sitting on top of a triangular face without influencing the rest of the structure. This is why they are turned off by default.'
+    300,
+    'Tetrahedra are rather inconsequential for a deltahedron since they are only sitting on top of a triangular face without influencing the rest of the structure and can therefore be considered as separable compounds. You may wish to not allow the creation of tetrahedra for clarity.'
   )
+  allowTetrahedraButton.click()
 
   const mouseSignalOnReleaseButton = new SwitchButton('trigger on mouse release')
   mouseSignalOnReleaseButton.onPush(() =>
@@ -220,9 +221,6 @@ export function createPanels(ballPark: BallPark) {
   // But even for deltahedra without a hole (genus 0 surfaces) there might be no solution for a certain connectivity (one example you can find in the library under "curiosities").
   text(
     'Using the force slider to create an attractive force only for a moment and then setting it to zero again, you can find other solutions for the same connectivity.'
-  )
-  text(
-    'Tetrahedra are not allowed by default but you can change this in the settings. Tetrahedra are inconsequential for a deltahedron since they are only sitting on top of a triangular face without influencing the rest of the structure.'
   )
   text(
     'If you have questions or comments feel free to <a href="https://formaldesign.net/contact" target="_blank">get in touch</a>.'

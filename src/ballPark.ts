@@ -163,10 +163,10 @@ export class BallPark {
 
     tooltip(
       this.formulaInfo.div,
-      -110,
-      170,
-      420,
-      'The formula summarizing how many different vertices are present in the deltahedron. A vertex is characterized by its valence, which equals the number of edges connected to it. The initials of greek numerals for 4 T (Tetra), 5 P (Penta), 6 H (Hexa), and latin numerals for 7 S (Sept), 8 O (Oct), 9 N (Nonus), 10 D (Deca) are used to identify the valence (for numbers larger than 10 B ("Big" or "Beyond" is used). The subscripts equal the number of vertices for each vertex type. The colors correspond to the colors of the spheres representing the vertices.'
+      -120,
+      200,
+      430,
+      'The formula summarizing how many different vertices are present in the deltahedron. A vertex is characterized by its valence, which equals the number of edges connected to it. The initials of greek numerals for 4 T (Tetra), 5 P (Penta), 6 H (Hexa), and latin numerals for 7 S (Sept), 8 O (Oct), 9 N (Nonus), 10 D (Deca) are used to identify the valence (for numbers larger than 10 B ("Big" or "Beyond" is used). For 3 Y is used since T (which could also be Tri) is already taken and the letter Y is also made of three lines meeting at a point. The subscripts equal the number of vertices for each vertex type. The colors correspond to the colors of the spheres representing the vertices.'
     )
     this.formulaInfo.update()
 
