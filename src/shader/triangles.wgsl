@@ -46,7 +46,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
 
   let orth = cross(b - a, c - a);
   let volume = dot(a, orth) / 6;
-  atomicAdd(&out.volume, i32(volume * VOLUME_QUANTIZE_FACTOR));
+  atomicAdd(&out.volume, i32(volume * SMALL_QUANTIZE_FACTOR));
 
   let n = normalize(orth);
   triNorm[9 * i    ] = n.x;
@@ -72,17 +72,21 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
 
   // do centroid correction here cuz in rods.wgsl it is
   // interfering with other velocity updates
-  let bc = i32(global.ballCount);
-  let centroid = - vec3i(atomicLoad(&out.centroidX), atomicLoad(&out.centroidY), atomicLoad(&out.centroidZ)) / bc;
+  let centroid = - vec3i(atomicLoad(&out.centroidX), atomicLoad(&out.centroidY), atomicLoad(&out.centroidZ)) / max(10, i32(global.ballCount));
+
   if dot(centroid, centroid) > 0 {
-    atomicCompareExchangeWeak(&velocityUpdate[4 * j    ], 0, centroid.x);
-    atomicCompareExchangeWeak(&velocityUpdate[4 * j + 1], 0, centroid.y);
-    atomicCompareExchangeWeak(&velocityUpdate[4 * j + 2], 0, centroid.z);
-    atomicCompareExchangeWeak(&velocityUpdate[4 * k    ], 0, centroid.x);
-    atomicCompareExchangeWeak(&velocityUpdate[4 * k + 1], 0, centroid.y);
-    atomicCompareExchangeWeak(&velocityUpdate[4 * k + 2], 0, centroid.z);
-    atomicCompareExchangeWeak(&velocityUpdate[4 * l    ], 0, centroid.x);
-    atomicCompareExchangeWeak(&velocityUpdate[4 * l + 1], 0, centroid.y);
-    atomicCompareExchangeWeak(&velocityUpdate[4 * l + 2], 0, centroid.z);
+    // divide by valence because it is added as many times as the valence
+    var corr = centroid / max(1, i32(balls[j].valence));
+    atomicAdd(&velocityUpdate[4 * j    ], corr.x);
+    atomicAdd(&velocityUpdate[4 * j + 1], corr.y);
+    atomicAdd(&velocityUpdate[4 * j + 2], corr.z);
+    corr = centroid / max(1, i32(balls[k].valence));
+    atomicAdd(&velocityUpdate[4 * k    ], corr.x);
+    atomicAdd(&velocityUpdate[4 * k + 1], corr.y);
+    atomicAdd(&velocityUpdate[4 * k + 2], corr.z);
+    corr = centroid / max(1, i32(balls[l].valence));
+    atomicAdd(&velocityUpdate[4 * l    ], corr.x);
+    atomicAdd(&velocityUpdate[4 * l + 1], corr.y);
+    atomicAdd(&velocityUpdate[4 * l + 2], corr.z);
   }
 }

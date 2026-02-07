@@ -7,13 +7,13 @@ import {
   torusVertexPositions,
 } from './mesh'
 import { Camera } from './camera'
-import { Structure } from './structure'
+import { GeometryStatus, Structure } from './structure'
 import { loadFromPublic, readFile } from './io'
 import { ActivityIndicator, Info, tooltip, vertexCountToSummationFormula } from './display'
 import { vec3 } from './algebra'
 
 const QUANTIZE_FACTOR = 2097152
-const VOLUME_QUANTIZE_FACTOR = 65536 // smaller to allow larger volumes
+const SMALL_QUANTIZE_FACTOR = 65536 // smaller to allow larger volumes
 export const q = 24 // scalar quantities per object in buffer
 
 export class BallPark {
@@ -25,8 +25,7 @@ export class BallPark {
   cylinderRadius = 0.04
   cylinderLength = 1
 
-  timeStep = 0.05 // 0.05
-  subSteps = 1 // 5
+  timeStep = 0.05
 
   action = false
 
@@ -99,11 +98,7 @@ export class BallPark {
       octahedronVertexPositions
     )
 
-    const gpuDevice = await this.compute.initialize(
-      [balls, rods, triangles],
-      this.timeStep,
-      this.subSteps
-    )
+    const gpuDevice = await this.compute.initialize([balls, rods, triangles], this.timeStep)
 
     this.compute.setHalfEdgeBuffer(halfEdges)
     this.compute.setCount(balls.count, rods.count, triangles.count)
@@ -210,14 +205,14 @@ export class BallPark {
 
       // main computation and rendering _______________________________________
       if (this.subdivide || checkSelection || !converged || this.action || this.rotate) {
-        const commandEncoder = gpuDevice.createCommandEncoder()
+        const encoder = gpuDevice.createCommandEncoder()
 
         // if (!slowmo)
-        this.compute.integration(commandEncoder, balls.count, rods.count, triangles.count)
+        this.compute.integration(encoder, balls.count, rods.count, triangles.count)
 
-        this.render.render(camera, commandEncoder)
+        this.render.render(camera, encoder)
 
-        gpuDevice.queue.submit([commandEncoder.finish()])
+        gpuDevice.queue.submit([encoder.finish()])
       }
       //_______________________________________________________________________
 
@@ -268,16 +263,17 @@ export class BallPark {
         if (hoveringRod !== -1 && camera.mouseSignal) {
           // edge selected
 
-          let status = 0
+          let status = GeometryStatus.Valid
 
           if (this.add) this.deltahedron.addVertex(hoveringRod)
           else if (this.flip) status = this.deltahedron.flipEdge(hoveringRod)
           else if (this.collapse) status = await this.deltahedron.collapseEdge(hoveringRod)
 
-          if (status > 0) {
-            if (status === 1)
+          if (status !== GeometryStatus.Valid) {
+            if (status === GeometryStatus.Tetrahedron)
               this.alertText = 'Tetrahedral corners are not allowed<br>(see settings).'
-            if (status === 2) this.alertText = 'Loose triangles are not allowed.'
+            if (status === GeometryStatus.LooseTriangle)
+              this.alertText = 'Loose triangles are not allowed.'
             this.alertInfo.update()
           }
           if (this.showOnlyIsoRods) this.deltahedron.showOnlyIsoRods()
@@ -367,8 +363,10 @@ export class BallPark {
         else this.activityIndicator.run()
         lastError = this.error
 
-        this.volume = out[OUT.volume] / VOLUME_QUANTIZE_FACTOR
+        this.volume = out[OUT.volume] / SMALL_QUANTIZE_FACTOR
         this.volumeInfo.update()
+
+        // console.log(out[OUT.centroidX], out[OUT.centroidY], out[OUT.centroidZ])
 
         this.compute.resetError()
       }

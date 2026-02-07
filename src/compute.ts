@@ -36,8 +36,6 @@ export class Compute {
   private rodScanPipeline!: GPUComputePipeline
   private ballScanPipeline!: GPUComputePipeline
 
-  private subSteps!: number
-
   private globalParameterBuffer!: GPUBuffer
   private ballsBuffer!: GPUBuffer
   private rodsBuffer!: GPUBuffer
@@ -52,7 +50,7 @@ export class Compute {
   private stagingOutBuffer!: GPUBuffer
   private stagingBuffer!: GPUBuffer
 
-  initialize = async (objects: Array<Object>, timeStep: number, subSteps: number) => {
+  initialize = async (objects: Array<Object>, timeStep: number) => {
     // if (navigator.gpu === undefined) alert('WebGPU is not supported')
 
     const adapter = await navigator.gpu!.requestAdapter()
@@ -64,15 +62,13 @@ export class Compute {
       requiredFeatures: ['float32-filterable'], // for hdr
     })
 
-    this.subSteps = subSteps
-
     // buffers ////////////////////////////////////////////
 
     this.globalParameterBuffer = this.device.createBuffer({
       size: 4 * 20,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
     })
-    this.setTimeAndSubStep(timeStep, subSteps)
+    this.setTimeStep(timeStep)
 
     const [balls, rods, triangles] = objects
 
@@ -92,7 +88,7 @@ export class Compute {
 
     this.velocityUpdateBuffer = this.device.createBuffer({
       size: (this.ballsBuffer.size / q) * 4, // padding unnecessary
-      usage: GPUBufferUsage.STORAGE,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
     })
 
     this.halfEdgeBuffer = this.device.createBuffer({
@@ -242,12 +238,14 @@ export class Compute {
     rodCount: number,
     triangleCount: number
   ) => {
+    this.resetVolume(encoder)
+    this.resetCentroid(encoder)
+
     this.computePass(encoder, this.rodsPipeline, this.bindGroup, rodCount)
 
-    this.resetCentroidAndVolume()
+    this.computePass(encoder, this.ballsPipeline, this.bindGroup, ballCount)
 
-    for (let s = 0; s < this.subSteps; s++)
-      this.computePass(encoder, this.ballsPipeline, this.bindGroup, ballCount)
+    encoder.clearBuffer(this.velocityUpdateBuffer)
 
     this.computePass(encoder, this.trianglesPipeline, this.triangleBindGroup, triangleCount)
   }
@@ -286,9 +284,14 @@ export class Compute {
     this.device.queue.writeBuffer(this.outBuffer, 0, new Int32Array([2147483647, -1, -1]))
   }
 
-  resetCentroidAndVolume = () => {
+  resetCentroid = (encoder: GPUCommandEncoder) => {
     this.unmapStagingOut()
-    this.device.queue.writeBuffer(this.outBuffer, 4 * OUT.centroidX, new Int32Array([0, 0, 0, 0]))
+    encoder.clearBuffer(this.outBuffer, 4 * OUT.centroidX, 4 * 3)
+  }
+
+  resetVolume = (encoder: GPUCommandEncoder) => {
+    this.unmapStagingOut()
+    encoder.clearBuffer(this.outBuffer, 4 * OUT.volume, 4)
   }
 
   resetError = () => {
@@ -337,8 +340,8 @@ export class Compute {
     passEncoder.end()
   }
 
-  setTimeAndSubStep = (dt: number, sub: number) => {
-    this.device.queue.writeBuffer(this.globalParameterBuffer, 12, new Float32Array([dt / sub]))
+  setTimeStep = (dt: number) => {
+    this.device.queue.writeBuffer(this.globalParameterBuffer, 12, new Float32Array([dt]))
   }
 
   setNewBallRodIndex = (newBallRodIndex: number) => {

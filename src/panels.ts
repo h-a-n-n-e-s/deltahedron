@@ -73,13 +73,13 @@ export function createPanels(ballPark: BallPark) {
   structureButton(`octagonal (${sumFormula('P8H36O4')})`, '', () => ballPark.loadTorus())
 
   //
-  // title('curiosities')
+  title('curiosities')
 
-  // const v11Butt = structureButton(
-  //   `V11 not converging (${sumFormula('T4P5H1S1')})`,
-  //   '/V11/T4P5H1S1_not_converging'
-  // )
-  // tooltip(v11Butt, -250, 0, 230, 'This structure seems to have no solution even though E=3V-6.')
+  const v12aButt = structureButton(
+    `V12 not converging (${sumFormula('T4P5H2S1')})`,
+    '/not_converging/V12a'
+  )
+  tooltip(v12aButt, -250, 0, 230, 'This structure seems to have no solution even though E=3V-6.')
 
   //
   //

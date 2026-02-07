@@ -30,9 +30,6 @@ export interface HDRImageData {
   data: F32Arr
 }
 
-/**
- * @ignore
- */
 type Header = {
   width: number
   height: number
@@ -43,9 +40,6 @@ type Header = {
   flipY: boolean
 }
 
-/**
- * @ignore
- */
 type DataStream = {
   offset: number
   data: DataView
@@ -90,9 +84,6 @@ export class HDRLoader {
     return this.#decodeRGBE(new DataView(buffer))
   }
 
-  /**
-   * @ignore
-   */
   #decodeRGBE(data: DataView): HDRImageData {
     const stream = {
       data,
@@ -110,9 +101,6 @@ export class HDRLoader {
     }
   }
 
-  /**
-   * @ignore
-   */
   #parseHeader(stream: DataStream): Header {
     let line = this.#readLine(stream)
     const header = {
@@ -160,9 +148,6 @@ export class HDRLoader {
     return header
   }
 
-  /**
-   * @ignore
-   */
   #parseSize(label: string, value: number, header: Header) {
     switch (label) {
       case '+X':
@@ -183,9 +168,6 @@ export class HDRLoader {
     }
   }
 
-  /**
-   * @ignore
-   */
   #readLine(stream: DataStream): string {
     let ch,
       str = ''
@@ -195,9 +177,6 @@ export class HDRLoader {
     return str
   }
 
-  /**
-   * @ignore
-   */
   #parseData(stream: DataStream, header: Header): F32Arr {
     const hash = stream.data.getUint16(stream.offset)
     let data
@@ -213,9 +192,6 @@ export class HDRLoader {
     return data
   }
 
-  /**
-   * @ignore
-   */
   #parseNewRLE(stream: DataStream, header: Header): F32Arr {
     const { width, height, colorCorr } = header
     const tgt = new Float32Array(width * height * 4)
@@ -270,9 +246,6 @@ export class HDRLoader {
     return tgt
   }
 
-  /**
-   * @ignore
-   */
   #swap(data: F32Arr, i1: number, i2: number) {
     i1 *= 4
     i2 *= 4
@@ -284,9 +257,6 @@ export class HDRLoader {
     }
   }
 
-  /**
-   * @ignore
-   */
   #flipX(data: F32Arr, header: Header) {
     const { width, height } = header
     const hw = width >> 1
@@ -303,9 +273,6 @@ export class HDRLoader {
     }
   }
 
-  /**
-   * @ignore
-   */
   #flipY(data: F32Arr, header: Header) {
     const { width, height } = header
     const hh = height >> 1

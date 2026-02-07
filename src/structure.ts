@@ -15,6 +15,12 @@ export interface Object {
   maxCount: number
 }
 
+export enum GeometryStatus {
+  Valid = 0,
+  Tetrahedron = 1,
+  LooseTriangle = 2,
+}
+
 const twin = (i: number): number => i ^ 1
 
 const face = (h: U32Arr, i: number): number => h[4 * i]
@@ -389,7 +395,7 @@ export class Structure {
     return [vertexB, vertexD]
   }
 
-  flipEdge(rodIndex: number) {
+  flipEdge(rodIndex: number): GeometryStatus {
     const h = this.halfEdges
 
     const ac = 2 * rodIndex
@@ -406,8 +412,10 @@ export class Structure {
 
     // check if a tetrahedron would be formed
     if (!this.allowTetrahedra) {
-      if (this.getValence(vertexA) < 5 || this.getValence(vertexC) < 5) return 1
-    } else if (this.getValence(vertexA) < 4 || this.getValence(vertexC) < 4) return 2
+      if (this.getValence(vertexA) < 5 || this.getValence(vertexC) < 5)
+        return GeometryStatus.Tetrahedron
+    } else if (this.getValence(vertexA) < 4 || this.getValence(vertexC) < 4)
+      return GeometryStatus.LooseTriangle
 
     setNext(h, ab, da)
     setPrev(h, ab, ac)
@@ -442,15 +450,17 @@ export class Structure {
     this.compute.setTriangleIndexBuffer(this.triangles.mesh.indices)
     this.compute.setHalfEdgeBuffer(h)
 
-    return 0
+    return GeometryStatus.Valid
   }
 
-  async collapseEdge(rodIndex: number) {
+  async collapseEdge(rodIndex: number): Promise<GeometryStatus> {
     const h = this.halfEdges
 
     // octahedron is smallest possible shape
-    if (!this.allowTetrahedra && this.triangles.count < 9) return 1
-    if (this.triangles.count < 5) return 2
+    if (!this.allowTetrahedra && this.triangles.count < 9) return GeometryStatus.Tetrahedron
+
+    // or tetrahedron is smallest possible shape
+    if (this.triangles.count < 5) return GeometryStatus.LooseTriangle
 
     const ac = 2 * rodIndex
     const ca = ac + 1
@@ -471,7 +481,12 @@ export class Structure {
 
     // check if a tetrahedron would be formed
     if (!this.allowTetrahedra)
-      if (this.getValence(vertexB) < 5 || this.getValence(vertexD) < 5) return 1
+      if (this.getValence(vertexB) < 5 || this.getValence(vertexD) < 5)
+        return GeometryStatus.Tetrahedron
+
+    // check if loose triangle would be formed
+    if (this.getValence(vertexB) < 4 || this.getValence(vertexD) < 4)
+      return GeometryStatus.LooseTriangle
 
     const faceABC = face(h, ab)
     const faceACD = face(h, da)
@@ -572,7 +587,7 @@ export class Structure {
     this.compute.setTriangleIndexBuffer(this.triangles.mesh.indices)
     this.compute.setCount(this.balls.count, this.rods.count, this.triangles.count)
 
-    return 0
+    return GeometryStatus.Valid
   }
 
   async saveData() {

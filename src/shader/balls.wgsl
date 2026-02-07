@@ -36,17 +36,19 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
 
   let displacementSum = vec3f(up) * DEQUANTIZE_FACTOR;
 
+  newBall.valence = u32(velocityUpdate[4*i+3]);
+
   // Diagonal Newton approximation ________________________
-  let inverseEffectiveMass = 1.0 / max(1.0, f32(velocityUpdate[4*i+3])); // valence
+  let inverseEffectiveMass = 1.0 / max(1.0, f32(newBall.valence));
 
   let correctionVelocity = displacementSum * inverseEffectiveMass / global.timeStep;
 
   newBall.velocity += correctionVelocity * 1.5; // SOR omega 1.5
 
-  velocityUpdate[4*i] = 0;
-  velocityUpdate[4*i+1] = 0;
-  velocityUpdate[4*i+2] = 0;
-  velocityUpdate[4*i+3] = 0;
+  // velocityUpdate[4*i] = 0;
+  // velocityUpdate[4*i+1] = 0;
+  // velocityUpdate[4*i+2] = 0;
+  // velocityUpdate[4*i+3] = 0;
 
   if global.repulsion != 0.0 {
     // radius is the radius of the ball
