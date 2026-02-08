@@ -27,6 +27,7 @@ export function createPanels(ballPark: BallPark) {
   //
   title('Platonic solids')
 
+  structureButton(`tetrahedron (${sumFormula('Y4')})`, '', () => ballPark.loadTetrahedron())
   structureButton(`octahedron (${sumFormula('T6')})`, '', () => ballPark.loadOctahedron())
   structureButton(`icosahedron (${sumFormula('P12')})`, '/basic/icosahedron')
 
@@ -211,9 +212,8 @@ export function createPanels(ballPark: BallPark) {
   //
   new Panel('info')
 
-  title('about')
   text(
-    'With this interactive application you can explore the world of deltahedra, which are polyhedra made only from equilateral triangles. In the upper left corner you can find the three basic operations which will be performed if you click on an edge with the mouse. Almost all interactive elements and info panels show information tooltips if you hover over them with the mouse.'
+    'With this interactive application you can explore the world of deltahedra, which are polyhedra made only from equilateral triangles. In the upper left corner you can find the three basic operations which will be performed if you click on an edge with the mouse. Almost all interactive elements and info panels show information tooltips if the mouse hovers over them.'
   )
   text(
     'If a certain structure can truly converge to a deltahedron (maximum distance error = 0, also called a "solution") depends on several things. First of all, the force slider needs to be at zero which means that there is no repulsive or attractive force between the vertices. Second, there might be more edge constraints than can be satisfied at the same time. This happens when E>3V-6, where E and V are the number of edges and vertices, respectively. This condition is always met for toroidal deltahedra (wich have one hole, also called genus 1 surfaces). That is why most toroids do not converge but in the library you can find some which still do because of their symmetries.'
@@ -221,6 +221,9 @@ export function createPanels(ballPark: BallPark) {
   // But even for deltahedra without a hole (genus 0 surfaces) there might be no solution for a certain connectivity (one example you can find in the library under "curiosities").
   text(
     'Using the force slider to create an attractive force only for a moment and then setting it to zero again, you can find other solutions for the same connectivity.'
+  )
+  text(
+    'Sometimes, especially if you apply an attractive force, structures can self-intersect. The algorithm does not prevent this, it only tries to bring all edge lengths to unity (a "solution"). Typically, there are more self-intersecting solutions than regular ones.'
   )
   text(
     'If you have questions or comments feel free to <a href="https://formaldesign.net/contact" target="_blank">get in touch</a>.'

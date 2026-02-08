@@ -52,10 +52,12 @@ tooltip(
 )
 operationButtons.click(0) // activate 'add' button
 
-const forceSlider = new InfoSlider(-1, 9, 1, 1, 'force: ', 0, '', 140, document.body)
+const min = -2
+const max = 8
+const forceSlider = new InfoSlider(min, max, 1, 1, 'force: ', 0, '', 140, document.body)
 forceSlider.onSlide(() => {
   let v = forceSlider.value
-  if (v < 0) v = -0.2
+  if (v < 0) v = 0.2 * forceSlider.value
   ballPark.setRepulsion(v)
   if (v !== 0) forceSlider.addClass('alert')
   else forceSlider.removeClass('alert')
@@ -71,8 +73,8 @@ tooltip(
 // slightly attractive force if 'a' key is pressed
 document.addEventListener('keydown', (e) => {
   const v = forceSlider.value
-  if (e.key === 'ArrowLeft') forceSlider.setSlider(v > -1 ? v - 1 : -1)
-  if (e.key === 'ArrowRight') forceSlider.setSlider(v < 9 ? v + 1 : 9)
+  if (e.key === 'ArrowLeft') forceSlider.setSlider(v > min ? v - 1 : min)
+  if (e.key === 'ArrowRight') forceSlider.setSlider(v < max ? v + 1 : max)
   ballPark.action = true
 })
 // focused listener to prevent "double stepping"

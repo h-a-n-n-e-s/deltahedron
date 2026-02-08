@@ -3,6 +3,8 @@ import { Render } from './render'
 import {
   octahedronHalfEdges,
   octahedronVertexPositions,
+  tetrahedronHalfEdges,
+  tetrahedronVertexPositions,
   torusHalfEdges,
   torusVertexPositions,
 } from './mesh'
@@ -405,6 +407,10 @@ export class BallPark {
 
   setAllowTetrahedra(s: boolean) {
     this.deltahedron.allowTetrahedra = s
+  }
+
+  loadTetrahedron() {
+    this.setStructure(tetrahedronHalfEdges, tetrahedronVertexPositions)
   }
 
   loadOctahedron() {
