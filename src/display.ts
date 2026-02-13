@@ -165,34 +165,53 @@ export const createOverlay = (message: string, id?: string) => {
   return globalOverlay
 }
 
-export const checkBrowserSupport = (): boolean => {
+export const checkBrowserSupport = async (): Promise<boolean> => {
+  let message = ''
+
   const ua = navigator.userAgent.toLowerCase()
 
-  // Detection Logic
   const isFirefox = ua.includes('firefox')
   const isSafari = ua.includes('safari') && !ua.includes('chrome') && !ua.includes('android')
 
   // Check for WebGPU specifically (even if the browser claims support, the object might be missing)
   const hasWebGPU = 'gpu' in navigator
 
-  if (isFirefox || isSafari || !hasWebGPU) {
-    let message = 'This application uses WebGPU for high-performance 3D.'
+  if (isFirefox) {
+    message =
+      "Firefox's WebGPU implementation is currently unstable. Please use Chrome, Edge, or Opera."
+  } else if (isSafari) {
+    message = "Safari's WebGPU support is currently unstable. Please use Chrome, Edge, or Opera."
+  } else if (!hasWebGPU) {
+    message =
+      'Your browser does not support WebGPU. This app requires a Chromium-based browser (Chrome, Edge, Opera).'
+  } else {
+    const adapter = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' })
 
-    if (isFirefox) {
-      message =
-        "Firefox's WebGPU implementation is currently unstable. Please use Chrome, Edge, or Opera."
-    } else if (isSafari) {
-      message = "Safari's WebGPU support is currently unstable. Please use Chrome, Edge, or Opera."
-    } else if (!hasWebGPU) {
-      message =
-        'Your browser does not support WebGPU. This app requires a Chromium-based browser (Chrome, Edge, Opera).'
-    }
+    const info = adapter ? adapter.info : undefined
 
+    let optimal = false
+
+    if (info) {
+      if (ua.includes('mac')) {
+        // Optimal if it's not a generic fallback and mentions Apple/Metal
+        optimal = info.description.includes('apple') || info.architecture.includes('metal')
+      } else if (ua.includes('linux')) {
+        // if Vulkan isn't in the description it's likely the slow GL fallback
+        optimal = info.description.toLowerCase().includes('vulkan')
+      } else if (ua.includes('win')) {
+        // Check for D3D12 signature (Chrome's preferred Windows backend)
+        optimal = info.description.includes('Direct3D 12')
+      }
+      if (!optimal)
+        message = `Your browser's GPU hardware acceleration is not set up optimally to use WebGPU. The user experience will likely be disappointing.`
+    } else message = `Your browser does not support WebGPU.`
+  }
+
+  if (message !== '') {
     const overlay = createOverlay(message)
     overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.7)'
     overlay.style.display = 'flex'
     showWarningBanner(overlay)
-
     return false
   }
 

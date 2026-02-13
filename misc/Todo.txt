@@ -13,16 +13,9 @@ self intersection indicator
 sound
 undo
 
-display loaded file name
-
 cut open
 change topology
 pull one ball with the mouse while keeping all others fixed
-
-specular term
-ssao
-textures
-one reflection ray tracing
 
 flat faces limit
 any precision Newton post processor

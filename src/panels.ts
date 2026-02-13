@@ -47,6 +47,7 @@ export function createPanels(ballPark: BallPark) {
     250,
     'This structure has two distinct non-intersecting solutions. Try to find the second one by carefully applying the attractive force.'
   )
+  structureButton(`propeller (${sumFormula('T9S6')})`, '/V15/T9S6_propeller')
   const fivefoldButt = structureButton(
     `fivefold inward (${sumFormula('P12H10')})`,
     '/V22/P12H10_fivefold_in'
@@ -58,7 +59,7 @@ export function createPanels(ballPark: BallPark) {
     180,
     'Set force to zero before loading it to see the inward facing solution.'
   )
-  structureButton(`propeller (${sumFormula('T9S6')})`, '/V15/T9S6_propeller')
+  structureButton(`the X (${sumFormula('T12H24S4O4')})`, '/V44/X')
 
   //
   const toroids = title('toroids')

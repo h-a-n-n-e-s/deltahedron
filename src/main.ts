@@ -4,7 +4,7 @@ import { Button, InfoSlider, PushButton, RadioButton } from './ui'
 import { checkBrowserSupport, createOverlay, tooltip } from './display'
 import { createPanels } from './panels'
 
-const validBrowser = checkBrowserSupport()
+const validBrowser = await checkBrowserSupport()
 
 const loadingTexturesOverlay = validBrowser
   ? createOverlay('loading textures...', 'loadTexOverlay')
