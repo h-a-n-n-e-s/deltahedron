@@ -189,7 +189,7 @@ export const checkBrowserSupport = async (): Promise<boolean> => {
 
     const info = adapter ? adapter.info : undefined
 
-    let optimal = false
+    // let optimal = false
 
     if (info) {
       console.log('>> gpu info <<')
