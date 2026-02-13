@@ -192,9 +192,13 @@ export const checkBrowserSupport = async (): Promise<boolean> => {
     let optimal = false
 
     if (info) {
+      console.log('>> gpu info <<')
+      console.log('architecture:', info.architecture)
+      console.log('description:', info.description)
+      console.log('vendor:', info.vendor)
       if (ua.includes('mac')) {
         // Optimal if it's not a generic fallback and mentions Apple/Metal
-        optimal = info.description.includes('apple') || info.architecture.includes('metal')
+        optimal = info.vendor.includes('apple') || info.architecture.includes('metal')
       } else if (ua.includes('linux')) {
         // if Vulkan isn't in the description it's likely the slow GL fallback
         optimal = info.description.toLowerCase().includes('vulkan')
