@@ -13,6 +13,8 @@ self intersection indicator
 sound
 undo
 
+gltf export
+
 cut open
 change topology
 pull one ball with the mouse while keeping all others fixed
