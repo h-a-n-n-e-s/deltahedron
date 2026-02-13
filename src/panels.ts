@@ -143,16 +143,11 @@ export function createPanels(ballPark: BallPark) {
     'The structure will continue rotating in the direction you rotate it with the mouse. The rotation speed depends on the speed of the mouse action.'
   )
 
-  const showTooltipsButton = new SwitchButton('show tooltips')
-  showTooltipsButton.onPush(() => enableTooltips(showTooltipsButton.on))
-  showTooltipsButton.click()
-
   viewPanel.div.appendChild(faceButton.button)
   viewPanel.div.appendChild(rodButton.button)
   viewPanel.div.appendChild(ballButton.button)
   viewPanel.div.appendChild(showOnlyIsoRodsButton.button)
   viewPanel.div.appendChild(rotateButton.button)
-  viewPanel.div.appendChild(showTooltipsButton.button)
 
   // show stuff
   faceButton.click()
@@ -187,8 +182,13 @@ export function createPanels(ballPark: BallPark) {
     'Edge operations will only be triggered once the mouse button is released (and not on push).'
   )
 
+  const showTooltipsButton = new SwitchButton('show tooltips')
+  showTooltipsButton.onPush(() => enableTooltips(showTooltipsButton.on))
+  showTooltipsButton.click()
+
   settingsPanel.div.appendChild(allowTetrahedraButton.button)
   settingsPanel.div.appendChild(mouseSignalOnReleaseButton.button)
+  settingsPanel.div.appendChild(showTooltipsButton.button)
 
   //
   //
