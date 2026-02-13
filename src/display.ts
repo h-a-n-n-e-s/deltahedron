@@ -196,17 +196,20 @@ export const checkBrowserSupport = async (): Promise<boolean> => {
       console.log('architecture:', info.architecture)
       console.log('description:', info.description)
       console.log('vendor:', info.vendor)
-      if (ua.includes('mac')) {
-        // Optimal if it's not a generic fallback and mentions Apple/Metal
-        optimal = info.vendor.includes('apple') || info.architecture.includes('metal')
-      } else if (ua.includes('linux')) {
-        // if Vulkan isn't in the description it's likely the slow GL fallback
-        optimal = info.description.toLowerCase().includes('vulkan')
-      } else if (ua.includes('win')) {
-        // Check for D3D12 signature (Chrome's preferred Windows backend)
-        optimal = info.description.includes('Direct3D 12')
-      }
-      if (!optimal)
+
+      const isModernHardware = adapter!.features.has('subgroups')
+
+      // if (ua.includes('mac')) {
+      //   // Optimal if it's not a generic fallback and mentions Apple/Metal
+      //   optimal = info.vendor.includes('apple') || info.architecture.includes('metal')
+      // } else if (ua.includes('linux')) {
+      //   // if Vulkan isn't in the description it's likely the slow GL fallback
+      //   optimal = info.description.toLowerCase().includes('vulkan')
+      // } else if (ua.includes('win')) {
+      //   // Check for D3D12 signature (Chrome's preferred Windows backend)
+      //   optimal = info.description.includes('Direct3D 12')
+      // }
+      if (adapter!.info.isFallbackAdapter || !isModernHardware)
         message = `Your browser's GPU hardware acceleration is not set up optimally to use WebGPU. The user experience will likely be disappointing.`
     } else message = `Your browser does not support WebGPU.`
   }
