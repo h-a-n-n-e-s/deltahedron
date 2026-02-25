@@ -11,7 +11,13 @@ import {
 import { Camera } from './camera'
 import { GeometryStatus, Structure } from './structure'
 import { loadFromPublic, readFile } from './io'
-import { ActivityIndicator, Info, tooltip, vertexCountToSummationFormula } from './display'
+import {
+  ActivityIndicator,
+  createOverlay,
+  Info,
+  tooltip,
+  vertexCountToSummationFormula,
+} from './display'
 import { vec3 } from './algebra'
 
 const QUANTIZE_FACTOR = 2097152
@@ -456,6 +462,9 @@ export class BallPark {
   }
 
   loadDataFile = async (fileName: string) => {
+    const overlay = createOverlay('loading...')
+    overlay.style.display = 'flex'
+
     // files from public/data/...
     const path = `/data/${fileName}`
 
@@ -464,6 +473,8 @@ export class BallPark {
       this.setStructure(he, pos)
       console.log(`File loaded from ${fileName}`)
     })
+
+    overlay.remove()
   }
 
   setStructure = (heData: U32Arr, posData?: F32Arr) => {

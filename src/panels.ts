@@ -214,7 +214,10 @@ export function createPanels(ballPark: BallPark) {
   new Panel('info')
 
   text(
-    'With this interactive application you can explore the world of deltahedra, which are polyhedra made only from equilateral triangles. In the upper left corner you can find the three basic operations which will be performed if you click on an edge with the mouse. Almost all interactive elements and info panels show information tooltips if the mouse hovers over them.'
+    'With this interactive application you can explore the world of deltahedra, which are polyhedra made only from equilateral triangles. In the upper left corner you can find the three basic operations which will be performed if you click on an edge with the mouse.'
+  )
+  text(
+    'Almost all interactive elements and info panels show information tooltips if the mouse hovers over them.'
   )
   text(
     'If a certain structure can truly converge to a deltahedron (maximum distance error = 0, also called a "solution") depends on several things. First of all, the force slider needs to be at zero which means that there is no repulsive or attractive force between the vertices. Second, there might be more edge constraints than can be satisfied at the same time. This happens when E>3V-6, where E and V are the number of edges and vertices, respectively. This condition is always met for toroidal deltahedra (wich have one hole, also called genus 1 surfaces). That is why most toroids do not converge but in the library you can find some which still do because of their symmetries.'
@@ -228,6 +231,11 @@ export function createPanels(ballPark: BallPark) {
   )
   text(
     'If you have questions or comments feel free to <a href="https://formaldesign.net/contact" target="_blank">get in touch</a>.'
+  )
+  text(
+    '<span style="display: block; text-align: center">&copy; ' +
+      new Date().getFullYear() +
+      ' Formal Design</span>'
   )
 }
 

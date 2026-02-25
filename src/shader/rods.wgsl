@@ -59,6 +59,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   atomicAdd(&velocityUpdate[4 * k + 3], 1); // valence count for diagonal newton
 }
 
+// unit quaternion of a rotation from y-axis to direction of unit vector nor
 fn quaternionFromDirection(nor:vec3f) -> vec4f {
   // handle singularity: if pointing straight down (v.y == -1)
   if (nor.y < -0.9999) {

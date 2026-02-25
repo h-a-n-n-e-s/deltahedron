@@ -1,32 +1,13 @@
-/*
-
-This is adapted from
-https://github.com/martinlaxenaire/gpu-curtains/blob/main/src/extras/loaders/HDRLoader.ts
-
-Copyright (c) 2024 Martin Laxenaire
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-*/
-
 import { F32Arr } from './compute'
 
-// ported from https://github.com/DerSchmale/io-rgbe/tree/main
+// Adapted from https://github.com/DerSchmale/io-rgbe/blob/main/src/decode.ts
+// by David Lenaerts 2020, MIT License.
 
-/**
- * HDRImageData contains all decompressed image data.
- */
-export interface HDRImageData {
-  /** Width of the HDR image */
+export interface HDRData {
   width: number
-  /** Height of the HDR image */
   height: number
-  /** Exposure of the HDR image */
   exposure: number
-  /** Gamma of the HDR image */
   gamma: number
-  /** {@link F32Arr} holding the HDR image data */
   data: F32Arr
 }
 
@@ -45,46 +26,13 @@ type DataStream = {
   data: DataView
 }
 
-/**
- * Basic glTF loader class.
- *
- * Allow to load an HDR file from an URI and returns a {@link HDRImageData} object containing the {@link Float32Array} data alongside width, height and other useful information.
- *
- * @example
- * ```javascript
- * const hdrLoader = new HDRLoader()
- * const hdr = await hdrLoader.loadFromUrl('path/to/environment.hdr')
- *
- * // assuming `renderer` is a valid Renderer
- * const envTexture = new Texture(renderer, {
- *   label: 'Environment texture',
- *   name: 'envTexture',
- *   visibility: ['fragment'],
- *   format: 'rgba16float',
- *   generateMips: true,
- *   fixedSize: {
- *     width: hdr.width,
- *     height: hdr.height,
- *   },
- * })
- *
- * envTexture.uploadData({
- *   data: hdr.data,
- * })
- * ```
- */
 export class HDRLoader {
-  /**
-   * Load and decode RGBE-encoded data to a flat list of floating point pixel data (RGBA).
-   * @param url -  The url of the .hdr file to load
-   * @returns - The {@link HDRImageData}
-   */
-  async loadFromUrl(url: string): Promise<HDRImageData> {
+  async loadFromUrl(url: string): Promise<HDRData> {
     const buffer = await (await fetch(url)).arrayBuffer()
     return this.#decodeRGBE(new DataView(buffer))
   }
 
-  #decodeRGBE(data: DataView): HDRImageData {
+  #decodeRGBE(data: DataView): HDRData {
     const stream = {
       data,
       offset: 0,
@@ -116,7 +64,6 @@ export class HDRLoader {
     if (line !== '#?RADIANCE' && line !== '#?RGBE') throw new Error('Incorrect file format!')
 
     while (line !== '') {
-      // empty line means there's only 1 line left, containing size info:
       line = this.#readLine(stream)
       const parts = line.split('=')
       switch (parts[0]) {
@@ -160,7 +107,7 @@ export class HDRLoader {
         break
       case '-Y':
         header.height = value
-        header.flipY = false // WebGPU flipY default is false
+        header.flipY = false
         break
       case '+Y':
         header.height = value
@@ -207,14 +154,12 @@ export class HDRLoader {
       offset += 4
       const numComps = width * 4
 
-      // read individual RLE components
       const comps = []
       let x = 0
 
       while (x < numComps) {
         let value = data.getUint8(offset++)
         if (value > 128) {
-          // RLE:
           const len = value - 128
           value = data.getUint8(offset++)
           for (let rle = 0; rle < len; ++rle) {
@@ -233,7 +178,6 @@ export class HDRLoader {
         const b = comps[x + width * 2]
         let e = comps[x + width * 3]
 
-        // NOT -128 but -136!!! This allows encoding smaller values rather than higher ones (as you'd expect).
         e = e ? Math.pow(2.0, e - 136) : 0
 
         tgt[i++] = r * e * colorCorr[0]
@@ -262,10 +206,8 @@ export class HDRLoader {
     const hw = width >> 1
 
     for (let y = 0; y < height; ++y) {
-      // selects the current row
       const b = y * width
       for (let x = 0; x < hw; ++x) {
-        // add the mirrored columns
         const i1 = b + x
         const i2 = b + width - 1 - x
         this.#swap(data, i1, i2)
@@ -278,117 +220,12 @@ export class HDRLoader {
     const hh = height >> 1
 
     for (let y = 0; y < hh; ++y) {
-      // selects the mirrored rows
       const b1 = y * width
       const b2 = (height - 1 - y) * width
 
       for (let x = 0; x < width; ++x) {
-        // adds the column
         this.#swap(data, b1 + x, b2 + x)
       }
     }
-  }
-
-  /**
-   * Convert an equirectangular {@link HDRImageData} to 6 {@link HDRImageData} cube map faces. Works but can display artifacts at the poles.
-   * @param parsedHdr - equirectangular {@link HDRImageData} to use.
-   * @returns - 6 {@link HDRImageData} cube map faces
-   */
-  equirectangularToCubeMap(parsedHdr: HDRImageData): HDRImageData[] {
-    const faceSize = Math.max(parsedHdr.width / 4, parsedHdr.height / 2)
-
-    type Face = {
-      posX: F32Arr
-      negX: F32Arr
-      posY: F32Arr
-      negY: F32Arr
-      posZ: F32Arr
-      negZ: F32Arr
-    }
-    type FaceKey = keyof Face
-
-    const faces = {
-      posX: new Float32Array(faceSize * faceSize * 4),
-      negX: new Float32Array(faceSize * faceSize * 4),
-      posY: new Float32Array(faceSize * faceSize * 4),
-      negY: new Float32Array(faceSize * faceSize * 4),
-      posZ: new Float32Array(faceSize * faceSize * 4),
-      negZ: new Float32Array(faceSize * faceSize * 4),
-    }
-
-    function getPixel(u: number, v: number): Array<number> {
-      const x = Math.floor(u * parsedHdr.width)
-      const y = Math.floor(v * parsedHdr.height)
-
-      const index = (y * parsedHdr.width + x) * 4
-      return [
-        parsedHdr.data[index],
-        parsedHdr.data[index + 1],
-        parsedHdr.data[index + 2],
-        parsedHdr.data[index + 3],
-      ]
-    }
-
-    function setPixel(face: FaceKey, x: number, y: number, pixel: Array<number>) {
-      const index = (y * faceSize + x) * 4
-      faces[face][index] = pixel[0]
-      faces[face][index + 1] = pixel[1]
-      faces[face][index + 2] = pixel[2]
-      faces[face][index + 3] = pixel[3]
-    }
-
-    function mapDirection(face: FaceKey, x: number, y: number): Array<number> {
-      const a = (2 * (x + 0.5)) / faceSize - 1
-      const b = (2 * (y + 0.5)) / faceSize - 1
-      switch (face) {
-        case 'posX':
-          return [a, -1, -b]
-        case 'negX':
-          return [-a, 1, -b]
-        case 'posY':
-          return [-b, -a, 1]
-        case 'negY':
-          return [b, -a, -1]
-        case 'posZ':
-          return [-1, -a, -b]
-        case 'negZ':
-          return [1, a, -b]
-      }
-      // return [0,0,0]
-    }
-
-    function directionToUV(direction: Array<number>) {
-      const [x, y, z] = direction
-      const r = Math.sqrt(x * x + y * y)
-      //const theta = mod(Math.atan2(y, x), 2 * Math.PI)
-      const theta = Math.atan2(y, x)
-      const phi = Math.atan2(z, r)
-      const u = (theta + Math.PI) / (2 * Math.PI)
-      const v = (phi + Math.PI / 2) / Math.PI
-      return [u, v]
-    }
-
-    for (const face in faces) {
-      for (let y = 0; y < faceSize; y++) {
-        for (let x = 0; x < faceSize; x++) {
-          const direction = mapDirection(face as FaceKey, x, y)
-          const [u, v] = directionToUV(direction)
-          const pixel = getPixel(u, v)
-          setPixel(face as FaceKey, x, y, pixel)
-        }
-      }
-    }
-
-    const facesData = [faces.posX, faces.negX, faces.posY, faces.negY, faces.posZ, faces.negZ]
-
-    return facesData.map((faceData) => {
-      return {
-        data: faceData,
-        width: faceSize,
-        height: faceSize,
-        exposure: parsedHdr.exposure,
-        gamma: parsedHdr.gamma,
-      }
-    })
   }
 }

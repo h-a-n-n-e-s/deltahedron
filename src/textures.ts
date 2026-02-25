@@ -1,4 +1,4 @@
-import { HDRImageData, HDRLoader } from './hdrloader'
+import { HDRData, HDRLoader } from './hdrloader'
 
 // translated to TypeScript and modified for hdr format from
 // https://webgpufundamentals.org/webgpu/lessons/webgpu-environment-maps.html
@@ -53,7 +53,7 @@ async function textureFromHDRImages(device: GPUDevice, urls: Array<string>) {
   return textureFromHDRSources(device, images)
 }
 
-function textureFromHDRSources(device: GPUDevice, sources: Array<HDRImageData>) {
+function textureFromHDRSources(device: GPUDevice, sources: Array<HDRData>) {
   // Assume all sources to be the same size so just use the first one for width and height
   const source = sources[0]
   const texture = device.createTexture({
@@ -69,11 +69,7 @@ function textureFromHDRSources(device: GPUDevice, sources: Array<HDRImageData>) 
   return texture
 }
 
-function copyHDRSourcesToTexture(
-  device: GPUDevice,
-  texture: GPUTexture,
-  sources: Array<HDRImageData>
-) {
+function copyHDRSourcesToTexture(device: GPUDevice, texture: GPUTexture, sources: Array<HDRData>) {
   sources.forEach((source, layer) => {
     device.queue.writeTexture(
       { texture: texture, origin: [0, 0, layer] },

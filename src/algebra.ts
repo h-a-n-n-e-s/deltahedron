@@ -188,10 +188,3 @@ export const mat4 = {
     v[15] = 1
   },
 }
-
-// unit quaternion of a rotation from y-axis to direction of vector v
-export const quaternionFromDirection = (v: F32Arr) => {
-  const L = Math.sqrt(v[0] ** 2 + v[1] ** 2 + v[2] ** 2)
-  const f = 1 / Math.sqrt(2 * L * (L + v[1]))
-  return new Float32Array([v[2] * f, 0, -v[0] * f, (L + v[1]) * f])
-}
