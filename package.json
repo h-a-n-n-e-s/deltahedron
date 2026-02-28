@@ -1,6 +1,6 @@
 {
   "name": "deltahedron",
-  "private": true,
+  "private": false,
   "author": "Johannes Schoenke",
   "version": "0.0.0",
   "type": "module",

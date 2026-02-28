@@ -192,6 +192,7 @@ export const checkBrowserSupport = async (): Promise<boolean> => {
     if (adapter) {
       // print some gpu info
       console.log(
+        '\n\n',
         '________gpu info________\n',
         'architecture:',
         adapter.info.architecture,

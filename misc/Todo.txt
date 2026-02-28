@@ -2,7 +2,6 @@
 create icosahedral toroids
 
 compound indicator
-
 color flat edges differently
 flat edges indicator
 display smallest dihedral angle

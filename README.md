@@ -1,6 +1,6 @@
 # Deltahedron
 
-A 3D interactive application for exploring the world of deltahedra, which are polyhedra made only from equilateral triangles.
+A 3D interactive application for exploring deltahedra&mdash;polyhedra composed entirely of equilateral triangles. Unlike systems that form complex shapes by combining simpler ones, this application takes a more organic approach using three edge operations. For any given edge, one can either add a vertex on it, flip it, or remove it. The algorithm continuously seeks a configuration where all edges maintain unit length. Although these operations may seem unconventional at first, they can produce intriguing structures that are difficult to obtain through other methods.
 
 The app is online at [https://delta.formaldesign.net](https://delta.formaldesign.net).
 
