@@ -160,7 +160,15 @@ export function createPanels(ballPark: BallPark) {
   const settingsPanel = new Panel('settings', SHORT_WINDOW_HEIGHT)
 
   const allowTetrahedraButton = new SwitchButton('allow tetrahedra')
-  allowTetrahedraButton.onPush(() => ballPark.setAllowTetrahedra(allowTetrahedraButton.on))
+  allowTetrahedraButton.onPush(() => {
+    if (!allowTetrahedraButton.on && ballPark.deltahedron.hasTetrahedralCorners()) {
+      ballPark.alertText =
+        'The structure has tetrahedral corners<br>so you cannot change this setting.'
+      ballPark.alertInfo.update()
+      allowTetrahedraButton.click() // keep it switched on
+    }
+    ballPark.setAllowTetrahedra(allowTetrahedraButton.on)
+  })
   tooltip(
     allowTetrahedraButton.button,
     -320,

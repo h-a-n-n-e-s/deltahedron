@@ -129,7 +129,7 @@ export class Structure {
 
     for (let i = 0; i < this.balls.count; i++) {
       this.createBall(i, p.slice(3 * i, 3 * i + 3))
-      const valence = this.vertexCoordinationCount(halfEdgesInit, i)
+      const valence = this.vertexValence(halfEdgesInit, i)
       this.setValence(i, valence)
       this.setBallColor(i, this.connectionsToColor(valence))
     }
@@ -184,13 +184,24 @@ export class Structure {
     return this.balls.data[index * q + 22] // valence
   }
 
+  hasTetrahedralCorners(halfEdgesInit?: U32Arr): boolean {
+    const h = halfEdgesInit ? halfEdgesInit : this.halfEdges
+
+    for (let i = 0; i < this.vertexCount(h); i++) {
+      const valence = this.vertexValence(h, i)
+      if (valence === 3) return true
+    }
+
+    return false
+  }
+
   connectionsToColor(valence: number) {
     if (!this.allowTetrahedra && valence < 4) throw new Error('valence < 4')
     else if (valence > 10) return colorArray[7]
     else return colorArray[valence - 3]
   }
 
-  vertexCoordinationCount(halfEdges: U32Arr, vertexIndex: number) {
+  vertexValence(halfEdges: U32Arr, vertexIndex: number) {
     let count = 0
     for (let i = 0; i < halfEdges.length / 4; ++i) {
       const index = halfEdges[4 * i + 3]

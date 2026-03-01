@@ -24,6 +24,8 @@ const QUANTIZE_FACTOR = 2097152
 const SMALL_QUANTIZE_FACTOR = 65536 // smaller to allow larger volumes
 export const q = 24 // scalar quantities per object in buffer
 
+const TETRA_CORNERS_NOT_ALLOWED = 'Tetrahedral corners are not allowed<br>(see settings).'
+
 export class BallPark {
   cubemap = 'cubemap/oceansky2hdr'
   tex = 'textures/scratched_plastic'
@@ -278,8 +280,7 @@ export class BallPark {
           else if (this.collapse) status = await this.deltahedron.collapseEdge(hoveringRod)
 
           if (status !== GeometryStatus.Valid) {
-            if (status === GeometryStatus.Tetrahedron)
-              this.alertText = 'Tetrahedral corners are not allowed<br>(see settings).'
+            if (status === GeometryStatus.Tetrahedron) this.alertText = TETRA_CORNERS_NOT_ALLOWED
             if (status === GeometryStatus.LooseTriangle)
               this.alertText = 'Loose triangles are not allowed.'
             this.alertInfo.update()
@@ -478,6 +479,12 @@ export class BallPark {
   }
 
   setStructure = (heData: U32Arr, posData?: F32Arr) => {
+    if (!this.deltahedron.allowTetrahedra && this.deltahedron.hasTetrahedralCorners(heData)) {
+      this.alertText = TETRA_CORNERS_NOT_ALLOWED
+      this.alertInfo.update()
+      return
+    }
+
     const [balls, rods, triangles, halfEdges] = this.deltahedron.init(heData, posData)
 
     this.compute.setCompleteBallsAndRodsBuffer(balls.data, rods.data)
