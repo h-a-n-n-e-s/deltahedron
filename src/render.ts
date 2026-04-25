@@ -163,19 +163,17 @@ export class Render {
 
     this.renderPassDescriptor = {
       label: 'main renderPass',
-      // @ts-ignore
       colorAttachments: [
         {
-          view: {},
-          resolveTarget: {},
+          view: undefined as unknown as GPUTextureView,
+          resolveTarget: undefined,
           clearValue: [0, 0, 0, 0],
           loadOp: 'clear',
           storeOp: 'store',
         },
       ],
       depthStencilAttachment: {
-        // @ts-ignore
-        view: {},
+        view: undefined as unknown as GPUTextureView,
         depthClearValue: 1.0,
         depthLoadOp: 'clear',
         depthStoreOp: 'store',
@@ -334,12 +332,10 @@ export class Render {
         usage: GPUTextureUsage.RENDER_ATTACHMENT,
         sampleCount: 4,
       })
+      this.renderPassDescriptor.depthStencilAttachment!.view = this.depthTexture.createView()
+      this.renderPassDescriptor.colorAttachments[0]!.view = this.multisampleTexture.createView()
     }
-    this.renderPassDescriptor.depthStencilAttachment!.view = this.depthTexture.createView()
-    // @ts-ignore
-    this.renderPassDescriptor.colorAttachments[0].view = this.multisampleTexture.createView()
-    // @ts-ignore
-    this.renderPassDescriptor.colorAttachments[0].resolveTarget = this.canvasTexture.createView() // only in last render pass
+    this.renderPassDescriptor.colorAttachments[0]!.resolveTarget = this.canvasTexture.createView() // only in last render pass
   }
 
   getCanvas = () => this.canvas

@@ -7,14 +7,11 @@
     "skipLibCheck": true,
 
     /* Bundler mode */
-    "moduleResolution": "Node10",
     "allowImportingTsExtensions": true,
-    "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
 
-    "allowJs": true
-    ,
+    "allowJs": true,
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
@@ -29,7 +26,6 @@
     "removeComments": true,
 
     "types": ["@webgpu/types"],
-
   },
-  "include": ["src"]
+  "include": ["src"],
 }

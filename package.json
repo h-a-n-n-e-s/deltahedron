@@ -6,13 +6,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "pnpm tsgo && pnpm vite build",
     "preview": "vite preview"
   },
   "devDependencies": {
+    "@typescript/native-preview": "beta",
     "@webgpu/types": "^0.1.69",
-    "typescript": "^5.9.3",
-    "vite": "^7.3.1"
+    "vite": "^8.0.10"
   },
-  "packageManager": "pnpm@10.8.0"
+  "packageManager": "pnpm@10.33.2"
 }

@@ -15,12 +15,6 @@ Button.initialize(10, 10, 10)
 
 const ballPark = new BallPark()
 
-// const holdButton = new SwitchButton('hold', true);
-// holdButton.onPush(() => ballPark.setHold(holdButton.on));
-
-// const bamButton = new PushButton('bam', true);
-// bamButton.onPush( async () => ballPark.bam());
-
 const operationButtons = new RadioButton(
   [
     { name: 'add', func: (on) => ballPark.addVertex(on) },

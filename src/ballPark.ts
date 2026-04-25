@@ -29,7 +29,6 @@ const TETRA_CORNERS_NOT_ALLOWED = 'Tetrahedral corners are not allowed<br>(see s
 export class BallPark {
   cubemap = 'cubemap/oceansky2hdr'
   tex = 'textures/scratched_plastic'
-  // tex = 'textures/metal';
 
   ballRadius = 0.1
   cylinderRadius = 0.04
